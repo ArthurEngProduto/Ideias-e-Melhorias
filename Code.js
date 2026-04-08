@@ -68,13 +68,28 @@ function getRows_() {
 
   return dataRows
     .filter((row) => row.some((cell) => String(cell || '').trim() !== ''))
-    .map((row) => {
+    .map((row, index) => {
       const obj = {};
       headers.forEach((header, index) => {
         obj[header] = row[index] || '';
       });
+            obj.__rowNumber = index + 2;
       return obj;
     });
+}
+
+function updateConcludedStatus(rowNumber, concluded) {
+  const numericRow = Number(rowNumber);
+  if (!numericRow || numericRow < 2) {
+    throw new Error('Linha inválida para atualização.');
+  }
+
+  const sheet = getSheet_();
+  const columnR = 18;
+  const value = concluded ? 'OK' : '';
+  sheet.getRange(numericRow, columnR).setValue(value);
+
+  return { success: true, rowNumber: numericRow, concluded: value };
 }
 
 function getSheet_() {
@@ -124,7 +139,7 @@ function normalizeFilters_(filters) {
 
   return {
     timestampStart,
-    
+
     timestampEnd,
     name: String(filters.name || '').trim().toLowerCase(),
     sector: String(filters.sector || '').trim(),

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portal de Ideias e Melhorias</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --surface: #ffffff;
+        --line: #dce3f1;
+        --text: #1d2433;
+        --muted: #647089;
+        --primary: #2452d8;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+      .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+      .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+      h1 { margin: 0 0 4px 0; }
+      .meta { color: var(--muted); font-size: 13px; }
+      .toolbar {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 2fr repeat(4, 1fr) 140px 120px;
+        gap: 10px;
+      }
+      @media (max-width: 1100px) {
+        .toolbar { grid-template-columns: repeat(2, 1fr); }
+      }
+      input, select, button {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+      button { cursor: pointer; border: none; background: var(--primary); color: #fff; font-weight: 600; }
+      button.secondary { background: #fff; border: 1px solid var(--primary); color: var(--primary); }
+      .summary { margin: 14px 0; color: var(--muted); }
+      .status { margin-top: 12px; font-size: 13px; color: #8a5a00; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 10px; display: none; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+      .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+      .card-title { font-size: 16px; font-weight: 700; margin: 8px 0; }
+      .badge { display: inline-block; background: #eaf0ff; color: #2342ac; font-size: 12px; padding: 4px 8px; border-radius: 999px; margin-right: 6px; }
+      .field { margin-top: 8px; border-top: 1px dashed #edf1f8; padding-top: 8px; }
+      .label { color: var(--muted); font-size: 12px; }
+      .value { margin-top: 2px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+      .pagination { margin: 18px 0 4px 0; display: flex; gap: 8px; justify-content: center; }
+      .empty { display: none; text-align: center; color: var(--muted); margin: 24px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="panel">
+        <h1>Portal de Ideias e Melhorias</h1>
+        <div class="meta" id="topMeta">Carregando informações...</div>
+
+        <div class="toolbar">
+          <input id="search" placeholder="Buscar em qualquer campo..." />
+          <select id="sector"></select>
+          <select id="reference"></select>
+          <select id="productContributionType"></select>
+          <select id="processContributionType"></select>
+          <button onclick="applyFilters()">Filtrar</button>
+          <button class="secondary" onclick="clearFilters()">Limpar</button>
+        </div>
+
+        <div class="status" id="statusBox"></div>
+      </div>
+
+      <div class="summary" id="summary"></div>
+      <div class="grid" id="cards"></div>
+      <div class="empty" id="empty">Nenhum registro encontrado para os filtros informados.</div>
+
+      <div class="pagination">
+        <button class="secondary" onclick="prevPage()">Anterior</button>
+        <button class="secondary" onclick="nextPage()">Próxima</button>
+      </div>
+    </div>
+
+    <script>
+      let state = {
+        page: 1,
+        pageSize: 12,
+        total: 0,
+        totalPages: 1,
+        rows: [],
+        fields: [],
+        filters: {}
+      };
+
+      const preferredOrder = [
+        'Carimbo de data/hora',
+        'Digite seu nome:',
+        'Selecione o seu setor:',
+        'Este registro se refere a:',
+        'Qual é o tipo de contribuição neste produto',
+        'Descreva o problema a ser corrigido no produto:',
+        'Qual é o tipo de contribuição neste processo?',
+        'Descreva o problema a ser corrigido no processo:',
+        'Nome do Produto:',
+        'Modelo:',
+        'Tamanho:',
+        'Em qual produto esse processo ocorre?',
+        'Nome do processo:',
+        'Etapa ou atividade específica (se existir) :',
+        'Qual é a recorrência ou necessidade desta melhoria?',
+        'Descreva sua ideia de solução:',
+        'Deseja anexar uma foto? (opcional)'
+      ];
+
+      function boot() {
+        google.script.run
+          .withSuccessHandler((payload) => {
+            state.fields = payload.fields || [];
+            setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
+
+            setSelectOptions('sector', payload.options.sectors, 'Todos os setores');
+            setSelectOptions('reference', payload.options.refs, 'Produto ou processo');
+            setSelectOptions('productContributionType', payload.options.productContributionType, 'Contribuição no produto');
+            setSelectOptions('processContributionType', payload.options.processContributionType, 'Contribuição no processo');
+
+            loadData();
+          })
+          .withFailureHandler(showError)
+          .getPortalBootstrap();
+      }
+
+      function loadData() {
+        google.script.run
+          .withSuccessHandler((data) => {
+            state = { ...state, ...data };
+            hideError();
+            render();
+          })
+          .withFailureHandler(showError)
+          .getPortalData(state.filters, state.page, state.pageSize);
+      }
+
+      function setSelectOptions(id, options, placeholder) {
+        const select = document.getElementById(id);
+        const html = [`<option value="">${escapeHtml(placeholder)}</option>`]
+          .concat((options || []).map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`))
+          .join('');
+        select.innerHTML = html;
+      }
+
+      function applyFilters() {
+        state.page = 1;
+        state.filters = {
+          search: document.getElementById('search').value,
+          sector: document.getElementById('sector').value,
+          reference: document.getElementById('reference').value,
+          productContributionType: document.getElementById('productContributionType').value,
+          processContributionType: document.getElementById('processContributionType').value
+        };
+        loadData();
+      }
+
+      function clearFilters() {
+        document.getElementById('search').value = '';
+        ['sector', 'reference', 'productContributionType', 'processContributionType'].forEach((id) => {
+          document.getElementById(id).value = '';
+        });
+        applyFilters();
+      }
+
+      function render() {
+        document.getElementById('summary').textContent =
+          `Mostrando ${state.rows.length} de ${state.total} registro(s). Página ${state.page} de ${state.totalPages}.`;
+
+        const cards = document.getElementById('cards');
+        const empty = document.getElementById('empty');
+
+        if (!state.rows.length) {
+          cards.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+
+        empty.style.display = 'none';
+        cards.innerHTML = state.rows.map(renderCard).join('');
+      }
+
+      function renderCard(row) {
+        const rowKeys = Object.keys(row || {});
+        const orderedKeys = [
+          ...preferredOrder.filter((k) => rowKeys.includes(k)),
+          ...rowKeys.filter((k) => !preferredOrder.includes(k))
+        ];
+
+        const title = row['Descreva sua ideia de solução:']
+          || row['Descreva o problema a ser corrigido no produto:']
+          || row['Descreva o problema a ser corrigido no processo:']
+          || row['Nome do Produto:']
+          || 'Registro';
+
+        const badges = [row['Selecione o seu setor:'], row['Este registro se refere a:']]
+          .filter(Boolean)
+          .map((item) => `<span class="badge">${escapeHtml(item)}</span>`)
+          .join('');
+
+        const fieldsHtml = orderedKeys
+          .filter((key) => String(row[key] || '').trim() !== '')
+          .map((key) => `
+            <div class="field">
+              <div class="label">${escapeHtml(cleanLabel(key))}</div>
+              <div class="value">${escapeHtml(row[key])}</div>
+            </div>
+          `)
+          .join('');
+
+        return `
+          <article class="card">
+            <div>${badges}</div>
+            <div class="card-title">${escapeHtml(title)}</div>
+            ${fieldsHtml}
+          </article>
+        `;
+      }
+
+      function cleanLabel(label) {
+        return String(label || '').replace(/\s+/g, ' ').trim();
+      }
+
+      function prevPage() {
+        if (state.page <= 1) return;
+        state.page -= 1;
+        loadData();
+      }
+
+      function nextPage() {
+        if (state.page >= state.totalPages) return;
+        state.page += 1;
+        loadData();
+      }
+
+      function showError(err) {
+        const message = err && err.message ? err.message : String(err || 'Erro desconhecido');
+        const box = document.getElementById('statusBox');
+        box.style.display = 'block';
+        box.textContent = `Erro ao carregar dados: ${message}`;
+        document.getElementById('topMeta').textContent = 'Falha na conexão com a planilha.';
+      }
+
+      function hideError() {
+        const box = document.getElementById('statusBox');
+        box.style.display = 'none';
+        box.textContent = '';
+      }
+
+      function setTopMeta(text) {
+        document.getElementById('topMeta').textContent = text;
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+      }
+
+      boot();
+    </script>
+  </body>
+</html>

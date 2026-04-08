@@ -44,6 +44,8 @@
       tbody tr:hover { background: #f8fbff; }
       .filter-row th { background: #fff; border-bottom: 1px solid var(--line); }
       .filter-row input, .filter-row select { padding: 8px; font-size: 13px; }
+            .date-range { display: flex; align-items: center; gap: 6px; }
+      .date-range span { color: var(--muted); font-size: 12px; white-space: nowrap; }
       .pagination { margin: 18px 0 4px 0; display: flex; gap: 8px; justify-content: center; }
       .empty { display: none; text-align: center; color: var(--muted); margin: 24px 0; }
       .modal {
@@ -105,7 +107,13 @@
               <th>Este registro se refere a:</th>
             </tr>
             <tr class="filter-row">
-              <th><input id="timestampFilter" type="date" aria-label="Filtrar por data" /></th>
+              <th>
+                <div class="date-range">
+                  <input id="timestampStartFilter" type="date" aria-label="Filtrar por data inicial" />
+                  <span>até</span>
+                  <input id="timestampEndFilter" type="date" aria-label="Filtrar por data final" />
+                </div>
+              </th>
               <th><input id="nameFilter" placeholder="Filtrar por nome" /></th>
               <th><select id="sectorFilter"></select></th>
               <th><select id="referenceFilter"></select></th>
@@ -199,8 +207,16 @@
 
       function applyFilters() {
         state.page = 1;
+                let timestampStart = document.getElementById('timestampStartFilter').value;
+        let timestampEnd = document.getElementById('timestampEndFilter').value;
+        if (timestampStart && timestampEnd && timestampStart > timestampEnd) {
+          [timestampStart, timestampEnd] = [timestampEnd, timestampStart];
+          document.getElementById('timestampStartFilter').value = timestampStart;
+          document.getElementById('timestampEndFilter').value = timestampEnd;
+        }
         state.filters = {
-          timestamp: document.getElementById('timestampFilter').value,
+          timestampStart,
+          timestampEnd,
           name: document.getElementById('nameFilter').value,
           sector: document.getElementById('sectorFilter').value,
           reference: document.getElementById('referenceFilter').value
@@ -209,7 +225,7 @@
       }
 
       function clearFilters() {
-        ['timestampFilter', 'nameFilter'].forEach((id) => {
+        ['timestampStartFilter', 'timestampEndFilter', 'nameFilter'].forEach((id) => {
           document.getElementById(id).value = '';
         });
         ['sectorFilter', 'referenceFilter'].forEach((id) => {
@@ -277,7 +293,7 @@
       }
 
       function addFilterListeners() {
-        ['timestampFilter', 'nameFilter', 'sectorFilter', 'referenceFilter'].forEach((id) => {
+        ['timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'sectorFilter', 'referenceFilter'].forEach((id) => {
           const el = document.getElementById(id);
           el.addEventListener('change', applyFilters);
           if (el.tagName === 'INPUT') {

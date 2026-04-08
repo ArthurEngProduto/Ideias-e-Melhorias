@@ -31,7 +31,10 @@ function getPortalData(filters, page, pageSize) {
   const normalizedFilters = normalizeFilters_(filters || {});
 
   const filteredRows = rows.filter((row) => {
-        if (normalizedFilters.timestamp && !getFieldValue_(row, 'Carimbo de data/hora').toLowerCase().includes(normalizedFilters.timestamp)) return false;
+    if (
+      normalizedFilters.timestamp &&
+      normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora')) !== normalizedFilters.timestamp
+    ) return false;
     if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
     if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
     if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
@@ -132,4 +135,23 @@ function normalizeHeader_(header) {
 function getFieldValue_(row, key) {
   const normalizedKey = normalizeHeader_(key);
   return String(row[normalizedKey] || '').trim();
+}
+
+function normalizeDateFilter_(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+
+  const brMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (brMatch) {
+    const [, day, month, year] = brMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return `${year}-${month}-${day}`;
+  }
+
+  return '';
 }

@@ -275,7 +275,7 @@
           .map((key) => `
             <div class="detail-item">
               <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
-              <div class="detail-value">${escapeHtml(row[key])}</div>
+              <div class="detail-value">${renderDetailValue(key, row[key])}</div>
             </div>
           `)
           .join('');
@@ -306,6 +306,22 @@
 
       function cleanLabel(label) {
         return String(label || '').replace(/\s+/g, ' ').trim();
+      }
+
+      function renderDetailValue(key, value) {
+        const text = String(value || '').trim();
+        if (!text) return '-';
+
+        const photoLabel = 'Deseja anexar uma foto? (opcional)';
+        if (cleanLabel(key) !== cleanLabel(photoLabel)) {
+          return escapeHtml(text);
+        }
+
+        const urlMatch = text.match(/https?:\/\/[^\s]+/i);
+        if (!urlMatch) return escapeHtml(text);
+
+        const url = urlMatch[0];
+        return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text)}</a>`;
       }
 
       function formatTimestampToDate(rawTimestamp) {

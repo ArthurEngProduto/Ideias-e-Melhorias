@@ -75,6 +75,24 @@
         gap: 10px;
         margin-bottom: 10px;
       }
+            .modal-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .checkbox-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text);
+      }
+      .checkbox-wrap input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--primary);
+      }
       .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
       .detail-item { border: 1px solid #edf1f8; border-radius: 8px; padding: 10px; }
       .detail-label { font-size: 12px; color: var(--muted); }
@@ -133,7 +151,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2 id="modalTitle" style="margin:0;">Detalhes do registro</h2>
-          <button class="secondary" style="max-width:120px;" onclick="closeModal()">Fechar</button>
+          <div class="modal-actions">
+            <label class="checkbox-wrap" for="concludedCheckbox">
+              <input id="concludedCheckbox" type="checkbox" onchange="toggleConcludedStatus()" />
+              <span>OK (Concluído)</span>
+            </label>
+            <button class="secondary" style="max-width:120px;" onclick="closeModal()">Fechar</button>
+          </div>
         </div>
         <div class="details-grid" id="modalDetails"></div>
       </div>
@@ -147,7 +171,8 @@
         totalPages: 1,
         rows: [],
         fields: [],
-        filters: {}
+        filters: {},
+        selectedRowIndex: null
       };
 
       const preferredOrder = [
@@ -265,13 +290,14 @@
       function openModal(index) {
         const row = state.rows[index];
         if (!row) return;
+                state.selectedRowIndex = index;
         const rowKeys = Object.keys(row || {});
         const orderedKeys = [
           ...preferredOrder.filter((k) => rowKeys.includes(k)),
           ...rowKeys.filter((k) => !preferredOrder.includes(k))
         ];
         const details = orderedKeys
-          .filter((key) => String(row[key] || '').trim() !== '')
+          .filter((key) => !key.startsWith('__') && String(row[key] || '').trim() !== '')
           .map((key) => `
             <div class="detail-item">
               <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
@@ -279,6 +305,8 @@
             </div>
           `)
           .join('');
+                  const concludedValue = String(row['Concluído'] || '').trim().toLowerCase();
+        document.getElementById('concludedCheckbox').checked = ['ok', 'sim', 'true', '1', 'concluído', 'concluido'].includes(concludedValue);
         document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
         document.getElementById('modalDetails').innerHTML = details;
         document.getElementById('detailsModal').classList.add('open');
@@ -286,6 +314,7 @@
 
       function closeModal() {
         document.getElementById('detailsModal').classList.remove('open');
+                state.selectedRowIndex = null;
       }
 
       function handleModalBackdrop(event) {
@@ -372,6 +401,29 @@
 
       function setTopMeta(text) {
         document.getElementById('topMeta').textContent = text;
+      }
+
+            function toggleConcludedStatus() {
+        if (state.selectedRowIndex === null || state.selectedRowIndex === undefined) return;
+        const row = state.rows[state.selectedRowIndex];
+        if (!row || !row.__rowNumber) {
+          showError('Não foi possível identificar a linha para atualizar o status.');
+          return;
+        }
+
+        const checkbox = document.getElementById('concludedCheckbox');
+        const concluded = !!checkbox.checked;
+
+        google.script.run
+          .withSuccessHandler(() => {
+            row['Concluído'] = concluded ? 'OK' : '';
+            hideError();
+          })
+          .withFailureHandler((err) => {
+            checkbox.checked = !concluded;
+            showError(err);
+          })
+          .updateConcludedStatus(row.__rowNumber, concluded);
       }
 
       function escapeHtml(str) {

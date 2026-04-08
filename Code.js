@@ -27,19 +27,7 @@ function getPortalBootstrap() {
 }
 
 function getPortalData(filters, page, pageSize) {
-  const rows = getRows_();
-  const normalizedFilters = normalizeFilters_(filters || {});
-
-  const filteredRows = rows.filter((row) => {
-    const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
-    if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
-    if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
-    if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
-    if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
-    if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
-  
-    return true;
-  });
+  const filteredRows = getFilteredRows_(filters || {});
 
   const safePageSize = Number(pageSize) > 0 ? Number(pageSize) : DEFAULT_PAGE_SIZE;
   const requestedPage = Number(page) > 0 ? Number(page) : 1;
@@ -54,6 +42,25 @@ function getPortalData(filters, page, pageSize) {
     total,
     totalPages,
     rows: pagedRows,
+  };
+}
+
+function getPortalStats(filters) {
+  const filteredRows = getFilteredRows_(filters || {});
+  const fields = [
+    'Selecione o seu setor:',
+    'Este registro se refere a:',
+    'Qual é o tipo de contribuição neste produto',
+    'Qual é o tipo de contribuição neste processo?',
+    'Qual é a recorrência ou necessidade desta melhoria?',
+  ];
+
+  return {
+    total: filteredRows.length,
+    charts: fields.map((field) => ({
+      field,
+      values: countByField_(filteredRows, field),
+    })),
   };
 }
 
@@ -76,6 +83,21 @@ function getRows_() {
       obj.__rowNumber = index + 2;
       return obj;
     });
+}
+
+function getFilteredRows_(filters) {
+  const rows = getRows_();
+  const normalizedFilters = normalizeFilters_(filters || {});
+
+  return rows.filter((row) => {
+    const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
+    if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
+    if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
+    if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
+    if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
+    if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
+    return true;
+  });
 }
 
 function updateConcludedStatus(rowNumber, concluded) {
@@ -342,6 +364,18 @@ function uniqueByKey_(rows, key) {
     if (value) set.add(value);
   });
   return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+function countByField_(rows, key) {
+  const counts = {};
+  rows.forEach((row) => {
+    const value = getFieldValue_(row, key) || 'Não informado';
+    counts[value] = (counts[value] || 0) + 1;
+  });
+
+  return Object.keys(counts)
+    .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b, 'pt-BR'))
+    .map((label) => ({ label, count: counts[label] }));
 }
 
 function normalizeFilters_(filters) {

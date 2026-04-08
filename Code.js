@@ -92,6 +92,53 @@ function updateConcludedStatus(rowNumber, concluded) {
   return { success: true, rowNumber: numericRow, concluded: value };
 }
 
+function deletePortalRow(rowNumber) {
+  const numericRow = Number(rowNumber);
+  if (!numericRow || numericRow < 2) {
+    throw new Error('Linha inválida para exclusão.');
+  }
+
+  const sheet = getSheet_();
+  if (numericRow > sheet.getLastRow()) {
+    throw new Error('A linha informada não existe mais na planilha.');
+  }
+
+  const headers = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getDisplayValues()[0]
+    .map((header) => normalizeHeader_(header));
+  const rowValues = sheet.getRange(numericRow, 1, 1, headers.length).getDisplayValues()[0];
+  const rowObject = {};
+  headers.forEach((header, index) => {
+    rowObject[header] = rowValues[index] || '';
+  });
+
+  const deletedFromForm = deleteFormResponseForRow_(rowObject);
+  sheet.deleteRow(numericRow);
+
+  return {
+    success: true,
+    rowNumber: numericRow,
+    deletedFromForm,
+  };
+}
+
+function deletePortalRow(rowNumber) {
+  const numericRow = Number(rowNumber);
+  if (!numericRow || numericRow < 2) {
+    throw new Error('Linha inválida para exclusão.');
+  }
+
+  const sheet = getSheet_();
+  const lastRow = sheet.getLastRow();
+  if (numericRow > lastRow) {
+    throw new Error('Linha não encontrada para exclusão.');
+  }
+
+  sheet.deleteRow(numericRow);
+
+  return { success: true, rowNumber: numericRow };
+}
 function getSheet_() {
   const ss = resolveSpreadsheet_();
   const sheet = SHEET_NAME ? ss.getSheetByName(SHEET_NAME) : ss.getSheets()[0];
@@ -100,6 +147,109 @@ function getSheet_() {
     throw new Error('A aba configurada não foi encontrada. Revise SHEET_NAME em Code.gs.');
   }
 
+function deleteFormResponseForRow_(row) {
+  const form = getLinkedForm_();
+  if (!form) return false;
+
+  const responseId = findResponseId_(row);
+  if (responseId) {
+    form.deleteResponse(responseId);
+    return true;
+  }
+
+  const response = findFormResponseByTimestamp_(form, row);
+  if (!response) return false;
+
+  form.deleteResponse(response.getId());
+  return true;
+}
+
+function getLinkedForm_() {
+  const spreadsheet = resolveSpreadsheet_();
+  const formUrl = spreadsheet.getFormUrl();
+  if (!formUrl) return null;
+  return FormApp.openByUrl(formUrl);
+}
+
+function findResponseId_(row) {
+  const candidateKeys = [
+    'ID da resposta',
+    'ID da resposta do formulário',
+    'Response ID',
+    'Response Id',
+    'responseId',
+    'response id',
+  ];
+
+  for (let i = 0; i < candidateKeys.length; i += 1) {
+    const value = getFieldValue_(row, candidateKeys[i]);
+    if (value) return value;
+  }
+
+  return '';
+}
+
+function findFormResponseByTimestamp_(form, row) {
+  const rawTimestamp = getFieldValue_(row, 'Carimbo de data/hora');
+  if (!rawTimestamp) return null;
+
+  const parsedTimestamp = parseTimestamp_(rawTimestamp);
+  if (!parsedTimestamp) return null;
+
+  const responses = form.getResponses(parsedTimestamp);
+  if (!responses || !responses.length) return null;
+
+  const rowName = getFieldValue_(row, 'Digite seu nome:').toLowerCase();
+  const formTitle = normalizeHeader_(form.getTitle());
+
+  for (let i = 0; i < responses.length; i += 1) {
+    const response = responses[i];
+    const responseTimestamp = response.getTimestamp();
+    if (!responseTimestamp || responseTimestamp.getTime() !== parsedTimestamp.getTime()) {
+      continue;
+    }
+
+    if (!rowName) return response;
+
+    const answers = response.getItemResponses();
+    const matchedName = answers.some((itemResponse) => {
+      const title = normalizeHeader_(itemResponse.getItem().getTitle());
+      if (title !== 'Digite seu nome:') return false;
+      return String(itemResponse.getResponse() || '').trim().toLowerCase() === rowName;
+    });
+
+    if (matchedName) return response;
+  }
+
+  Logger.log(
+    'Não foi possível identificar resposta pelo carimbo/nome. Formulário: %s | Timestamp: %s',
+    formTitle,
+    rawTimestamp
+  );
+  return null;
+}
+
+function parseTimestamp_(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+
+  const brDateTimeMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (brDateTimeMatch) {
+    const [, day, month, year, hour = '0', minute = '0', second = '0'] = brDateTimeMatch;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    );
+  }
+
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+}
   return sheet;
 }
 

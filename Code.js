@@ -31,22 +31,11 @@ function getPortalData(filters, page, pageSize) {
   const normalizedFilters = normalizeFilters_(filters || {});
 
   const filteredRows = rows.filter((row) => {
-    if (normalizedFilters.search) {
-      const haystack = Object.values(row).join(' ').toLowerCase();
-      if (!haystack.includes(normalizedFilters.search)) return false;
-    }
-
+        if (normalizedFilters.timestamp && !getFieldValue_(row, 'Carimbo de data/hora').toLowerCase().includes(normalizedFilters.timestamp)) return false;
+    if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
     if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
     if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
-    if (
-      normalizedFilters.productContributionType &&
-      getFieldValue_(row, 'Qual é o tipo de contribuição neste produto') !== normalizedFilters.productContributionType
-    ) return false;
-    if (
-      normalizedFilters.processContributionType &&
-      getFieldValue_(row, 'Qual é o tipo de contribuição neste processo?') !== normalizedFilters.processContributionType
-    ) return false;
-
+  
     return true;
   });
 
@@ -115,8 +104,6 @@ function getFilterOptions_() {
   return {
     sectors: uniqueByKey_(rows, 'Selecione o seu setor:'),
     refs: uniqueByKey_(rows, 'Este registro se refere a:'),
-    productContributionType: uniqueByKey_(rows, 'Qual é o tipo de contribuição neste produto'),
-    processContributionType: uniqueByKey_(rows, 'Qual é o tipo de contribuição neste processo?'),
   };
 }
 
@@ -131,11 +118,10 @@ function uniqueByKey_(rows, key) {
 
 function normalizeFilters_(filters) {
   return {
-    search: String(filters.search || '').trim().toLowerCase(),
+    timestamp: String(filters.timestamp || '').trim().toLowerCase(),
+    name: String(filters.name || '').trim().toLowerCase(),
     sector: String(filters.sector || '').trim(),
     reference: String(filters.reference || '').trim(),
-    productContributionType: String(filters.productContributionType || '').trim(),
-    processContributionType: String(filters.processContributionType || '').trim(),
   };
 }
 

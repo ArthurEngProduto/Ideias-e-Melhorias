@@ -75,10 +75,21 @@
         gap: 10px;
         margin-bottom: 10px;
       }
-            .modal-actions {
+      .modal-actions {
         display: flex;
         align-items: center;
         gap: 12px;
+      }
+            .danger {
+        background: #b91c1c;
+        color: #fff;
+      }
+      .danger-button {
+        background: #dc2626;
+        color: #fff;
+      }
+      .danger-button:hover {
+        background: #b91c1c;
       }
       .checkbox-wrap {
         display: inline-flex;
@@ -192,6 +203,7 @@
               <input id="concludedCheckbox" type="checkbox" onchange="toggleConcludedStatus()" />
               <span>OK (Concluído)</span>
             </label>
+            <button class="danger" style="max-width:130px;" onclick="deleteSelectedRow()">Excluir linha</button>
             <button class="secondary" style="max-width:120px;" onclick="closeModal()">Fechar</button>
           </div>
         </div>
@@ -470,7 +482,7 @@
         document.getElementById('topMeta').textContent = text;
       }
 
-            function toggleConcludedStatus() {
+      function toggleConcludedStatus() {
         if (state.selectedRowIndex === null || state.selectedRowIndex === undefined) return;
         const row = state.rows[state.selectedRowIndex];
         if (!row || !row.__rowNumber) {
@@ -492,6 +504,40 @@
             showError(err);
           })
           .updateConcludedStatus(row.__rowNumber, concluded);
+      }
+
+
+      function deleteSelectedRow() {
+        if (state.selectedRowIndex === null || state.selectedRowIndex === undefined) return;
+        const row = state.rows[state.selectedRowIndex];
+        if (!row || !row.__rowNumber) {
+          showError('Não foi possível identificar a linha para excluir.');
+          return;
+        }
+
+        const confirmed = window.confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.');
+        if (!confirmed) return;
+
+        google.script.run
+          .withSuccessHandler((result) => {
+            const removedName = row['Digite seu nome:'] || 'Registro';
+            closeModal();
+            loadData();
+            hideError();
+
+            if (!result || !result.deletedFromForm) {
+              const box = document.getElementById('statusBox');
+              box.style.display = 'block';
+              box.textContent = `Registro de "${removedName}" excluído da planilha/portal, mas não foi possível confirmar a exclusão da resposta no Google Forms.`;
+              return;
+            }
+
+            const box = document.getElementById('statusBox');
+            box.style.display = 'block';
+            box.textContent = `Registro de "${removedName}" excluído com sucesso no portal, planilha e Google Forms.`;
+          })
+          .withFailureHandler(showError)
+          .deletePortalRow(row.__rowNumber);
       }
 
       function escapeHtml(str) {

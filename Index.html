@@ -21,12 +21,9 @@
       .meta { color: var(--muted); font-size: 13px; }
       .toolbar {
         margin-top: 14px;
-        display: grid;
-        grid-template-columns: 2fr repeat(4, 1fr) 140px 120px;
+        display: flex;
         gap: 10px;
-      }
-      @media (max-width: 1100px) {
-        .toolbar { grid-template-columns: repeat(2, 1fr); }
+        justify-content: flex-end;
       }
       input, select, button {
         width: 100%;
@@ -39,15 +36,48 @@
       button.secondary { background: #fff; border: 1px solid var(--primary); color: var(--primary); }
       .summary { margin: 14px 0; color: var(--muted); }
       .status { margin-top: 12px; font-size: 13px; color: #8a5a00; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 10px; display: none; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
-      .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-      .card-title { font-size: 16px; font-weight: 700; margin: 8px 0; }
-      .badge { display: inline-block; background: #eaf0ff; color: #2342ac; font-size: 12px; padding: 4px 8px; border-radius: 999px; margin-right: 6px; }
-      .field { margin-top: 8px; border-top: 1px dashed #edf1f8; padding-top: 8px; }
-      .label { color: var(--muted); font-size: 12px; }
-      .value { margin-top: 2px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+      .table-wrap { overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+      table { width: 100%; border-collapse: collapse; min-width: 860px; }
+      thead th { text-align: left; background: #f8faff; border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
+      tbody td { border-top: 1px solid #edf1f8; padding: 10px; font-size: 14px; }
+      tbody tr { cursor: pointer; }
+      tbody tr:hover { background: #f8fbff; }
+      .filter-row th { background: #fff; border-bottom: 1px solid var(--line); }
+      .filter-row input, .filter-row select { padding: 8px; font-size: 13px; }
       .pagination { margin: 18px 0 4px 0; display: flex; gap: 8px; justify-content: center; }
       .empty { display: none; text-align: center; color: var(--muted); margin: 24px 0; }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        background: rgba(11, 19, 44, 0.6);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal.open { display: flex; }
+      .modal-content {
+        width: min(920px, 100%);
+        max-height: 85vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 16px;
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .detail-item { border: 1px solid #edf1f8; border-radius: 8px; padding: 10px; }
+      .detail-label { font-size: 12px; color: var(--muted); }
+      .detail-value { margin-top: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+      @media (max-width: 800px) { .details-grid { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
@@ -57,11 +87,6 @@
         <div class="meta" id="topMeta">Carregando informações...</div>
 
         <div class="toolbar">
-          <input id="search" placeholder="Buscar em qualquer campo..." />
-          <select id="sector"></select>
-          <select id="reference"></select>
-          <select id="productContributionType"></select>
-          <select id="processContributionType"></select>
           <button onclick="applyFilters()">Filtrar</button>
           <button class="secondary" onclick="clearFilters()">Limpar</button>
         </div>
@@ -70,12 +95,39 @@
       </div>
 
       <div class="summary" id="summary"></div>
-      <div class="grid" id="cards"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Carimbo de data/hora</th>
+              <th>Digite seu nome:</th>
+              <th>Selecione o seu setor:</th>
+              <th>Este registro se refere a:</th>
+            </tr>
+            <tr class="filter-row">
+              <th><input id="timestampFilter" placeholder="Filtrar por data/hora" /></th>
+              <th><input id="nameFilter" placeholder="Filtrar por nome" /></th>
+              <th><select id="sectorFilter"></select></th>
+              <th><select id="referenceFilter"></select></th>
+            </tr>
+          </thead>
+          <tbody id="rowsTable"></tbody>
+        </table>
+      </div>
       <div class="empty" id="empty">Nenhum registro encontrado para os filtros informados.</div>
 
       <div class="pagination">
         <button class="secondary" onclick="prevPage()">Anterior</button>
         <button class="secondary" onclick="nextPage()">Próxima</button>
+      </div>
+    </div>
+    <div class="modal" id="detailsModal" onclick="handleModalBackdrop(event)">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle" style="margin:0;">Detalhes do registro</h2>
+          <button class="secondary" style="max-width:120px;" onclick="closeModal()">Fechar</button>
+        </div>
+        <div class="details-grid" id="modalDetails"></div>
       </div>
     </div>
 
@@ -116,10 +168,9 @@
             state.fields = payload.fields || [];
             setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
 
-            setSelectOptions('sector', payload.options.sectors, 'Todos os setores');
-            setSelectOptions('reference', payload.options.refs, 'Produto ou processo');
-            setSelectOptions('productContributionType', payload.options.productContributionType, 'Contribuição no produto');
-            setSelectOptions('processContributionType', payload.options.processContributionType, 'Contribuição no processo');
+            setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
+            setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
+            addFilterListeners();
 
             loadData();
           })
@@ -149,18 +200,19 @@
       function applyFilters() {
         state.page = 1;
         state.filters = {
-          search: document.getElementById('search').value,
-          sector: document.getElementById('sector').value,
-          reference: document.getElementById('reference').value,
-          productContributionType: document.getElementById('productContributionType').value,
-          processContributionType: document.getElementById('processContributionType').value
+          timestamp: document.getElementById('timestampFilter').value,
+          name: document.getElementById('nameFilter').value,
+          sector: document.getElementById('sectorFilter').value,
+          reference: document.getElementById('referenceFilter').value
         };
         loadData();
       }
 
       function clearFilters() {
-        document.getElementById('search').value = '';
-        ['sector', 'reference', 'productContributionType', 'processContributionType'].forEach((id) => {
+        ['timestampFilter', 'nameFilter'].forEach((id) => {
+          document.getElementById(id).value = '';
+        });
+        ['sectorFilter', 'referenceFilter'].forEach((id) => {
           document.getElementById(id).value = '';
         });
         applyFilters();
@@ -170,54 +222,70 @@
         document.getElementById('summary').textContent =
           `Mostrando ${state.rows.length} de ${state.total} registro(s). Página ${state.page} de ${state.totalPages}.`;
 
-        const cards = document.getElementById('cards');
+        const rowsTable = document.getElementById('rowsTable');
         const empty = document.getElementById('empty');
 
         if (!state.rows.length) {
-          cards.innerHTML = '';
+          rowsTable.innerHTML = '';
           empty.style.display = 'block';
           return;
         }
 
         empty.style.display = 'none';
-        cards.innerHTML = state.rows.map(renderCard).join('');
+        rowsTable.innerHTML = state.rows.map((row, index) => renderTableRow(row, index)).join('');
       }
 
-      function renderCard(row) {
+      function renderTableRow(row, index) {
+        return `
+          <tr onclick="openModal(${index})">
+            <td>${escapeHtml(row['Carimbo de data/hora'] || '-')}</td>
+            <td>${escapeHtml(row['Digite seu nome:'] || '-')}</td>
+            <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
+            <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
+          </tr>
+        `;
+      }
+
+      function openModal(index) {
+        const row = state.rows[index];
+        if (!row) return;
         const rowKeys = Object.keys(row || {});
         const orderedKeys = [
           ...preferredOrder.filter((k) => rowKeys.includes(k)),
           ...rowKeys.filter((k) => !preferredOrder.includes(k))
         ];
-
-        const title = row['Descreva sua ideia de solução:']
-          || row['Descreva o problema a ser corrigido no produto:']
-          || row['Descreva o problema a ser corrigido no processo:']
-          || row['Nome do Produto:']
-          || 'Registro';
-
-        const badges = [row['Selecione o seu setor:'], row['Este registro se refere a:']]
-          .filter(Boolean)
-          .map((item) => `<span class="badge">${escapeHtml(item)}</span>`)
-          .join('');
-
-        const fieldsHtml = orderedKeys
+        const details = orderedKeys
           .filter((key) => String(row[key] || '').trim() !== '')
           .map((key) => `
-            <div class="field">
-              <div class="label">${escapeHtml(cleanLabel(key))}</div>
-              <div class="value">${escapeHtml(row[key])}</div>
+            <div class="detail-item">
+              <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
+              <div class="detail-value">${escapeHtml(row[key])}</div>
             </div>
           `)
           .join('');
+        document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
+        document.getElementById('modalDetails').innerHTML = details;
+        document.getElementById('detailsModal').classList.add('open');
+      }
 
-        return `
-          <article class="card">
-            <div>${badges}</div>
-            <div class="card-title">${escapeHtml(title)}</div>
-            ${fieldsHtml}
-          </article>
-        `;
+      function closeModal() {
+        document.getElementById('detailsModal').classList.remove('open');
+      }
+
+      function handleModalBackdrop(event) {
+        if (event.target && event.target.id === 'detailsModal') closeModal();
+      }
+
+      function addFilterListeners() {
+        ['timestampFilter', 'nameFilter', 'sectorFilter', 'referenceFilter'].forEach((id) => {
+          const el = document.getElementById(id);
+          el.addEventListener('change', applyFilters);
+          if (el.tagName === 'INPUT') {
+            el.addEventListener('keyup', (event) => {
+              if (event.key === 'Enter') applyFilters();
+            });
+          }
+        });
       }
 
       function cleanLabel(label) {
@@ -243,6 +311,7 @@
         box.textContent = `Erro ao carregar dados: ${message}`;
         document.getElementById('topMeta').textContent = 'Falha na conexão com a planilha.';
       }
+
 
       function hideError() {
         const box = document.getElementById('statusBox');

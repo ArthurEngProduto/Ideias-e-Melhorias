@@ -70,10 +70,10 @@ function getRows_() {
     .filter((row) => row.some((cell) => String(cell || '').trim() !== ''))
     .map((row, index) => {
       const obj = {};
-      headers.forEach((header, index) => {
-        obj[header] = row[index] || '';
+      headers.forEach((header, headerIndex) => {
+        obj[header] = row[headerIndex] || '';
       });
-            obj.__rowNumber = index + 2;
+      obj.__rowNumber = index + 2;
       return obj;
     });
 }
@@ -113,32 +113,17 @@ function deletePortalRow(rowNumber) {
     rowObject[header] = rowValues[index] || '';
   });
 
-  const deletedFromForm = deleteFormResponseForRow_(rowObject);
+  const deletionSummary = deleteFormResponseForRow_(rowObject);
   sheet.deleteRow(numericRow);
 
   return {
     success: true,
     rowNumber: numericRow,
-    deletedFromForm,
+    deletedFromForm: deletionSummary.deletedFromForm,
+    deletedFromFormResponsesSheet: deletionSummary.deletedFromResponsesSheet,
   };
 }
 
-function deletePortalRow(rowNumber) {
-  const numericRow = Number(rowNumber);
-  if (!numericRow || numericRow < 2) {
-    throw new Error('Linha inválida para exclusão.');
-  }
-
-  const sheet = getSheet_();
-  const lastRow = sheet.getLastRow();
-  if (numericRow > lastRow) {
-    throw new Error('Linha não encontrada para exclusão.');
-  }
-
-  sheet.deleteRow(numericRow);
-
-  return { success: true, rowNumber: numericRow };
-}
 function getSheet_() {
   const ss = resolveSpreadsheet_();
   const sheet = SHEET_NAME ? ss.getSheetByName(SHEET_NAME) : ss.getSheets()[0];
@@ -147,21 +132,51 @@ function getSheet_() {
     throw new Error('A aba configurada não foi encontrada. Revise SHEET_NAME em Code.gs.');
   }
 
+  return sheet;
+}
+
+function resolveSpreadsheet_() {
+  if (SPREADSHEET_ID) {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+
+  const active = SpreadsheetApp.getActiveSpreadsheet();
+  if (active) return active;
+
+  throw new Error(
+    'Não foi possível localizar a planilha ativa. Se o script for independente, preencha SPREADSHEET_ID em Code.gs.'
+  );
+}
+
 function deleteFormResponseForRow_(row) {
   const form = getLinkedForm_();
-  if (!form) return false;
+  if (!form) {
+    return {
+      deletedFromForm: false,
+      deletedFromResponsesSheet: false,
+    };
+  }
+
+  let deletedFromForm = false;
 
   const responseId = findResponseId_(row);
   if (responseId) {
     form.deleteResponse(responseId);
-    return true;
+    deletedFromForm = true;
+  } else {
+    const response = findFormResponseByTimestamp_(form, row);
+    if (response) {
+      form.deleteResponse(response.getId());
+      deletedFromForm = true;
+    }
   }
 
-  const response = findFormResponseByTimestamp_(form, row);
-  if (!response) return false;
+  const deletedFromResponsesSheet = deleteFromLinkedResponsesSheet_(form, row);
 
-  form.deleteResponse(response.getId());
-  return true;
+  return {
+    deletedFromForm,
+    deletedFromResponsesSheet,
+  };
 }
 
 function getLinkedForm_() {
@@ -200,7 +215,6 @@ function findFormResponseByTimestamp_(form, row) {
   if (!responses || !responses.length) return null;
 
   const rowName = getFieldValue_(row, 'Digite seu nome:').toLowerCase();
-  const formTitle = normalizeHeader_(form.getTitle());
 
   for (let i = 0; i < responses.length; i += 1) {
     const response = responses[i];
@@ -221,12 +235,67 @@ function findFormResponseByTimestamp_(form, row) {
     if (matchedName) return response;
   }
 
-  Logger.log(
-    'Não foi possível identificar resposta pelo carimbo/nome. Formulário: %s | Timestamp: %s',
-    formTitle,
-    rawTimestamp
-  );
+  Logger.log('Não foi possível identificar resposta pelo carimbo/nome. Timestamp: %s', rawTimestamp);
   return null;
+}
+
+function deleteFromLinkedResponsesSheet_(form, row) {
+  try {
+    const destinationId = form.getDestinationId();
+    if (!destinationId) return false;
+
+    const responsesSpreadsheet = SpreadsheetApp.openById(destinationId);
+    const responsesSheet = getResponsesSheet_(responsesSpreadsheet);
+    if (!responsesSheet) return false;
+
+    return deleteRowByTimestampAndName_(responsesSheet, row);
+  } catch (error) {
+    Logger.log('Falha ao excluir na aba de respostas: %s', error);
+    return false;
+  }
+}
+
+function getResponsesSheet_(spreadsheet) {
+  const sheets = spreadsheet.getSheets();
+  for (let i = 0; i < sheets.length; i += 1) {
+    const sheet = sheets[i];
+    const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getDisplayValues()[0];
+    const normalizedHeaders = headers.map((h) => normalizeHeader_(h));
+    if (normalizedHeaders.includes('Carimbo de data/hora')) {
+      return sheet;
+    }
+  }
+  return null;
+}
+
+function deleteRowByTimestampAndName_(sheet, row) {
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+  if (lastRow < 2 || lastColumn < 1) return false;
+
+  const values = sheet.getRange(1, 1, lastRow, lastColumn).getDisplayValues();
+  const headers = values[0].map((h) => normalizeHeader_(h));
+  const timestampIndex = headers.indexOf('Carimbo de data/hora');
+  if (timestampIndex === -1) return false;
+
+  const nameIndex = headers.indexOf('Digite seu nome:');
+  const expectedTimestamp = normalizeDateTimeText_(getFieldValue_(row, 'Carimbo de data/hora'));
+  const expectedName = getFieldValue_(row, 'Digite seu nome:').toLowerCase();
+
+  for (let line = 1; line < values.length; line += 1) {
+    const candidateTimestamp = normalizeDateTimeText_(values[line][timestampIndex]);
+    if (!candidateTimestamp || candidateTimestamp !== expectedTimestamp) continue;
+
+    if (nameIndex !== -1 && expectedName) {
+      const candidateName = String(values[line][nameIndex] || '').trim().toLowerCase();
+      if (candidateName !== expectedName) continue;
+    }
+
+    sheet.deleteRow(line + 1);
+    return true;
+  }
+
+  return false;
 }
 
 function parseTimestamp_(value) {
@@ -236,34 +305,26 @@ function parseTimestamp_(value) {
   const brDateTimeMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
   if (brDateTimeMatch) {
     const [, day, month, year, hour = '0', minute = '0', second = '0'] = brDateTimeMatch;
-    return new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hour),
-      Number(minute),
-      Number(second)
-    );
+    return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
   }
 
   const parsed = new Date(text);
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed;
 }
-  return sheet;
-}
 
-function resolveSpreadsheet_() {
-  if (SPREADSHEET_ID) {
-    return SpreadsheetApp.openById(SPREADSHEET_ID);
-  }
+function normalizeDateTimeText_(value) {
+  const parsed = parseTimestamp_(value);
+  if (!parsed) return '';
 
-  const active = SpreadsheetApp.getActiveSpreadsheet();
-  if (active) return active;
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const hour = String(parsed.getHours()).padStart(2, '0');
+  const minute = String(parsed.getMinutes()).padStart(2, '0');
+  const second = String(parsed.getSeconds()).padStart(2, '0');
 
-  throw new Error(
-    'Não foi possível localizar a planilha ativa. Se o script for independente, preencha SPREADSHEET_ID em Code.gs.'
-  );
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
 function getFilterOptions_() {
@@ -284,7 +345,7 @@ function uniqueByKey_(rows, key) {
 }
 
 function normalizeFilters_(filters) {
-    const timestampStart = String(filters.timestampStart || filters.timestamp || '').trim().toLowerCase();
+  const timestampStart = String(filters.timestampStart || filters.timestamp || '').trim().toLowerCase();
   const timestampEnd = String(filters.timestampEnd || filters.timestamp || '').trim().toLowerCase();
 
   return {

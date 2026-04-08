@@ -433,6 +433,7 @@
         google.script.run
           .withSuccessHandler(() => {
             row['Concluído'] = concluded ? 'OK' : '';
+            render();
             hideError();
           })
           .withFailureHandler((err) => {

@@ -31,10 +31,9 @@ function getPortalData(filters, page, pageSize) {
   const normalizedFilters = normalizeFilters_(filters || {});
 
   const filteredRows = rows.filter((row) => {
-    if (
-      normalizedFilters.timestamp &&
-      normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora')) !== normalizedFilters.timestamp
-    ) return false;
+    const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
+    if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
+    if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
     if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
     if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
     if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
@@ -120,8 +119,13 @@ function uniqueByKey_(rows, key) {
 }
 
 function normalizeFilters_(filters) {
+    const timestampStart = String(filters.timestampStart || filters.timestamp || '').trim().toLowerCase();
+  const timestampEnd = String(filters.timestampEnd || filters.timestamp || '').trim().toLowerCase();
+
   return {
-    timestamp: String(filters.timestamp || '').trim().toLowerCase(),
+    timestampStart,
+    
+    timestampEnd,
     name: String(filters.name || '').trim().toLowerCase(),
     sector: String(filters.sector || '').trim(),
     reference: String(filters.reference || '').trim(),

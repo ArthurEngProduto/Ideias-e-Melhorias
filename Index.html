@@ -403,6 +403,11 @@
         const text = String(value || '').trim();
         if (!text) return '-';
 
+        const recurrenceLabel = 'Qual é a recorrência ou necessidade desta melhoria?';
+        if (cleanLabel(key) === cleanLabel(recurrenceLabel)) {
+          return getRecurrenceBadge(text);
+        }
+
         const photoLabel = 'Deseja anexar uma foto? (opcional)';
         if (cleanLabel(key) !== cleanLabel(photoLabel)) {
           return escapeHtml(text);

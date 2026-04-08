@@ -142,6 +142,21 @@
       .detail-item { border: 1px solid #edf1f8; border-radius: 8px; padding: 10px; }
       .detail-label { font-size: 12px; color: var(--muted); }
       .detail-value { margin-top: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+            .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+      .stats-card { border: 1px solid #edf1f8; border-radius: 10px; padding: 12px; }
+      .stats-title { margin: 0 0 10px 0; font-size: 14px; line-height: 1.35; }
+      .pie-chart {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        margin: 0 auto 10px;
+        background: #eef2ff;
+        border: 1px solid var(--line);
+      }
+      .legend-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+      .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+      .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+      .stats-empty { color: var(--muted); font-size: 14px; margin-top: 8px; }
       @media (max-width: 800px) { .details-grid { grid-template-columns: 1fr; } }
     </style>
   </head>
@@ -154,6 +169,7 @@
         <div class="toolbar">
           <button onclick="applyFilters()">Filtrar</button>
           <button class="secondary" onclick="clearFilters()">Limpar</button>
+          <button class="secondary" onclick="openStatsModal()">Ver estatísticas</button>
         </div>
 
         <div class="status" id="statusBox"></div>
@@ -210,6 +226,17 @@
         <div class="details-grid" id="modalDetails"></div>
       </div>
     </div>
+        <div class="modal" id="statsModal" onclick="handleStatsModalBackdrop(event)">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 style="margin:0;">Estatísticas das respostas</h2>
+          <button class="secondary" style="max-width:120px;" onclick="closeStatsModal()">Fechar</button>
+        </div>
+        <div class="summary" id="statsSummary" style="margin-top:0;"></div>
+        <div class="stats-grid" id="statsCharts"></div>
+        <div class="stats-empty" id="statsEmpty" style="display:none;">Não há dados para montar os gráficos com os filtros atuais.</div>
+      </div>
+    </div>
 
     <script>
       let state = {
@@ -220,8 +247,10 @@
         rows: [],
         fields: [],
         filters: {},
-        selectedRowIndex: null
+        selectedRowIndex: null,
+        stats: null
       };
+            const chartPalette = ['#2452d8', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#64748b'];
 
       const preferredOrder = [
         'Carimbo de data/hora',
@@ -389,6 +418,80 @@
       function closeModal() {
         document.getElementById('detailsModal').classList.remove('open');
                 state.selectedRowIndex = null;
+      }
+
+      function openStatsModal() {
+        google.script.run
+          .withSuccessHandler((stats) => {
+            state.stats = stats || null;
+            renderStatsModal();
+            document.getElementById('statsModal').classList.add('open');
+            hideError();
+          })
+          .withFailureHandler(showError)
+          .getPortalStats(state.filters);
+      }
+
+      function closeStatsModal() {
+        document.getElementById('statsModal').classList.remove('open');
+      }
+
+      function handleStatsModalBackdrop(event) {
+        if (event.target && event.target.id === 'statsModal') closeStatsModal();
+      }
+
+      function renderStatsModal() {
+        const stats = state.stats || { total: 0, charts: [] };
+        document.getElementById('statsSummary').textContent = `Base para estatística: ${stats.total || 0} registro(s).`;
+        const chartsWrap = document.getElementById('statsCharts');
+        const empty = document.getElementById('statsEmpty');
+
+        if (!stats.total || !stats.charts || !stats.charts.length) {
+          chartsWrap.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+
+        empty.style.display = 'none';
+        chartsWrap.innerHTML = stats.charts.map((chart) => renderPieChartCard(chart)).join('');
+      }
+
+      function renderPieChartCard(chart) {
+        const values = (chart.values || []).filter((entry) => entry.count > 0);
+        const total = values.reduce((acc, entry) => acc + Number(entry.count || 0), 0);
+        const pieBackground = buildPieGradient(values, total);
+        const legend = values
+          .map((entry, index) => {
+            const color = chartPalette[index % chartPalette.length];
+            const percent = total ? Math.round((entry.count / total) * 100) : 0;
+            return `
+              <li class="legend-item">
+                <span class="legend-dot" style="background:${color};"></span>
+                <span>${escapeHtml(entry.label)} - ${entry.count} (${percent}%)</span>
+              </li>
+            `;
+          })
+          .join('');
+
+        return `
+          <section class="stats-card">
+            <h3 class="stats-title">${escapeHtml(chart.field)}</h3>
+            <div class="pie-chart" style="background:${pieBackground};"></div>
+            <ul class="legend-list">${legend}</ul>
+          </section>
+        `;
+      }
+
+      function buildPieGradient(values, total) {
+        if (!total) return '#eef2ff';
+        let acc = 0;
+        const stops = values.map((entry, index) => {
+          const color = chartPalette[index % chartPalette.length];
+          const start = acc;
+          acc += (entry.count / total) * 100;
+          return `${color} ${start}% ${acc}%`;
+        });
+        return `conic-gradient(${stops.join(', ')})`;
       }
 
       function handleModalBackdrop(event) {

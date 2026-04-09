@@ -64,13 +64,14 @@
         align-items: center;
       }
       .header-logo .logo-img {
-        width: 24px;
+        width: 65px;
         height: auto;
         display: block;
       }
-      .header-logo .logo-dark { display: none; }
-      body.dark-mode .header-logo .logo-dark { display: block; }
-      body.dark-mode .header-logo .logo-light { display: none; }
+      .header-logo .logo-dark { display: block; }
+      .header-logo .logo-light { display: none; }
+      body.dark-mode .header-logo .logo-light { display: block; }
+      body.dark-mode .header-logo .logo-dark { display: none; }
       .portal-title { text-align: center; }
       .meta {
         color: var(--muted);
@@ -349,7 +350,7 @@
             />
             <img
               class="logo-img logo-dark"
-              src="https://images.tcdn.com.br/files/1392931/themes/77/img/settings/7het-1747883529307-Logo---Baldi--3-.png?de394334e3789ba065d4e7c9790af7fd"
+              src="data:image/png;base64,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"
               alt="Logo Baldi (modo escuro)"
             />
           </div>

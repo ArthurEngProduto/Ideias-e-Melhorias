@@ -583,8 +583,7 @@
       }
 
       function renderTableRow(row, index) {
-        const concludedValue = String(row['Concluído'] || '').trim().toLowerCase();
-        const isConcluded = ['ok', 'sim', 'true', '1', 'concluído', 'concluido'].includes(concludedValue);
+        const isConcluded = isConcludedValue(row['Concluído']);
         const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
         const recurrenceBadge = getRecurrenceBadge(recurrence);
         const statusContent = isConcluded
@@ -637,8 +636,7 @@
             </div>
           `)
           .join('');
-                  const concludedValue = String(row['Concluído'] || '').trim().toLowerCase();
-        document.getElementById('concludedCheckbox').checked = ['ok', 'sim', 'true', '1', 'concluído', 'concluido'].includes(concludedValue);
+        document.getElementById('concludedCheckbox').checked = isConcludedValue(row['Concluído']);
         document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
         document.getElementById('modalDetails').innerHTML = details;
         document.getElementById('detailsModal').classList.add('open');
@@ -773,6 +771,13 @@
       }
 
       function getChartColor(chart, entry, index) {
+        const conclusionField = 'Status da conclusão';
+        if (cleanLabel(chart.field) === cleanLabel(conclusionField)) {
+          const label = cleanLabel(entry.label).toLowerCase();
+          if (label === 'concluídos' || label === 'concluidos') return '#86efac';
+          if (label === 'em processo') return '#7f1d1d';
+        }
+
         const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';
         if (cleanLabel(chart.field) === cleanLabel(recurrenceField)) {
           const label = cleanLabel(entry.label).toLowerCase();
@@ -808,6 +813,11 @@
         }
 
         return chartPalette[index % chartPalette.length];
+      }
+      
+            function isConcludedValue(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return ['ok', 'sim', 'true', '1', 'concluído', 'concluido'].includes(normalized);
       }
       
       function handleModalBackdrop(event) {

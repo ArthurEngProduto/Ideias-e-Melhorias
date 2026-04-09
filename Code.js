@@ -87,7 +87,8 @@ function getConclusionStatusCounts_(rows) {
   let inProgress = 0;
 
   rows.forEach((row) => {
-    if (isConcludedValue_(row['Concluído'])) {
+    const statusValue = getRowStatusValue_(row);
+    if (statusValue === 'Concluído') {
       concluded += 1;
       return;
     }
@@ -98,6 +99,11 @@ function getConclusionStatusCounts_(rows) {
     { label: 'Concluídos', count: concluded },
     { label: 'Em processo', count: inProgress },
   ];
+}
+
+function getRowStatusValue_(row) {
+  const rawStatus = String(row['Status'] || row['Concluído'] || '').trim();
+  return normalizeRowStatus_(rawStatus);
 }
 
 function getRows_() {
@@ -211,8 +217,10 @@ function getStatusColumnIndex_(sheet) {
 
 function normalizeRowStatus_(status) {
   const normalized = String(status || '').trim().toLowerCase();
-  if (normalized === 'parado') return 'Parado';
+  if (!normalized) return 'Na fila';
   if (normalized === 'concluído' || normalized === 'concluido' || normalized === 'ok') return 'Concluído';
+    if (normalized === 'em andamento' || normalized === 'andamento' || normalized === 'in progress') return 'Em andamento';
+  if (normalized === 'na fila' || normalized === 'fila' || normalized === 'parado' || normalized === 'pausado' || normalized === 'stopped') return 'Na fila';
   return 'Em andamento';
 }
 

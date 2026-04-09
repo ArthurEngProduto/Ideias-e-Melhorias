@@ -212,28 +212,36 @@
         color: #dcfce7;
         border: 1px solid #15803d;
       }
-      .status-select {
-        width: auto;
-        min-width: 145px;
-        padding: 6px 8px;
-        font-size: 12px;
+      .status-tag-button {
+        border: none;
         border-radius: 999px;
+        padding: 6px 10px;
+        min-width: 120px;
+        text-align: center;
+        font-size: 12px;
         font-weight: 700;
+        cursor: pointer;
       }
-      .status-select.status-parado {
+      .status-tag-button.status-queue {
         background: #7f1d1d;
         color: #fee2e2;
-        border: 1px solid #b91c1c;
       }
-      .status-select.status-andamento {
+      .status-tag-button.status-progress {
         background: #854d0e;
         color: #fef3c7;
-        border: 1px solid #b45309;
       }
-      .status-select.status-concluido {
+      .status-tag-button.status-done {
         background: #166534;
         color: #dcfce7;
-        border: 1px solid #15803d;
+      }
+      .status-picker-modal-content {
+        width: min(360px, 95vw);
+      }
+      .status-picker-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 8px;
       }
         .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .detail-item { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; }
@@ -406,7 +414,7 @@
                 <th>Selecione o seu setor:</th>
                 <th>Este registro se refere a:</th>
               <th>Mapa de calor</th>
-              <th>Status do registro</th>
+              <th>Status</th>
               </tr>
               <tr class="filter-row">
                 <th>
@@ -456,6 +464,19 @@
           <div class="stats-empty" id="statsEmpty" style="display:none;">Não há dados para montar os gráficos com os filtros atuais.</div>
         </div>
       </div>
+      <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
+        <div class="modal-content status-picker-modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;font-size:18px;">Alterar status</h2>
+            <button class="secondary" style="max-width:120px;" onclick="closeStatusPickerModal()">Fechar</button>
+          </div>
+          <div class="status-picker-options">
+            <button class="status-tag-button status-done" type="button" onclick="selectStatus('Concluído')">Concluído</button>
+            <button class="status-tag-button status-progress" type="button" onclick="selectStatus('Em andamento')">Em andamento</button>
+            <button class="status-tag-button status-queue" type="button" onclick="selectStatus('Na fila')">Na fila</button>
+          </div>
+        </div>
+      </div>
 
       <script>
         let state = {
@@ -467,6 +488,7 @@
           fields: [],
           filters: {},
           selectedRowIndex: null,
+          selectedStatusRowIndex: null,
           stats: null
         };
         let loadingCount = 0;
@@ -608,8 +630,8 @@
         function renderTableRow(row, index) {
           const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
           const recurrenceBadge = getRecurrenceBadge(recurrence);
-        const workflowStatus = getWorkflowStatus(row);
-        const statusContent = renderWorkflowStatusSelect(row, workflowStatus, index);
+          const workflowStatus = getWorkflowStatus(row);
+          const statusContent = renderWorkflowStatusTag(workflowStatus, index);
           return `
             <tr onclick="openModal(${index})">
               <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
@@ -624,44 +646,23 @@
         }
 
       function getWorkflowStatus(row) {
-        const rawValue = String(row['Status'] || '').trim().toLowerCase();
-        if (['parado', 'pausado', 'stopped'].includes(rawValue)) return 'Parado';
-
+        const rawValue = String(row.Status || row['Concluído'] || '').trim().toLowerCase();
+        if (!rawValue) return 'Na fila';
+        if (['concluído', 'concluido', 'ok'].includes(rawValue)) return 'Concluído';
+        if (['em andamento', 'andamento', 'in progress'].includes(rawValue)) return 'Em andamento';
+        if (['na fila', 'fila', 'parado', 'pausado', 'stopped'].includes(rawValue)) return 'Na fila';
         return 'Em andamento';
       }
 
-      function renderWorkflowStatusSelect(row, currentStatus, index) {
-        const rowNumber = Number(row.__rowNumber || 0);
-        if (!rowNumber) {
-          return renderWorkflowBadge(currentStatus);
-        }
-
-        const statusClass = getWorkflowStatusClass(currentStatus);
-        return `
-          <select
-            class="status-select ${statusClass}"
-            onclick="event.stopPropagation()"
-            onchange="updateWorkflowStatus(${index}, this.value)"
-            aria-label="Atualizar status do registro"
-          >
-            <option value="Parado" ${currentStatus === 'Parado' ? 'selected' : ''}>Parado</option>
-            <option value="Em andamento" ${currentStatus === 'Em andamento' ? 'selected' : ''}>Em andamento</option>
-            <option value="Concluído" ${currentStatus === 'Concluído' ? 'selected' : ''}>Concluído</option>
-          </select>
-        `;
+      function renderWorkflowStatusTag(currentStatus, index) {
+      const statusClass = getWorkflowStatusClass(currentStatus);
+        return `<button class="status-tag-button ${statusClass}" onclick="openStatusPickerModal(event, ${index})" aria-label="Alterar status">${escapeHtml(currentStatus)}</button>`;
       }
 
       function getWorkflowStatusClass(status) {
-        if (status === 'Parado') return 'status-parado';
-        if (status === 'Concluído') return 'status-concluido';
-        return 'status-andamento';
-      }
-
-      function renderWorkflowBadge(status) {
-        const badgeClass = status === 'Parado'
-          ? 'workflow-stopped'
-          : (status === 'Concluído' ? 'workflow-done' : 'workflow-progress');
-        return `<span class="status-badge ${badgeClass}">${escapeHtml(status)}</span>`;
+        if (status === 'Concluído') return 'status-done';
+        if (status === 'Na fila') return 'status-queue';
+        return 'status-progress';
       }
 
         function getRecurrenceBadge(recurrence) {
@@ -741,6 +742,29 @@
 
         function handleStatsModalBackdrop(event) {
           if (event.target && event.target.id === 'statsModal') closeStatsModal();
+        }
+
+                function openStatusPickerModal(event, index) {
+          if (event) event.stopPropagation();
+          state.selectedStatusRowIndex = index;
+          document.getElementById('statusPickerModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function closeStatusPickerModal() {
+          document.getElementById('statusPickerModal').classList.remove('open');
+          state.selectedStatusRowIndex = null;
+          updateModalBackgroundState();
+        }
+
+        function handleStatusPickerBackdrop(event) {
+          if (event.target && event.target.id === 'statusPickerModal') closeStatusPickerModal();
+        }
+
+        function selectStatus(status) {
+          if (state.selectedStatusRowIndex === null || state.selectedStatusRowIndex === undefined) return;
+          updateWorkflowStatus(state.selectedStatusRowIndex, status);
+          closeStatusPickerModal();
         }
 
         function renderStatsModal() {
@@ -1003,9 +1027,9 @@
           }
 
           google.script.run
+            .withSuccessHandler(() => {
               row.Status = status;
               row['Concluído'] = status;
-            row['Concluído'] = status;
               render();
               hideError();
             })

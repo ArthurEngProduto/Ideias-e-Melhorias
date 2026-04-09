@@ -52,9 +52,32 @@
         filter: blur(4px);
       }
       .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-      h1 { margin: 0 0 4px 0; }
+      h1 { margin: 0; }
+      .header-top {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 14px;
+      }
+      .header-logo {
+        display: flex;
+        align-items: center;
+      }
+      .header-logo .logo-img {
+        width: 24px;
+        height: auto;
+        display: block;
+      }
+      .header-logo .logo-dark { display: none; }
+      body.dark-mode .header-logo .logo-dark { display: block; }
+      body.dark-mode .header-logo .logo-light { display: none; }
       .portal-title { text-align: center; }
-      .meta { color: var(--muted); font-size: 13px; }
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+        text-align: right;
+        white-space: nowrap;
+      }
       .toolbar {
         margin-top: 14px;
         display: flex;
@@ -277,6 +300,14 @@
         }
       }
       @media (max-width: 800px) {
+        .header-top {
+          grid-template-columns: 1fr;
+          justify-items: center;
+        }
+        .meta {
+          text-align: center;
+          white-space: normal;
+        }
         .details-grid { grid-template-columns: 1fr; }
         .stats-modal-content {
           width: 100%;
@@ -309,8 +340,22 @@
     </div>
     <div class="container">
       <div class="panel">
-        <h1 class="portal-title">Portal de Ideias e Melhorias</h1>
-        <div class="meta" id="topMeta">Carregando informações...</div>
+        <div class="header-top">
+          <div class="header-logo" aria-label="Logo Baldi">
+            <img
+              class="logo-img logo-light"
+              src="https://images.tcdn.com.br/files/1392931/themes/77/img/settings/7het-1747883529307-Logo---Baldi--3-.png?de394334e3789ba065d4e7c9790af7fd"
+              alt="Logo Baldi"
+            />
+            <img
+              class="logo-img logo-dark"
+              src="https://images.tcdn.com.br/files/1392931/themes/77/img/settings/7het-1747883529307-Logo---Baldi--3-.png?de394334e3789ba065d4e7c9790af7fd"
+              alt="Logo Baldi (modo escuro)"
+            />
+          </div>
+          <h1 class="portal-title">Portal de Ideias e Melhorias</h1>
+          <div class="meta" id="topMeta">Base conectada. 0 registro(s) carregado(s).</div>
+        </div>
 
         <div class="toolbar">
           <button onclick="applyFilters()">Filtrar</button>

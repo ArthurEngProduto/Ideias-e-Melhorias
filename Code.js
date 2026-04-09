@@ -429,10 +429,12 @@ function getFilterOptions_() {
 }
 
 function uniqueByRowStatus_(rows) {
-  const set = new Set();
+  const defaultStatuses = ['Na fila', 'Em andamento', 'Concluído'];
+  const set = new Set(defaultStatuses);
   rows.forEach((row) => {
     set.add(getRowStatusValue_(row));
   });
+  
   return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 

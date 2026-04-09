@@ -76,6 +76,11 @@
         border: 1px solid var(--line);
         padding: 16px;
       }
+      .stats-modal-content {
+        width: min(96vw, 1700px);
+        max-height: 94vh;
+        padding: 20px 22px;
+      }
       .modal-header {
         display: flex;
         align-items: center;
@@ -150,12 +155,12 @@
       .detail-item { border: 1px solid #edf1f8; border-radius: 8px; padding: 10px; }
       .detail-label { font-size: 12px; color: var(--muted); }
       .detail-value { margin-top: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
-            .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
-      .stats-card { border: 1px solid #edf1f8; border-radius: 10px; padding: 12px; }
+            .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+      .stats-card { border: 1px solid #edf1f8; border-radius: 10px; padding: 14px; min-height: 390px; }
       .stats-title { margin: 0 0 10px 0; font-size: 14px; line-height: 1.35; }
       .pie-chart {
-        width: 160px;
-        height: 160px;
+        width: clamp(190px, 22vh, 250px);
+        height: clamp(190px, 22vh, 250px);
         border-radius: 50%;
         margin: 0 auto 10px;
         background: #eef2ff;
@@ -207,7 +212,20 @@
           transform: rotate(360deg);
         }
       }
-      @media (max-width: 800px) { .details-grid { grid-template-columns: 1fr; } }
+      @media (max-width: 800px) {
+        .details-grid { grid-template-columns: 1fr; }
+        .stats-modal-content {
+          width: 100%;
+          max-height: 96vh;
+          padding: 16px;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+        .stats-card {
+          min-height: auto;
+        }
+      }
     </style>
   </head>
   <body>
@@ -282,8 +300,8 @@
         <div class="details-grid" id="modalDetails"></div>
       </div>
     </div>
-        <div class="modal" id="statsModal" onclick="handleStatsModalBackdrop(event)">
-      <div class="modal-content">
+    <div class="modal" id="statsModal" onclick="handleStatsModalBackdrop(event)">
+      <div class="modal-content stats-modal-content">
         <div class="modal-header">
           <h2 style="margin:0;">Estatísticas das respostas</h2>
           <button class="secondary" style="max-width:120px;" onclick="closeStatsModal()">Fechar</button>
@@ -677,7 +695,7 @@
           document.getElementById('loadingOverlay').classList.remove('open');
         }
       }
-      
+
       function toggleConcludedStatus() {
         if (state.selectedRowIndex === null || state.selectedRowIndex === undefined) return;
         const row = state.rows[state.selectedRowIndex];

@@ -166,6 +166,39 @@
         background: #eef2ff;
         border: 1px solid var(--line);
       }
+      .bar-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 8px 0 12px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 32%) 1fr auto;
+        gap: 8px;
+        align-items: center;
+      }
+      .bar-label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .bar-track {
+        height: 14px;
+        border-radius: 999px;
+        background: #eef2ff;
+        border: 1px solid #dbe5ff;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        min-width: 2px;
+      }
+      .bar-value {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text);
+      }
       .legend-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
       .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
       .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
@@ -547,16 +580,24 @@
         }
 
         empty.style.display = 'none';
-        chartsWrap.innerHTML = stats.charts.map((chart) => renderPieChartCard(chart)).join('');
+        chartsWrap.innerHTML = stats.charts.map((chart) => renderStatsChartCard(chart)).join('');
+      }
+
+      function renderStatsChartCard(chart) {
+        const sectorField = 'Selecione o seu setor:';
+        if (cleanLabel(chart.field) === cleanLabel(sectorField)) {
+          return renderHorizontalBarChartCard(chart);
+        }
+        return renderPieChartCard(chart);
       }
 
       function renderPieChartCard(chart) {
         const values = (chart.values || []).filter((entry) => entry.count > 0);
         const total = values.reduce((acc, entry) => acc + Number(entry.count || 0), 0);
-        const pieBackground = buildPieGradient(values, total);
+        const pieBackground = buildPieGradient(chart, values, total);
         const legend = values
           .map((entry, index) => {
-            const color = chartPalette[index % chartPalette.length];
+            const color = getChartColor(chart, entry, index);
             const percent = total ? Math.round((entry.count / total) * 100) : 0;
             return `
               <li class="legend-item">
@@ -576,11 +617,43 @@
         `;
       }
 
-      function buildPieGradient(values, total) {
+      function renderHorizontalBarChartCard(chart) {
+        const values = (chart.values || [])
+          .filter((entry) => entry.count > 0)
+          .sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+        const total = values.reduce((acc, entry) => acc + Number(entry.count || 0), 0);
+        const max = values.length ? Math.max(...values.map((entry) => Number(entry.count || 0))) : 0;
+        const bars = values
+          .map((entry, index) => {
+            const count = Number(entry.count || 0);
+            const width = max ? Math.max((count / max) * 100, 2) : 0;
+            const percent = total ? Math.round((count / total) * 100) : 0;
+            const color = getChartColor(chart, entry, index);
+            return `
+              <div class="bar-row">
+                <span class="bar-label">${escapeHtml(entry.label)}</span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:${width}%;background:${color};"></div>
+                </div>
+                <span class="bar-value">${count} (${percent}%)</span>
+              </div>
+            `;
+          })
+          .join('');
+
+        return `
+          <section class="stats-card">
+            <h3 class="stats-title">${escapeHtml(chart.field)}</h3>
+            <div class="bar-chart">${bars}</div>
+          </section>
+        `;
+      }
+
+      function buildPieGradient(chart, values, total) {
         if (!total) return '#eef2ff';
         let acc = 0;
         const stops = values.map((entry, index) => {
-          const color = chartPalette[index % chartPalette.length];
+          const color = getChartColor(chart, entry, index);
           const start = acc;
           acc += (entry.count / total) * 100;
           return `${color} ${start}% ${acc}%`;
@@ -588,6 +661,23 @@
         return `conic-gradient(${stops.join(', ')})`;
       }
 
+      function getChartColor(chart, entry, index) {
+        const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';
+        if (cleanLabel(chart.field) === cleanLabel(recurrenceField)) {
+          const label = cleanLabel(entry.label).toLowerCase();
+          if (label.includes('recorrente')) return '#ef4444';
+          if (label.includes('algumas vezes')) return '#f97316';
+          if (label.includes('apenas uma vez')) return '#facc15';
+        }
+
+        const sectorField = 'Selecione o seu setor:';
+        if (cleanLabel(chart.field) === cleanLabel(sectorField)) {
+          return '#7dd3fc';
+        }
+
+        return chartPalette[index % chartPalette.length];
+      }
+      
       function handleModalBackdrop(event) {
         if (event.target && event.target.id === 'detailsModal') closeModal();
       }

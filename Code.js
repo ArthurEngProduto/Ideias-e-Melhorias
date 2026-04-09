@@ -138,6 +138,8 @@ function getFilteredRows_(filters) {
     if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
     if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
     if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
+    if (normalizedFilters.recurrence && getFieldValue_(row, 'Qual é a recorrência ou necessidade desta melhoria?') !== normalizedFilters.recurrence) return false;
+    if (normalizedFilters.status && getRowStatusValue_(row) !== normalizedFilters.status) return false;
     return true;
   });
 }
@@ -421,7 +423,17 @@ function getFilterOptions_() {
   return {
     sectors: uniqueByKey_(rows, 'Selecione o seu setor:'),
     refs: uniqueByKey_(rows, 'Este registro se refere a:'),
+    recurrences: uniqueByKey_(rows, 'Qual é a recorrência ou necessidade desta melhoria?'),
+    statuses: uniqueByRowStatus_(rows),
   };
+}
+
+function uniqueByRowStatus_(rows) {
+  const set = new Set();
+  rows.forEach((row) => {
+    set.add(getRowStatusValue_(row));
+  });
+  return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
 function uniqueByKey_(rows, key) {
@@ -485,6 +497,8 @@ function normalizeFilters_(filters) {
     name: String(filters.name || '').trim().toLowerCase(),
     sector: String(filters.sector || '').trim(),
     reference: String(filters.reference || '').trim(),
+    recurrence: String(filters.recurrence || '').trim(),
+    status: String(filters.status || '').trim() ? normalizeRowStatus_(filters.status) : '',
   };
 }
 

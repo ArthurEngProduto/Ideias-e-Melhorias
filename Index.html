@@ -781,6 +781,27 @@
           if (label.includes('apenas uma vez')) return '#facc15';
         }
 
+        const referenceField = 'Este registro se refere a:';
+        if (cleanLabel(chart.field) === cleanLabel(referenceField)) {
+          const label = cleanLabel(entry.label).toLowerCase();
+          if (label === 'produto') return '#7dd3fc';
+          if (label === 'processo') return '#2452d8';
+        }
+
+        const productContributionField = 'Qual é o tipo de contribuição neste produto';
+        if (cleanLabel(chart.field) === cleanLabel(productContributionField)) {
+          const label = cleanLabel(entry.label).toLowerCase();
+          if (label === 'ideia de melhoria em um produto') return '#7dd3fc';
+          if (label === 'problema que acontece com frequência') return '#991b1b';
+        }
+
+        const processContributionField = 'Qual é o tipo de contribuição neste processo?';
+        if (cleanLabel(chart.field) === cleanLabel(processContributionField)) {
+          const label = cleanLabel(entry.label).toLowerCase();
+          if (label === 'ideia de melhoria em um processo') return '#2452d8';
+          if (label === 'problema que acontece com frequência') return '#991b1b';
+        }
+
         const sectorField = 'Selecione o seu setor:';
         if (cleanLabel(chart.field) === cleanLabel(sectorField)) {
           return '#7dd3fc';

@@ -8,6 +8,16 @@
 const SPREADSHEET_ID = ''; // Ex: '1AbC...xyz'
 const SHEET_NAME = ''; // vazio = primeira aba
 const DEFAULT_PAGE_SIZE = 20;
+const CONTRIBUTION_TYPE_FIELDS = {
+  'Qual é o tipo de contribuição neste produto': [
+    'Ideia de melhoria em um produto',
+    'Problema que acontece com frequência',
+  ],
+  'Qual é o tipo de contribuição neste processo?': [
+    'Ideia de melhoria em um processo',
+    'Problema que acontece com frequência',
+  ],
+};
 
 function doGet() {
   return HtmlService.createTemplateFromFile('Index')
@@ -59,7 +69,9 @@ function getPortalStats(filters) {
     total: filteredRows.length,
     charts: fields.map((field) => ({
       field,
-      values: countByField_(filteredRows, field),
+      values: countByField_(filteredRows, field, {
+        allowedValues: CONTRIBUTION_TYPE_FIELDS[field] || null,
+      }),
     })),
   };
 }
@@ -366,16 +378,45 @@ function uniqueByKey_(rows, key) {
   return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
-function countByField_(rows, key) {
+function countByField_(rows, key, options) {
+  const safeOptions = options || {};
+  const allowedValues = Array.isArray(safeOptions.allowedValues) ? safeOptions.allowedValues : null;
+  const allowedValueByNormalizedKey = allowedValues
+    ? allowedValues.reduce((acc, value) => {
+        acc[normalizeOptionValue_(value)] = value;
+        return acc;
+      }, {})
+    : null;
   const counts = {};
+    if (allowedValues) {
+    allowedValues.forEach((value) => {
+      counts[value] = 0;
+    });
+  }
+
   rows.forEach((row) => {
-    const value = getFieldValue_(row, key) || 'Não informado';
+    const rawValue = getFieldValue_(row, key);
+
+    if (allowedValueByNormalizedKey) {
+      const normalizedValue = normalizeOptionValue_(rawValue);
+      const canonicalValue = allowedValueByNormalizedKey[normalizedValue];
+      if (!canonicalValue) return;
+      counts[canonicalValue] = (counts[canonicalValue] || 0) + 1;
+      return;
+    }
+
+    const value = rawValue || 'Não informado';
     counts[value] = (counts[value] || 0) + 1;
   });
 
   return Object.keys(counts)
     .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b, 'pt-BR'))
     .map((label) => ({ label, count: counts[label] }));
+}
+
+
+function normalizeOptionValue_(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
 function normalizeFilters_(filters) {
@@ -419,3 +460,4 @@ function normalizeDateFilter_(value) {
 
   return '';
 }
+

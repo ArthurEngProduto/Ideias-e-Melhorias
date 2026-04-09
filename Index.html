@@ -427,8 +427,8 @@
                 <th><input id="nameFilter" placeholder="Filtrar por nome" /></th>
                 <th><select id="sectorFilter"></select></th>
                 <th><select id="referenceFilter"></select></th>
-              <th></th>
-              <th></th>
+              <th><select id="recurrenceFilter"></select></th>
+              <th><select id="statusFilter"></select></th>
               </tr>
             </thead>
             <tbody id="rowsTable"></tbody>
@@ -545,6 +545,8 @@
 
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
               setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
+              setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Mapa de calor');
+              setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
               addFilterListeners();
 
               loadData();
@@ -595,7 +597,9 @@
             timestampEnd,
             name: document.getElementById('nameFilter').value,
             sector: document.getElementById('sectorFilter').value,
-            reference: document.getElementById('referenceFilter').value
+            reference: document.getElementById('referenceFilter').value,
+            recurrence: document.getElementById('recurrenceFilter').value,
+            status: document.getElementById('statusFilter').value
           };
           loadData();
         }
@@ -604,7 +608,7 @@
           ['timestampStartFilter', 'timestampEndFilter', 'nameFilter'].forEach((id) => {
             document.getElementById(id).value = '';
           });
-          ['sectorFilter', 'referenceFilter'].forEach((id) => {
+          ['sectorFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
             document.getElementById(id).value = '';
           });
           applyFilters();
@@ -921,7 +925,7 @@
         }
 
         function addFilterListeners() {
-          ['timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'sectorFilter', 'referenceFilter'].forEach((id) => {
+          ['timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'sectorFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
             const el = document.getElementById(id);
             el.addEventListener('change', applyFilters);
             if (el.tagName === 'INPUT') {

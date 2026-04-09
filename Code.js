@@ -67,13 +67,37 @@ function getPortalStats(filters) {
 
   return {
     total: filteredRows.length,
-    charts: fields.map((field) => ({
-      field,
-      values: countByField_(filteredRows, field, {
-        allowedValues: CONTRIBUTION_TYPE_FIELDS[field] || null,
+    charts: fields
+      .map((field) => ({
+        field,
+        values: countByField_(filteredRows, field, {
+          allowedValues: CONTRIBUTION_TYPE_FIELDS[field] || null,
+        }),
+      }))
+      .concat({
+        field: 'Status da conclusão',
+        values: getConclusionStatusCounts_(filteredRows),
       }),
-    })),
+  
   };
+}
+
+function getConclusionStatusCounts_(rows) {
+  let concluded = 0;
+  let inProgress = 0;
+
+  rows.forEach((row) => {
+    if (isConcludedValue_(row['Concluído'])) {
+      concluded += 1;
+      return;
+    }
+    inProgress += 1;
+  });
+
+  return [
+    { label: 'Concluídos', count: concluded },
+    { label: 'Em processo', count: inProgress },
+  ];
 }
 
 function getRows_() {

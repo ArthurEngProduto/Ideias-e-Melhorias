@@ -15,7 +15,13 @@
       }
       * { box-sizing: border-box; }
       body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-      .container { max-width: 1250px; margin: 0 auto; padding: 20px; }
+      .container { max-width: 1250px; margin: 0 auto; padding: 20px; transition: filter 0.2s ease; }
+      body.modal-active {
+        overflow: hidden;
+      }
+      body.modal-active .container {
+        filter: blur(4px);
+      }
       .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
       h1 { margin: 0 0 4px 0; }
       .meta { color: var(--muted); font-size: 13px; }
@@ -53,7 +59,9 @@
         position: fixed;
         inset: 0;
         z-index: 999;
-        background: rgba(11, 19, 44, 0.6);
+        background: rgba(11, 19, 44, 0.62);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
         align-items: center;
         justify-content: center;
         padding: 20px;
@@ -413,11 +421,13 @@
         document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
         document.getElementById('modalDetails').innerHTML = details;
         document.getElementById('detailsModal').classList.add('open');
+        updateModalBackgroundState();
       }
 
       function closeModal() {
         document.getElementById('detailsModal').classList.remove('open');
-                state.selectedRowIndex = null;
+        state.selectedRowIndex = null;
+        updateModalBackgroundState();
       }
 
       function openStatsModal() {
@@ -426,6 +436,7 @@
             state.stats = stats || null;
             renderStatsModal();
             document.getElementById('statsModal').classList.add('open');
+            updateModalBackgroundState();
             hideError();
           })
           .withFailureHandler(showError)
@@ -434,6 +445,7 @@
 
       function closeStatsModal() {
         document.getElementById('statsModal').classList.remove('open');
+        updateModalBackgroundState();
       }
 
       function handleStatsModalBackdrop(event) {
@@ -496,6 +508,11 @@
 
       function handleModalBackdrop(event) {
         if (event.target && event.target.id === 'detailsModal') closeModal();
+      }
+
+      function updateModalBackgroundState() {
+        const hasOpenModal = document.querySelector('.modal.open');
+        document.body.classList.toggle('modal-active', Boolean(hasOpenModal));
       }
 
       function addFilterListeners() {

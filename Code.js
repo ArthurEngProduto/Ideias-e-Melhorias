@@ -136,18 +136,18 @@ function getFilteredRows_(filters) {
   });
 }
 
-function updateConcludedStatus(rowNumber, concluded) {
+function updateRowStatus(rowNumber, status) {
   const numericRow = Number(rowNumber);
   if (!numericRow || numericRow < 2) {
     throw new Error('Linha inválida para atualização.');
   }
 
   const sheet = getSheet_();
-  const columnR = 18;
-  const value = concluded ? 'OK' : '';
-  sheet.getRange(numericRow, columnR).setValue(value);
+  const statusColumn = getStatusColumnIndex_(sheet);
+  const normalizedStatus = normalizeRowStatus_(status);
+  sheet.getRange(numericRow, statusColumn).setValue(normalizedStatus);
 
-  return { success: true, rowNumber: numericRow, concluded: value };
+  return { success: true, rowNumber: numericRow, status: normalizedStatus };
 }
 
 function deletePortalRow(rowNumber) {
@@ -191,6 +191,29 @@ function getSheet_() {
   }
 
   return sheet;
+}
+
+function getStatusColumnIndex_(sheet) {
+  const headers = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getDisplayValues()[0]
+    .map((header) => normalizeHeader_(header));
+  const normalizedCandidates = ['Status', 'Concluído'].map((name) => normalizeHeader_(name));
+
+  for (let i = 0; i < headers.length; i += 1) {
+    if (normalizedCandidates.includes(headers[i])) {
+      return i + 1;
+    }
+  }
+
+  return 18;
+}
+
+function normalizeRowStatus_(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (normalized === 'parado') return 'Parado';
+  if (normalized === 'concluído' || normalized === 'concluido' || normalized === 'ok') return 'Concluído';
+  return 'Em andamento';
 }
 
 function resolveSpreadsheet_() {

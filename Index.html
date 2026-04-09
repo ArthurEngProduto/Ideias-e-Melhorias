@@ -406,7 +406,7 @@
                 <th>Selecione o seu setor:</th>
                 <th>Este registro se refere a:</th>
               <th>Mapa de calor</th>
-              <th>Status</th>
+              <th>Status do registro</th>
               </tr>
               <tr class="filter-row">
                 <th>
@@ -624,9 +624,9 @@
         }
 
       function getWorkflowStatus(row) {
-        const rawValue = String(row['Status'] || row['Concluído'] || '').trim().toLowerCase();
+        const rawValue = String(row['Status'] || '').trim().toLowerCase();
         if (['parado', 'pausado', 'stopped'].includes(rawValue)) return 'Parado';
-        if (['concluído', 'concluido', 'ok', 'sim', 'true', '1', 'done'].includes(rawValue)) return 'Concluído';
+
         return 'Em andamento';
       }
 
@@ -686,12 +686,17 @@
           if (!row) return;
                   state.selectedRowIndex = index;
           const rowKeys = Object.keys(row || {});
+          const hiddenDetailLabels = ['Concluído'];
           const orderedKeys = [
             ...preferredOrder.filter((k) => rowKeys.includes(k)),
             ...rowKeys.filter((k) => !preferredOrder.includes(k))
           ];
           const details = orderedKeys
-            .filter((key) => !key.startsWith('__') && String(row[key] || '').trim() !== '')
+            .filter((key) => (
+              !key.startsWith('__')
+              && String(row[key] || '').trim() !== ''
+              && !hiddenDetailLabels.some((label) => cleanLabel(key) === cleanLabel(label))
+            ))
             .map((key) => `
               <div class="detail-item">
                 <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
@@ -990,22 +995,22 @@
           }
         }
 
-      function updateWorkflowStatus(index, status) {
-        const row = state.rows[index
+        function updateWorkflowStatus(index, status) {
+          const row = state.rows[index];
           if (!row || !row.__rowNumber) {
             showError('Não foi possível identificar a linha para atualizar o status.');
             return;
           }
 
           google.script.run
-            .withSuccessHandler(() => {
-            row['Status'] = status;
+              row.Status = status;
+              row['Concluído'] = status;
             row['Concluído'] = status;
               render();
               hideError();
             })
-          .withFailureHandler(showError)
-          .updateRowStatus(row.__rowNumber, status);
+            .withFailureHandler(showError)
+            .updateRowStatus(row.__rowNumber, status);
         }
 
 

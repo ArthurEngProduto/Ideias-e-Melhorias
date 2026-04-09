@@ -1,510 +1,1063 @@
-/**
- * Portal de visualização de respostas do Google Forms em formato de cards.
- *
- * IMPORTANTE:
- * - Se o projeto estiver VINCULADO à planilha, pode deixar SPREADSHEET_ID vazio.
- * - Se o projeto estiver INDEPENDENTE, preencha SPREADSHEET_ID com o ID da planilha.
- */
-const SPREADSHEET_ID = ''; // Ex: '1AbC...xyz'
-const SHEET_NAME = ''; // vazio = primeira aba
-const DEFAULT_PAGE_SIZE = 20;
-const CONTRIBUTION_TYPE_FIELDS = {
-  'Qual é o tipo de contribuição neste produto': [
-    'Ideia de melhoria em um produto',
-    'Problema que acontece com frequência',
-  ],
-  'Qual é o tipo de contribuição neste processo?': [
-    'Ideia de melhoria em um processo',
-    'Problema que acontece com frequência',
-  ],
-};
-
-function doGet() {
-  return HtmlService.createTemplateFromFile('Index')
-    .evaluate()
-    .setTitle('Portal de Ideias e Melhorias')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-function getPortalBootstrap() {
-  const rows = getRows_();
-
-  return {
-    totalRecords: rows.length,
-    fields: rows.length ? Object.keys(rows[0]) : [],
-    options: getFilterOptions_(),
-  };
-}
-
-function getPortalData(filters, page, pageSize) {
-  const filteredRows = getFilteredRows_(filters || {});
-
-  const safePageSize = Number(pageSize) > 0 ? Number(pageSize) : DEFAULT_PAGE_SIZE;
-  const requestedPage = Number(page) > 0 ? Number(page) : 1;
-  const total = filteredRows.length;
-  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
-  const safePage = Math.min(requestedPage, totalPages);
-  const pagedRows = filteredRows.slice((safePage - 1) * safePageSize, safePage * safePageSize);
-
-  return {
-    page: safePage,
-    pageSize: safePageSize,
-    total,
-    totalPages,
-    rows: pagedRows,
-  };
-}
-
-function getPortalStats(filters) {
-  const filteredRows = getFilteredRows_(filters || {});
-  const fields = [
-    'Selecione o seu setor:',
-    'Este registro se refere a:',
-    'Qual é o tipo de contribuição neste produto',
-    'Qual é o tipo de contribuição neste processo?',
-    'Qual é a recorrência ou necessidade desta melhoria?',
-  ];
-
-  return {
-    total: filteredRows.length,
-    charts: fields
-      .map((field) => ({
-        field,
-        values: countByField_(filteredRows, field, {
-          allowedValues: CONTRIBUTION_TYPE_FIELDS[field] || null,
-        }),
-      }))
-      .concat({
-        field: 'Status da conclusão',
-        values: getConclusionStatusCounts_(filteredRows),
-      }),
-  
-  };
-}
-
-function getConclusionStatusCounts_(rows) {
-  let concluded = 0;
-  let inProgress = 0;
-
-  rows.forEach((row) => {
-    if (isConcludedValue_(row['Concluído'])) {
-      concluded += 1;
-      return;
-    }
-    inProgress += 1;
-  });
-
-  return [
-    { label: 'Concluídos', count: concluded },
-    { label: 'Em processo', count: inProgress },
-  ];
-}
-
-function getRows_() {
-  const sheet = getSheet_();
-  const values = sheet.getDataRange().getDisplayValues();
-  if (!values || values.length < 2) return [];
-
-  const rawHeaders = values[0];
-  const headers = rawHeaders.map((h) => normalizeHeader_(h));
-  const dataRows = values.slice(1);
-
-  return dataRows
-    .filter((row) => row.some((cell) => String(cell || '').trim() !== ''))
-    .map((row, index) => {
-      const obj = {};
-      headers.forEach((header, headerIndex) => {
-        obj[header] = row[headerIndex] || '';
-      });
-      obj.__rowNumber = index + 2;
-      return obj;
-    });
-}
-
-function getFilteredRows_(filters) {
-  const rows = getRows_();
-  const normalizedFilters = normalizeFilters_(filters || {});
-
-  return rows.filter((row) => {
-    const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
-    if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
-    if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
-    if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
-    if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
-    if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
-    return true;
-  });
-}
-
-function updateRowStatus(rowNumber, status) {
-  const numericRow = Number(rowNumber);
-  if (!numericRow || numericRow < 2) {
-    throw new Error('Linha inválida para atualização.');
-  }
-
-  const sheet = getSheet_();
-  const statusColumn = getStatusColumnIndex_(sheet);
-  const normalizedStatus = normalizeRowStatus_(status);
-  sheet.getRange(numericRow, statusColumn).setValue(normalizedStatus);
-
-  return { success: true, rowNumber: numericRow, status: normalizedStatus };
-}
-
-function deletePortalRow(rowNumber) {
-  const numericRow = Number(rowNumber);
-  if (!numericRow || numericRow < 2) {
-    throw new Error('Linha inválida para exclusão.');
-  }
-
-  const sheet = getSheet_();
-  if (numericRow > sheet.getLastRow()) {
-    throw new Error('A linha informada não existe mais na planilha.');
-  }
-
-  const headers = sheet
-    .getRange(1, 1, 1, sheet.getLastColumn())
-    .getDisplayValues()[0]
-    .map((header) => normalizeHeader_(header));
-  const rowValues = sheet.getRange(numericRow, 1, 1, headers.length).getDisplayValues()[0];
-  const rowObject = {};
-  headers.forEach((header, index) => {
-    rowObject[header] = rowValues[index] || '';
-  });
-
-  const deletionSummary = deleteFormResponseForRow_(rowObject);
-  sheet.deleteRow(numericRow);
-
-  return {
-    success: true,
-    rowNumber: numericRow,
-    deletedFromForm: deletionSummary.deletedFromForm,
-    deletedFromFormResponsesSheet: deletionSummary.deletedFromResponsesSheet,
-  };
-}
-
-function getSheet_() {
-  const ss = resolveSpreadsheet_();
-  const sheet = SHEET_NAME ? ss.getSheetByName(SHEET_NAME) : ss.getSheets()[0];
-
-  if (!sheet) {
-    throw new Error('A aba configurada não foi encontrada. Revise SHEET_NAME em Code.gs.');
-  }
-
-  return sheet;
-}
-
-function getStatusColumnIndex_(sheet) {
-  const headers = sheet
-    .getRange(1, 1, 1, sheet.getLastColumn())
-    .getDisplayValues()[0]
-    .map((header) => normalizeHeader_(header));
-  const normalizedCandidates = ['Status', 'Concluído'].map((name) => normalizeHeader_(name));
-
-  for (let i = 0; i < headers.length; i += 1) {
-    if (normalizedCandidates.includes(headers[i])) {
-      return i + 1;
-    }
-  }
-
-  return 18;
-}
-
-function normalizeRowStatus_(status) {
-  const normalized = String(status || '').trim().toLowerCase();
-  if (normalized === 'parado') return 'Parado';
-  if (normalized === 'concluído' || normalized === 'concluido' || normalized === 'ok') return 'Concluído';
-  return 'Em andamento';
-}
-
-function resolveSpreadsheet_() {
-  if (SPREADSHEET_ID) {
-    return SpreadsheetApp.openById(SPREADSHEET_ID);
-  }
-
-  const active = SpreadsheetApp.getActiveSpreadsheet();
-  if (active) return active;
-
-  throw new Error(
-    'Não foi possível localizar a planilha ativa. Se o script for independente, preencha SPREADSHEET_ID em Code.gs.'
-  );
-}
-
-function deleteFormResponseForRow_(row) {
-  const form = getLinkedForm_();
-  if (!form) {
-    return {
-      deletedFromForm: false,
-      deletedFromResponsesSheet: false,
-    };
-  }
-
-  let deletedFromForm = false;
-
-  const responseId = findResponseId_(row);
-  if (responseId) {
-    form.deleteResponse(responseId);
-    deletedFromForm = true;
-  } else {
-    const response = findFormResponseByTimestamp_(form, row);
-    if (response) {
-      form.deleteResponse(response.getId());
-      deletedFromForm = true;
-    }
-  }
-
-  const deletedFromResponsesSheet = deleteFromLinkedResponsesSheet_(form, row);
-
-  return {
-    deletedFromForm,
-    deletedFromResponsesSheet,
-  };
-}
-
-function getLinkedForm_() {
-  const spreadsheet = resolveSpreadsheet_();
-  const formUrl = spreadsheet.getFormUrl();
-  if (!formUrl) return null;
-  return FormApp.openByUrl(formUrl);
-}
-
-function findResponseId_(row) {
-  const candidateKeys = [
-    'ID da resposta',
-    'ID da resposta do formulário',
-    'Response ID',
-    'Response Id',
-    'responseId',
-    'response id',
-  ];
-
-  for (let i = 0; i < candidateKeys.length; i += 1) {
-    const value = getFieldValue_(row, candidateKeys[i]);
-    if (value) return value;
-  }
-
-  return '';
-}
-
-function findFormResponseByTimestamp_(form, row) {
-  const rawTimestamp = getFieldValue_(row, 'Carimbo de data/hora');
-  if (!rawTimestamp) return null;
-
-  const parsedTimestamp = parseTimestamp_(rawTimestamp);
-  if (!parsedTimestamp) return null;
-
-  const responses = form.getResponses(parsedTimestamp);
-  if (!responses || !responses.length) return null;
-
-  const rowName = getFieldValue_(row, 'Digite seu nome:').toLowerCase();
-
-  for (let i = 0; i < responses.length; i += 1) {
-    const response = responses[i];
-    const responseTimestamp = response.getTimestamp();
-    if (!responseTimestamp || responseTimestamp.getTime() !== parsedTimestamp.getTime()) {
-      continue;
-    }
-
-    if (!rowName) return response;
-
-    const answers = response.getItemResponses();
-    const matchedName = answers.some((itemResponse) => {
-      const title = normalizeHeader_(itemResponse.getItem().getTitle());
-      if (title !== 'Digite seu nome:') return false;
-      return String(itemResponse.getResponse() || '').trim().toLowerCase() === rowName;
-    });
-
-    if (matchedName) return response;
-  }
-
-  Logger.log('Não foi possível identificar resposta pelo carimbo/nome. Timestamp: %s', rawTimestamp);
-  return null;
-}
-
-function deleteFromLinkedResponsesSheet_(form, row) {
-  try {
-    const destinationId = form.getDestinationId();
-    if (!destinationId) return false;
-
-    const responsesSpreadsheet = SpreadsheetApp.openById(destinationId);
-    const responsesSheet = getResponsesSheet_(responsesSpreadsheet);
-    if (!responsesSheet) return false;
-
-    return deleteRowByTimestampAndName_(responsesSheet, row);
-  } catch (error) {
-    Logger.log('Falha ao excluir na aba de respostas: %s', error);
-    return false;
-  }
-}
-
-function getResponsesSheet_(spreadsheet) {
-  const sheets = spreadsheet.getSheets();
-  for (let i = 0; i < sheets.length; i += 1) {
-    const sheet = sheets[i];
-    const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getDisplayValues()[0];
-    const normalizedHeaders = headers.map((h) => normalizeHeader_(h));
-    if (normalizedHeaders.includes('Carimbo de data/hora')) {
-      return sheet;
-    }
-  }
-  return null;
-}
-
-function deleteRowByTimestampAndName_(sheet, row) {
-  const lastRow = sheet.getLastRow();
-  const lastColumn = sheet.getLastColumn();
-  if (lastRow < 2 || lastColumn < 1) return false;
-
-  const values = sheet.getRange(1, 1, lastRow, lastColumn).getDisplayValues();
-  const headers = values[0].map((h) => normalizeHeader_(h));
-  const timestampIndex = headers.indexOf('Carimbo de data/hora');
-  if (timestampIndex === -1) return false;
-
-  const nameIndex = headers.indexOf('Digite seu nome:');
-  const expectedTimestamp = normalizeDateTimeText_(getFieldValue_(row, 'Carimbo de data/hora'));
-  const expectedName = getFieldValue_(row, 'Digite seu nome:').toLowerCase();
-
-  for (let line = 1; line < values.length; line += 1) {
-    const candidateTimestamp = normalizeDateTimeText_(values[line][timestampIndex]);
-    if (!candidateTimestamp || candidateTimestamp !== expectedTimestamp) continue;
-
-    if (nameIndex !== -1 && expectedName) {
-      const candidateName = String(values[line][nameIndex] || '').trim().toLowerCase();
-      if (candidateName !== expectedName) continue;
-    }
-
-    sheet.deleteRow(line + 1);
-    return true;
-  }
-
-  return false;
-}
-
-function parseTimestamp_(value) {
-  const text = String(value || '').trim();
-  if (!text) return null;
-
-  const brDateTimeMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-  if (brDateTimeMatch) {
-    const [, day, month, year, hour = '0', minute = '0', second = '0'] = brDateTimeMatch;
-    return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
-  }
-
-  const parsed = new Date(text);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed;
-}
-
-function normalizeDateTimeText_(value) {
-  const parsed = parseTimestamp_(value);
-  if (!parsed) return '';
-
-  const year = parsed.getFullYear();
-  const month = String(parsed.getMonth() + 1).padStart(2, '0');
-  const day = String(parsed.getDate()).padStart(2, '0');
-  const hour = String(parsed.getHours()).padStart(2, '0');
-  const minute = String(parsed.getMinutes()).padStart(2, '0');
-  const second = String(parsed.getSeconds()).padStart(2, '0');
-
-  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-}
-
-function getFilterOptions_() {
-  const rows = getRows_();
-  return {
-    sectors: uniqueByKey_(rows, 'Selecione o seu setor:'),
-    refs: uniqueByKey_(rows, 'Este registro se refere a:'),
-  };
-}
-
-function uniqueByKey_(rows, key) {
-  const set = new Set();
-  rows.forEach((row) => {
-    const value = getFieldValue_(row, key);
-    if (value) set.add(value);
-  });
-  return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-}
-
-function countByField_(rows, key, options) {
-  const safeOptions = options || {};
-  const allowedValues = Array.isArray(safeOptions.allowedValues) ? safeOptions.allowedValues : null;
-  const allowedValueByNormalizedKey = allowedValues
-    ? allowedValues.reduce((acc, value) => {
-        acc[normalizeOptionValue_(value)] = value;
-        return acc;
-      }, {})
-    : null;
-  const counts = {};
-    if (allowedValues) {
-    allowedValues.forEach((value) => {
-      counts[value] = 0;
-    });
-  }
-
-  rows.forEach((row) => {
-    const rawValue = getFieldValue_(row, key);
-
-    if (allowedValueByNormalizedKey) {
-      const normalizedValue = normalizeOptionValue_(rawValue);
-      const canonicalValue = allowedValueByNormalizedKey[normalizedValue];
-      if (!canonicalValue) return;
-      counts[canonicalValue] = (counts[canonicalValue] || 0) + 1;
-      return;
-    }
-
-    const value = rawValue || 'Não informado';
-    counts[value] = (counts[value] || 0) + 1;
-  });
-
-  return Object.keys(counts)
-    .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b, 'pt-BR'))
-    .map((label) => ({ label, count: counts[label] }));
-}
-
-
-function normalizeOptionValue_(value) {
-  return String(value || '').replace(/\s+/g, ' ').trim();
-}
-
-function normalizeFilters_(filters) {
-  const timestampStart = String(filters.timestampStart || filters.timestamp || '').trim().toLowerCase();
-  const timestampEnd = String(filters.timestampEnd || filters.timestamp || '').trim().toLowerCase();
-
-  return {
-    timestampStart,
-
-    timestampEnd,
-    name: String(filters.name || '').trim().toLowerCase(),
-    sector: String(filters.sector || '').trim(),
-    reference: String(filters.reference || '').trim(),
-  };
-}
-
-function normalizeHeader_(header) {
-  return String(header || '').replace(/\s+/g, ' ').trim();
-}
-
-function getFieldValue_(row, key) {
-  const normalizedKey = normalizeHeader_(key);
-  return String(row[normalizedKey] || '').trim();
-}
-
-function normalizeDateFilter_(value) {
-  const text = String(value || '').trim();
-  if (!text) return '';
-
-  const brMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (brMatch) {
-    const [, day, month, year] = brMatch;
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  }
-
-  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    return `${year}-${month}-${day}`;
-  }
-
-  return '';
-}
-
+  <!DOCTYPE html>
+  <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Portal de Ideias e Melhorias</title>
+      <style>
+        :root {
+          --bg: #f4f6fb;
+          --surface: #ffffff;
+          --surface-soft: #f8faff;
+          --line: #dce3f1;
+          --line-soft: #edf1f8;
+          --text: #1d2433;
+          --muted: #647089;
+          --primary: #2452d8;
+        }
+        body.dark-mode {
+          --bg: #0f172a;
+          --surface: #111827;
+          --surface-soft: #1f2937;
+          --line: #334155;
+          --line-soft: #475569;
+          --text: #e5e7eb;
+          --muted: #94a3b8;
+          --primary: #60a5fa;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+        .container { max-width: 1250px; margin: 0 auto; padding: 20px; transition: filter 0.2s ease; }
+        .theme-toggle {
+          position: fixed;
+          top: 16px;
+          right: 16px;
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          padding: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          color: var(--text);
+          z-index: 2500;
+        }
+        body.modal-active {
+          overflow: hidden;
+        }
+        body.modal-active .container {
+          filter: blur(4px);
+        }
+        .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+        h1 { margin: 0; }
+        .header-top {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          align-items: center;
+          gap: 14px;
+        }
+        .header-logo {
+          display: flex;
+          align-items: center;
+        }
+        .header-logo .logo-img {
+          width: 65px;
+          height: auto;
+          display: block;
+        }
+        .header-logo .logo-dark { display: block; }
+        .header-logo .logo-light { display: none; }
+        body.dark-mode .header-logo .logo-light { display: block; }
+        body.dark-mode .header-logo .logo-dark { display: none; }
+        .portal-title { text-align: center; }
+        .meta {
+          color: var(--muted);
+          font-size: 13px;
+          text-align: right;
+          white-space: nowrap;
+        }
+        .toolbar {
+          margin-top: 14px;
+          display: flex;
+          gap: 10px;
+          justify-content: flex-end;
+        }
+        input, select, button {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: var(--surface);
+          color: var(--text);
+        }
+        button { cursor: pointer; border: none; background: var(--primary); color: #fff; font-weight: 600; }
+        button.secondary { background: var(--surface); border: 1px solid var(--primary); color: var(--primary); }
+        .summary { margin: 14px 0; color: var(--muted); }
+        .status { margin-top: 12px; font-size: 13px; color: #8a5a00; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 10px; display: none; }
+        .table-wrap { overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 860px; }
+        thead th { text-align: left; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
+        tbody td { border-top: 1px solid var(--line-soft); padding: 10px; font-size: 14px; }
+        tbody tr { cursor: pointer; }
+        tbody tr:hover { background: var(--surface-soft); }
+        .filter-row th { background: var(--surface); border-bottom: 1px solid var(--line); }
+        .filter-row input, .filter-row select { padding: 8px; font-size: 13px; }
+        body.dark-mode .filter-row input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+          opacity: 1;
+        }
+        .date-range { display: flex; align-items: center; gap: 6px; }
+        .date-range span { color: var(--muted); font-size: 12px; white-space: nowrap; }
+        .pagination { margin: 18px 0 4px 0; display: flex; gap: 8px; justify-content: center; }
+        .empty { display: none; text-align: center; color: var(--muted); margin: 24px 0; }
+        .modal {
+          display: none;
+          position: fixed;
+          inset: 0;
+          z-index: 999;
+          background: rgba(11, 19, 44, 0.62);
+          backdrop-filter: blur(2px);
+          -webkit-backdrop-filter: blur(2px);
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+          width: min(920px, 100%);
+          max-height: 85vh;
+          overflow: auto;
+          background: var(--surface);
+          border-radius: 12px;
+          border: 1px solid var(--line);
+          padding: 16px;
+        }
+        .stats-modal-content {
+          width: min(96vw, 1700px);
+          max-height: 94vh;
+          padding: 20px 22px;
+        }
+        .modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .modal-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+              .danger {
+          background: #b91c1c;
+          color: #fff;
+        }
+        .danger-button {
+          background: #dc2626;
+          color: #fff;
+        }
+        .danger-button:hover {
+          background: #b91c1c;
+        }
+        .status-badge {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .status-badge.concluded {
+          background: #dcfce7;
+          color: #166534;
+          border: 1px solid #86efac;
+        }
+        .status-badge.recurrence-low {
+          background: #fef9c3;
+          color: #854d0e;
+          border: 1px solid #fde047;
+        }
+        .status-badge.recurrence-medium {
+          background: #ffedd5;
+          color: #9a3412;
+          border: 1px solid #fdba74;
+        }
+        .status-badge.recurrence-high {
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fca5a5;
+        }
+        .status-badge.recurrence-default {
+          background: #eef2ff;
+          color: #3730a3;
+          border: 1px solid #c7d2fe;
+          font-size: 12px;
+          font-weight: 700;
+        }
+             .status-badge.workflow-stopped {
+        background: #7f1d1d;
+        color: #fee2e2;
+        border: 1px solid #b91c1c;
+      }
+      .status-badge.workflow-progress {
+        background: #854d0e;
+        color: #fef3c7;
+        border: 1px solid #b45309;
+      }
+      .status-badge.workflow-done {
+        background: #166534;
+        color: #dcfce7;
+        border: 1px solid #15803d;
+      }
+      .status-select {
+        width: auto;
+        min-width: 145px;
+        padding: 6px 8px;
+        font-size: 12px;
+        border-radius: 999px;
+        font-weight: 700;
+      }
+      .status-select.status-parado {
+        background: #7f1d1d;
+        color: #fee2e2;
+        border: 1px solid #b91c1c;
+      }
+      .status-select.status-andamento {
+        background: #854d0e;
+        color: #fef3c7;
+        border: 1px solid #b45309;
+      }
+      .status-select.status-concluido {
+        background: #166534;
+        color: #dcfce7;
+        border: 1px solid #15803d;
+      }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .detail-item { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; }
+        .detail-label { font-size: 12px; color: var(--muted); }
+        .detail-value { margin-top: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+              .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+        .stats-card { border: 1px solid var(--line-soft); border-radius: 10px; padding: 14px; min-height: 390px; }
+        .stats-title { margin: 0 0 10px 0; font-size: 14px; line-height: 1.35; }
+        .pie-chart {
+          width: clamp(190px, 22vh, 250px);
+          height: clamp(190px, 22vh, 250px);
+          border-radius: 50%;
+          margin: 0 auto 10px;
+          background: var(--surface-soft);
+          border: 1px solid var(--line);
+        }
+        .bar-chart {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin: 8px 0 12px;
+        }
+        .bar-row {
+          display: grid;
+          grid-template-columns: minmax(120px, 32%) 1fr auto;
+          gap: 8px;
+          align-items: center;
+        }
+        .bar-label {
+          font-size: 12px;
+          color: var(--muted);
+        }
+        .bar-track {
+          height: 14px;
+          border-radius: 999px;
+          background: var(--surface-soft);
+          border: 1px solid var(--line);
+          overflow: hidden;
+        }
+        .bar-fill {
+          height: 100%;
+          border-radius: 999px;
+          min-width: 2px;
+        }
+        .bar-value {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--text);
+        }
+        .legend-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+        .stats-empty { color: var(--muted); font-size: 14px; margin-top: 8px; }
+        .loading-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 2000;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          background: rgba(11, 19, 44, 0.25);
+          backdrop-filter: blur(2px);
+          -webkit-backdrop-filter: blur(2px);
+        }
+        .loading-overlay.open { display: flex; }
+        .loading-box {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 16px 18px;
+          box-shadow: 0 10px 24px rgba(29, 36, 51, 0.16);
+        }
+        .loading-spinner {
+          width: 36px;
+          height: 36px;
+          border: 4px solid #dbe5ff;
+          border-top-color: var(--primary);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        .loading-text {
+          margin: 0;
+          color: var(--muted);
+          font-size: 14px;
+          font-weight: 600;
+        }
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        @media (max-width: 800px) {
+          .header-top {
+            grid-template-columns: 1fr;
+            justify-items: center;
+          }
+          .meta {
+            text-align: center;
+            white-space: normal;
+          }
+          .details-grid { grid-template-columns: 1fr; }
+          .stats-modal-content {
+            width: 100%;
+            max-height: 96vh;
+            padding: 16px;
+          }
+          .stats-grid {
+            grid-template-columns: 1fr;
+          }
+          .stats-card {
+            min-height: auto;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <button
+        id="themeToggle"
+        class="theme-toggle"
+        type="button"
+        aria-label="Ativar modo escuro"
+        title="Ativar modo escuro"
+        onclick="toggleTheme()"
+      >🌙</button>
+      <div class="loading-overlay open" id="loadingOverlay" aria-live="polite" aria-busy="true">
+        <div class="loading-box" role="status" aria-label="Carregando">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">Carregando...</p>
+        </div>
+      </div>
+      <div class="container">
+        <div class="panel">
+          <div class="header-top">
+            <div class="header-logo" aria-label="Logo Baldi">
+              <img
+                class="logo-img logo-light"
+                src="https://images.tcdn.com.br/files/1392931/themes/77/img/settings/7het-1747883529307-Logo---Baldi--3-.png?de394334e3789ba065d4e7c9790af7fd"
+                alt="Logo Baldi"
+              />
+              <img
+                class="logo-img logo-dark"
+                src="data:image/png;base64,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"
+                alt="Logo Baldi (modo escuro)"
+              />
+            </div>
+            <h1 class="portal-title">Portal de Ideias e Melhorias</h1>
+            <div class="meta" id="topMeta">Base conectada. 0 registro(s) carregado(s).</div>
+          </div>
+
+          <div class="toolbar">
+            <button onclick="applyFilters()">Filtrar</button>
+            <button class="secondary" onclick="clearFilters()">Limpar</button>
+            <button id="statsButton" class="secondary" onclick="openStatsModal()">Abrir estatísticas</button>
+          </div>
+
+          <div class="status" id="statusBox"></div>
+        </div>
+
+        <div class="summary" id="summary"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Carimbo de data/hora</th>
+                <th>Digite seu nome:</th>
+                <th>Selecione o seu setor:</th>
+                <th>Este registro se refere a:</th>
+              <th>Mapa de calor</th>
+              <th>Status do registro</th>
+              </tr>
+              <tr class="filter-row">
+                <th>
+                  <div class="date-range">
+                    <input id="timestampStartFilter" type="date" aria-label="Filtrar por data inicial" />
+                    <span>até</span>
+                    <input id="timestampEndFilter" type="date" aria-label="Filtrar por data final" />
+                  </div>
+                </th>
+                <th><input id="nameFilter" placeholder="Filtrar por nome" /></th>
+                <th><select id="sectorFilter"></select></th>
+                <th><select id="referenceFilter"></select></th>
+              <th></th>
+              <th></th>
+              </tr>
+            </thead>
+            <tbody id="rowsTable"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="empty">Nenhum registro encontrado para os filtros informados.</div>
+
+        <div class="pagination">
+          <button class="secondary" onclick="prevPage()">Anterior</button>
+          <button class="secondary" onclick="nextPage()">Próxima</button>
+        </div>
+      </div>
+      <div class="modal" id="detailsModal" onclick="handleModalBackdrop(event)">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 id="modalTitle" style="margin:0;">Detalhes do registro</h2>
+            <div class="modal-actions">
+              <button class="danger" style="max-width:130px;" onclick="deleteSelectedRow()">Excluir linha</button>
+              <button class="secondary" style="max-width:120px;" onclick="closeModal()">Fechar</button>
+            </div>
+          </div>
+          <div class="details-grid" id="modalDetails"></div>
+        </div>
+      </div>
+      <div class="modal" id="statsModal" onclick="handleStatsModalBackdrop(event)">
+        <div class="modal-content stats-modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;">Estatísticas das respostas</h2>
+            <button class="secondary" style="max-width:120px;" onclick="closeStatsModal()">Fechar</button>
+          </div>
+          <div class="summary" id="statsSummary" style="margin-top:0;"></div>
+          <div class="stats-grid" id="statsCharts"></div>
+          <div class="stats-empty" id="statsEmpty" style="display:none;">Não há dados para montar os gráficos com os filtros atuais.</div>
+        </div>
+      </div>
+
+      <script>
+        let state = {
+          page: 1,
+          pageSize: 12,
+          total: 0,
+          totalPages: 1,
+          rows: [],
+          fields: [],
+          filters: {},
+          selectedRowIndex: null,
+          stats: null
+        };
+        let loadingCount = 0;
+        const chartPalette = ['#2452d8', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#64748b'];
+
+        function applyTheme(mode) {
+          const isDarkMode = mode === 'dark';
+          document.body.classList.toggle('dark-mode', isDarkMode);
+          const toggleButton = document.getElementById('themeToggle');
+          toggleButton.textContent = isDarkMode ? '☀️' : '🌙';
+          const buttonLabel = isDarkMode ? 'Ativar modo claro' : 'Ativar modo escuro';
+          toggleButton.setAttribute('aria-label', buttonLabel);
+          toggleButton.setAttribute('title', buttonLabel);
+        }
+
+        function toggleTheme() {
+          const isDarkMode = document.body.classList.contains('dark-mode');
+          const nextTheme = isDarkMode ? 'light' : 'dark';
+          applyTheme(nextTheme);
+          localStorage.setItem('portalTheme', nextTheme);
+        }
+
+        function initializeTheme() {
+          const savedTheme = localStorage.getItem('portalTheme');
+          applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
+        }
+
+        const preferredOrder = [
+          'Carimbo de data/hora',
+          'Digite seu nome:',
+          'Selecione o seu setor:',
+          'Este registro se refere a:',
+          'Qual é o tipo de contribuição neste produto',
+          'Descreva o problema a ser corrigido no produto:',
+          'Qual é o tipo de contribuição neste processo?',
+          'Descreva o problema a ser corrigido no processo:',
+          'Nome do Produto:',
+          'Modelo:',
+          'Tamanho:',
+          'Em qual produto esse processo ocorre?',
+          'Nome do processo:',
+          'Etapa ou atividade específica (se existir) :',
+          'Qual é a recorrência ou necessidade desta melhoria?',
+          'Descreva sua ideia de solução:',
+          'Deseja anexar uma foto? (opcional)'
+        ];
+
+        function boot() {
+          showLoading();
+          google.script.run
+            .withSuccessHandler((payload) => {
+              state.fields = payload.fields || [];
+              setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
+
+              setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
+              setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
+              addFilterListeners();
+
+              loadData();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+              hideLoading();
+            })
+            .getPortalBootstrap();
+        }
+
+        function loadData() {
+          showLoading();
+          google.script.run
+            .withSuccessHandler((data) => {
+              state = { ...state, ...data };
+              hideError();
+              render();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+              hideLoading();
+            })
+            .getPortalData(state.filters, state.page, state.pageSize);
+        }
+
+        function setSelectOptions(id, options, placeholder) {
+          const select = document.getElementById(id);
+          const html = [`<option value="">${escapeHtml(placeholder)}</option>`]
+            .concat((options || []).map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`))
+            .join('');
+          select.innerHTML = html;
+        }
+
+        function applyFilters() {
+          state.page = 1;
+                  let timestampStart = document.getElementById('timestampStartFilter').value;
+          let timestampEnd = document.getElementById('timestampEndFilter').value;
+          if (timestampStart && timestampEnd && timestampStart > timestampEnd) {
+            [timestampStart, timestampEnd] = [timestampEnd, timestampStart];
+            document.getElementById('timestampStartFilter').value = timestampStart;
+            document.getElementById('timestampEndFilter').value = timestampEnd;
+          }
+          state.filters = {
+            timestampStart,
+            timestampEnd,
+            name: document.getElementById('nameFilter').value,
+            sector: document.getElementById('sectorFilter').value,
+            reference: document.getElementById('referenceFilter').value
+          };
+          loadData();
+        }
+
+        function clearFilters() {
+          ['timestampStartFilter', 'timestampEndFilter', 'nameFilter'].forEach((id) => {
+            document.getElementById(id).value = '';
+          });
+          ['sectorFilter', 'referenceFilter'].forEach((id) => {
+            document.getElementById(id).value = '';
+          });
+          applyFilters();
+        }
+
+        function render() {
+          document.getElementById('summary').textContent =
+            `Mostrando ${state.rows.length} de ${state.total} registro(s). Página ${state.page} de ${state.totalPages}.`;
+
+          const rowsTable = document.getElementById('rowsTable');
+          const empty = document.getElementById('empty');
+
+          if (!state.rows.length) {
+            rowsTable.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+          }
+
+          empty.style.display = 'none';
+          rowsTable.innerHTML = state.rows.map((row, index) => renderTableRow(row, index)).join('');
+        }
+
+        function renderTableRow(row, index) {
+          const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
+          const recurrenceBadge = getRecurrenceBadge(recurrence);
+        const workflowStatus = getWorkflowStatus(row);
+        const statusContent = renderWorkflowStatusSelect(row, workflowStatus, index);
+          return `
+            <tr onclick="openModal(${index})">
+              <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
+              <td>${escapeHtml(row['Digite seu nome:'] || '-')}</td>
+              <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
+              <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
+              <td>${recurrenceBadge}</td>
+              <td>${statusContent}</td>
+
+            </tr>
+          `;
+        }
+
+      function getWorkflowStatus(row) {
+        const rawValue = String(row['Status'] || '').trim().toLowerCase();
+        if (['parado', 'pausado', 'stopped'].includes(rawValue)) return 'Parado';
+
+        return 'Em andamento';
+      }
+
+      function renderWorkflowStatusSelect(row, currentStatus, index) {
+        const rowNumber = Number(row.__rowNumber || 0);
+        if (!rowNumber) {
+          return renderWorkflowBadge(currentStatus);
+        }
+
+        const statusClass = getWorkflowStatusClass(currentStatus);
+        return `
+          <select
+            class="status-select ${statusClass}"
+            onclick="event.stopPropagation()"
+            onchange="updateWorkflowStatus(${index}, this.value)"
+            aria-label="Atualizar status do registro"
+          >
+            <option value="Parado" ${currentStatus === 'Parado' ? 'selected' : ''}>Parado</option>
+            <option value="Em andamento" ${currentStatus === 'Em andamento' ? 'selected' : ''}>Em andamento</option>
+            <option value="Concluído" ${currentStatus === 'Concluído' ? 'selected' : ''}>Concluído</option>
+          </select>
+        `;
+      }
+
+      function getWorkflowStatusClass(status) {
+        if (status === 'Parado') return 'status-parado';
+        if (status === 'Concluído') return 'status-concluido';
+        return 'status-andamento';
+      }
+
+      function renderWorkflowBadge(status) {
+        const badgeClass = status === 'Parado'
+          ? 'workflow-stopped'
+          : (status === 'Concluído' ? 'workflow-done' : 'workflow-progress');
+        return `<span class="status-badge ${badgeClass}">${escapeHtml(status)}</span>`;
+      }
+
+        function getRecurrenceBadge(recurrence) {
+          if (!recurrence) return '-';
+
+          const recurrenceText = recurrence.toLowerCase();
+          let badgeClass = 'recurrence-default';
+
+          if (recurrenceText.includes('apenas uma vez')) {
+            badgeClass = 'recurrence-low';
+          } else if (recurrenceText.includes('algumas vezes')) {
+            badgeClass = 'recurrence-medium';
+          } else if (recurrenceText.includes('recorrente')) {
+            badgeClass = 'recurrence-high';
+          }
+
+          return `<span class="status-badge ${badgeClass}">${escapeHtml(recurrence)}</span>`;
+        }
+
+        function openModal(index) {
+          const row = state.rows[index];
+          if (!row) return;
+                  state.selectedRowIndex = index;
+          const rowKeys = Object.keys(row || {});
+          const hiddenDetailLabels = ['Concluído'];
+          const orderedKeys = [
+            ...preferredOrder.filter((k) => rowKeys.includes(k)),
+            ...rowKeys.filter((k) => !preferredOrder.includes(k))
+          ];
+          const details = orderedKeys
+            .filter((key) => (
+              !key.startsWith('__')
+              && String(row[key] || '').trim() !== ''
+              && !hiddenDetailLabels.some((label) => cleanLabel(key) === cleanLabel(label))
+            ))
+            .map((key) => `
+              <div class="detail-item">
+                <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
+                <div class="detail-value">${renderDetailValue(key, row[key])}</div>
+              </div>
+            `)
+            .join('');
+          document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
+          document.getElementById('modalDetails').innerHTML = details;
+          document.getElementById('detailsModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function closeModal() {
+          document.getElementById('detailsModal').classList.remove('open');
+          state.selectedRowIndex = null;
+          updateModalBackgroundState();
+        }
+
+        function openStatsModal() {
+          showLoading();
+          google.script.run
+            .withSuccessHandler((stats) => {
+              state.stats = stats || null;
+              renderStatsModal();
+              document.getElementById('statsModal').classList.add('open');
+              updateModalBackgroundState();
+              hideError();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+              hideLoading();
+            })
+            .getPortalStats(state.filters);
+        }
+
+        function closeStatsModal() {
+          document.getElementById('statsModal').classList.remove('open');
+          updateModalBackgroundState();
+        }
+
+        function handleStatsModalBackdrop(event) {
+          if (event.target && event.target.id === 'statsModal') closeStatsModal();
+        }
+
+        function renderStatsModal() {
+          const stats = state.stats || { total: 0, charts: [] };
+          document.getElementById('statsSummary').textContent = `Base para estatística: ${stats.total || 0} registro(s).`;
+          const chartsWrap = document.getElementById('statsCharts');
+          const empty = document.getElementById('statsEmpty');
+
+          if (!stats.total || !stats.charts || !stats.charts.length) {
+            chartsWrap.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+          }
+
+          empty.style.display = 'none';
+          chartsWrap.innerHTML = stats.charts.map((chart) => renderStatsChartCard(chart)).join('');
+        }
+
+        function renderStatsChartCard(chart) {
+          const sectorField = 'Selecione o seu setor:';
+          if (cleanLabel(chart.field) === cleanLabel(sectorField)) {
+            return renderHorizontalBarChartCard(chart);
+          }
+          return renderPieChartCard(chart);
+        }
+
+        function renderPieChartCard(chart) {
+          const values = (chart.values || []).filter((entry) => entry.count > 0);
+          const total = values.reduce((acc, entry) => acc + Number(entry.count || 0), 0);
+          const pieBackground = buildPieGradient(chart, values, total);
+          const legend = values
+            .map((entry, index) => {
+              const color = getChartColor(chart, entry, index);
+              const percent = total ? Math.round((entry.count / total) * 100) : 0;
+              return `
+                <li class="legend-item">
+                  <span class="legend-dot" style="background:${color};"></span>
+                  <span>${escapeHtml(entry.label)} - ${entry.count} (${percent}%)</span>
+                </li>
+              `;
+            })
+            .join('');
+
+          return `
+            <section class="stats-card">
+              <h3 class="stats-title">${escapeHtml(chart.field)}</h3>
+              <div class="pie-chart" style="background:${pieBackground};"></div>
+              <ul class="legend-list">${legend}</ul>
+            </section>
+          `;
+        }
+
+        function renderHorizontalBarChartCard(chart) {
+          const values = (chart.values || [])
+            .filter((entry) => entry.count > 0)
+            .sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+          const total = values.reduce((acc, entry) => acc + Number(entry.count || 0), 0);
+          const max = values.length ? Math.max(...values.map((entry) => Number(entry.count || 0))) : 0;
+          const bars = values
+            .map((entry, index) => {
+              const count = Number(entry.count || 0);
+              const width = max ? Math.max((count / max) * 100, 2) : 0;
+              const percent = total ? Math.round((count / total) * 100) : 0;
+              const color = getChartColor(chart, entry, index);
+              return `
+                <div class="bar-row">
+                  <span class="bar-label">${escapeHtml(entry.label)}</span>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width:${width}%;background:${color};"></div>
+                  </div>
+                  <span class="bar-value">${count} (${percent}%)</span>
+                </div>
+              `;
+            })
+            .join('');
+
+          return `
+            <section class="stats-card">
+              <h3 class="stats-title">${escapeHtml(chart.field)}</h3>
+              <div class="bar-chart">${bars}</div>
+            </section>
+          `;
+        }
+
+        function buildPieGradient(chart, values, total) {
+          if (!total) return '#eef2ff';
+          let acc = 0;
+          const stops = values.map((entry, index) => {
+            const color = getChartColor(chart, entry, index);
+            const start = acc;
+            acc += (entry.count / total) * 100;
+            return `${color} ${start}% ${acc}%`;
+          });
+          return `conic-gradient(${stops.join(', ')})`;
+        }
+
+        function getChartColor(chart, entry, index) {
+          const conclusionField = 'Status da conclusão';
+          if (cleanLabel(chart.field) === cleanLabel(conclusionField)) {
+            const label = cleanLabel(entry.label).toLowerCase();
+            if (label === 'concluídos' || label === 'concluidos') return '#86efac';
+            if (label === 'em processo') return '#7f1d1d';
+          }
+
+          const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';
+          if (cleanLabel(chart.field) === cleanLabel(recurrenceField)) {
+            const label = cleanLabel(entry.label).toLowerCase();
+            if (label.includes('recorrente')) return '#ef4444';
+            if (label.includes('algumas vezes')) return '#f97316';
+            if (label.includes('apenas uma vez')) return '#facc15';
+          }
+
+          const referenceField = 'Este registro se refere a:';
+          if (cleanLabel(chart.field) === cleanLabel(referenceField)) {
+            const label = cleanLabel(entry.label).toLowerCase();
+            if (label === 'produto') return '#7dd3fc';
+            if (label === 'processo') return '#2452d8';
+          }
+
+          const productContributionField = 'Qual é o tipo de contribuição neste produto';
+          if (cleanLabel(chart.field) === cleanLabel(productContributionField)) {
+            const label = cleanLabel(entry.label).toLowerCase();
+            if (label === 'ideia de melhoria em um produto') return '#7dd3fc';
+            if (label === 'problema que acontece com frequência') return '#991b1b';
+          }
+
+          const processContributionField = 'Qual é o tipo de contribuição neste processo?';
+          if (cleanLabel(chart.field) === cleanLabel(processContributionField)) {
+            const label = cleanLabel(entry.label).toLowerCase();
+            if (label === 'ideia de melhoria em um processo') return '#2452d8';
+            if (label === 'problema que acontece com frequência') return '#991b1b';
+          }
+
+          const sectorField = 'Selecione o seu setor:';
+          if (cleanLabel(chart.field) === cleanLabel(sectorField)) {
+            return '#7dd3fc';
+          }
+
+          return chartPalette[index % chartPalette.length];
+        }
+        
+              function isConcludedValue(value) {
+          const normalized = String(value || '').trim().toLowerCase();
+          return ['ok', 'sim', 'true', '1', 'concluído', 'concluido'].includes(normalized);
+        }
+        
+        function handleModalBackdrop(event) {
+          if (event.target && event.target.id === 'detailsModal') closeModal();
+        }
+
+        function updateModalBackgroundState() {
+          const hasOpenModal = document.querySelector('.modal.open');
+          document.body.classList.toggle('modal-active', Boolean(hasOpenModal));
+        }
+
+        function addFilterListeners() {
+          ['timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'sectorFilter', 'referenceFilter'].forEach((id) => {
+            const el = document.getElementById(id);
+            el.addEventListener('change', applyFilters);
+            if (el.tagName === 'INPUT') {
+              el.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') applyFilters();
+              });
+            }
+          });
+        }
+
+        function cleanLabel(label) {
+          return String(label || '').replace(/\s+/g, ' ').trim();
+        }
+
+        function renderDetailValue(key, value) {
+          const text = String(value || '').trim();
+          if (!text) return '-';
+
+          const recurrenceLabel = 'Qual é a recorrência ou necessidade desta melhoria?';
+          if (cleanLabel(key) === cleanLabel(recurrenceLabel)) {
+            return getRecurrenceBadge(text);
+          }
+
+          const photoLabel = 'Deseja anexar uma foto? (opcional)';
+          if (cleanLabel(key) !== cleanLabel(photoLabel)) {
+            return escapeHtml(text);
+          }
+
+          const urlMatch = text.match(/https?:\/\/[^\s]+/i);
+          if (!urlMatch) return escapeHtml(text);
+
+          const url = urlMatch[0];
+          return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text)}</a>`;
+        }
+
+        function formatTimestampToDate(rawTimestamp) {
+          const text = String(rawTimestamp || '').trim();
+          if (!text) return '-';
+
+          const brDateMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (brDateMatch) {
+            const [, day, month, year] = brDateMatch;
+            return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+          }
+
+          const isoDateMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (isoDateMatch) {
+            const [, year, month, day] = isoDateMatch;
+            return `${day}/${month}/${year}`;
+          }
+
+          return text.split(' ')[0];
+        }
+
+        function prevPage() {
+          if (state.page <= 1) return;
+          state.page -= 1;
+          loadData();
+        }
+
+        function nextPage() {
+          if (state.page >= state.totalPages) return;
+          state.page += 1;
+          loadData();
+        }
+
+        function showError(err) {
+          const message = err && err.message ? err.message : String(err || 'Erro desconhecido');
+          const box = document.getElementById('statusBox');
+          box.style.display = 'block';
+          box.textContent = `Erro ao carregar dados: ${message}`;
+          document.getElementById('topMeta').textContent = 'Falha na conexão com a planilha.';
+        }
+
+
+        function hideError() {
+          const box = document.getElementById('statusBox');
+          box.style.display = 'none';
+          box.textContent = '';
+        }
+
+        function setTopMeta(text) {
+          document.getElementById('topMeta').textContent = text;
+        }
+
+        function showLoading() {
+          loadingCount += 1;
+          document.getElementById('loadingOverlay').classList.add('open');
+        }
+
+        function hideLoading() {
+          loadingCount = Math.max(loadingCount - 1, 0);
+          if (!loadingCount) {
+            document.getElementById('loadingOverlay').classList.remove('open');
+          }
+        }
+
+        function updateWorkflowStatus(index, status) {
+          const row = state.rows[index];
+          if (!row || !row.__rowNumber) {
+            showError('Não foi possível identificar a linha para atualizar o status.');
+            return;
+          }
+
+          google.script.run
+              row.Status = status;
+              row['Concluído'] = status;
+            row['Concluído'] = status;
+              render();
+              hideError();
+            })
+            .withFailureHandler(showError)
+            .updateRowStatus(row.__rowNumber, status);
+        }
+
+
+        function deleteSelectedRow() {
+          if (state.selectedRowIndex === null || state.selectedRowIndex === undefined) return;
+          const row = state.rows[state.selectedRowIndex];
+          if (!row || !row.__rowNumber) {
+            showError('Não foi possível identificar a linha para excluir.');
+            return;
+          }
+
+          const confirmed = window.confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.');
+          if (!confirmed) return;
+
+          google.script.run
+            .withSuccessHandler((result) => {
+              const removedName = row['Digite seu nome:'] || 'Registro';
+              closeModal();
+              loadData();
+              hideError();
+
+              if (!result || !result.deletedFromForm) {
+                const box = document.getElementById('statusBox');
+                box.style.display = 'block';
+                box.textContent = `Registro de "${removedName}" excluído da planilha/portal, mas não foi possível confirmar a exclusão da resposta no Google Forms.`;
+                return;
+              }
+
+              const box = document.getElementById('statusBox');
+              box.style.display = 'block';
+              box.textContent = `Registro de "${removedName}" excluído com sucesso no portal, planilha e Google Forms.`;
+            })
+            .withFailureHandler(showError)
+            .deletePortalRow(row.__rowNumber);
+        }
+
+        function escapeHtml(str) {
+          return String(str || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+        }
+
+        initializeTheme();
+        boot();
+      </script>
+    </body>
+  </html>

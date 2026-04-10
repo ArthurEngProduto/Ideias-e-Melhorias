@@ -633,7 +633,12 @@
           produto: ['#7EC8F8', '#9BD5FA', '#B9E3FC'],
           processo: ['#3D63DD', '#5B7BE5', '#7D98EC'],
           recorrencia: ['#F4D35E', '#EE964B', '#D1495B'],
-          status: ['#7EC8F8', '#9BD5FA', '#B9E3FC'],
+          status: {
+            queue: '#7f1d1d',
+            progress: '#854d0e',
+            done: '#166534',
+          },
+          problemaFrequente: '#7f1d1d',
           default: ['#7EC8F8', '#9BD5FA', '#B9E3FC'],
         };
 
@@ -1095,7 +1100,11 @@
         function getChartColor(chart, entry, index) {
           const conclusionField = 'Status da conclusão';
           if (cleanLabel(chart.field) === cleanLabel(conclusionField)) {
-            return CHART_FAMILY.status[index % CHART_FAMILY.status.length];
+            const statusLabel = cleanLabel(entry.label).toLowerCase();
+            if (statusLabel === 'na fila') return CHART_FAMILY.status.queue;
+            if (statusLabel === 'em andamento') return CHART_FAMILY.status.progress;
+            if (statusLabel === 'concluídos' || statusLabel === 'concluído') return CHART_FAMILY.status.done;
+            return CHART_FAMILY.default[index % CHART_FAMILY.default.length];
           }
 
           const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';
@@ -1116,11 +1125,15 @@
 
           const productContributionField = 'Qual é o tipo de contribuição neste produto';
           if (cleanLabel(chart.field) === cleanLabel(productContributionField)) {
+            const label = cleanLabel(entry.label).toLowerCase();
+            if (label.includes('problema que acontece com frequência')) return CHART_FAMILY.problemaFrequente;
             return CHART_FAMILY.produto[index % CHART_FAMILY.produto.length];
           }
 
           const processContributionField = 'Qual é o tipo de contribuição neste processo?';
           if (cleanLabel(chart.field) === cleanLabel(processContributionField)) {
+            const label = cleanLabel(entry.label).toLowerCase();
+            if (label.includes('problema que acontece com frequência')) return CHART_FAMILY.problemaFrequente;
             return CHART_FAMILY.processo[index % CHART_FAMILY.processo.length];
           }
 

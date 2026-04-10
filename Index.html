@@ -328,6 +328,7 @@
           gap: 10px;
         }
         .detail-item { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; }
+        .detail-item.full-width { grid-column: 1 / -1; }
         .detail-label { font-size: 12px; color: var(--muted); }
         .detail-value { margin-top: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
@@ -1043,7 +1044,15 @@
           };
 
           const referenceValue = String(row['Este registro se refere a:'] || '').trim().toLowerCase();
+          const productContributionValue = String(row['Qual é o tipo de contribuição neste produto'] || '').trim().toLowerCase();
           const processContributionValue = String(row['Qual é o tipo de contribuição neste processo?'] || '').trim().toLowerCase();
+          const isImprovementIdea = [
+            productContributionValue,
+            processContributionValue,
+          ].includes('ideia de melhoria em um produto') || [
+            productContributionValue,
+            processContributionValue,
+          ].includes('ideia de melhoria em um processo');
           const isFrequentProcessProblem = processContributionValue === 'problema que acontece com frequência';
           const productInfoGroup = renderGroupedDetails('Informações do produto', [
             'Nome do Produto:',
@@ -1094,19 +1103,51 @@
           ]);
           const isProductRecord = referenceValue.includes('produto');
           const groupedDetailsHtml = `${isProductRecord ? productInfoGroup : processInfoGroup}`;
+                    const recurrenceFieldLabel = 'Qual é a recorrência ou necessidade desta melhoria?';
+          const solutionFieldLabel = 'Descreva sua ideia de solução:';
+          const photoFieldLabel = 'Deseja anexar uma foto? (opcional)';
+          const visibleUngroupedKeys = orderedKeys.filter((key) => (
+            shouldRenderDetailItem(key)
+            && !mainDetailKeys.includes(key)
+            && !groupedKeys.has(key)
+          ));
+          const extraForcedKeys = isImprovementIdea
+            ? [recurrenceFieldLabel, photoFieldLabel]
+            : [];
+          const forceVisibleLabels = new Set(extraForcedKeys.map((label) => cleanLabel(label)));
+          const mergedUngroupedKeys = [...visibleUngroupedKeys];
+          extraForcedKeys.forEach((forcedLabel) => {
+            const forcedKey = resolveRowKeyByAliases([forcedLabel]);
+            if (forcedKey && !mergedUngroupedKeys.includes(forcedKey)) {
+              mergedUngroupedKeys.push(forcedKey);
+            }
+          });
+          const ungroupedKeyOrder = isImprovementIdea
+            ? [recurrenceFieldLabel, photoFieldLabel, solutionFieldLabel]
+            : null;
+          const sortedUngroupedKeys = !ungroupedKeyOrder
+            ? mergedUngroupedKeys
+            : mergedUngroupedKeys.sort((keyA, keyB) => {
+              const indexA = ungroupedKeyOrder.findIndex((label) => cleanLabel(label) === cleanLabel(keyA));
+              const indexB = ungroupedKeyOrder.findIndex((label) => cleanLabel(label) === cleanLabel(keyB));
+              const safeIndexA = indexA === -1 ? Number.MAX_SAFE_INTEGER : indexA;
+              const safeIndexB = indexB === -1 ? Number.MAX_SAFE_INTEGER : indexB;
+              return safeIndexA - safeIndexB;
+            });
 
-          const details = groupedDetailsHtml + orderedKeys
-            .filter((key) => (
-              shouldRenderDetailItem(key)
-              && !mainDetailKeys.includes(key)
-              && !groupedKeys.has(key)
-            ))
+          const details = groupedDetailsHtml + sortedUngroupedKeys
             .map((key) => `
-              <div class="detail-item">
+              <div class="detail-item ${isImprovementIdea && cleanLabel(key) === cleanLabel(solutionFieldLabel) ? 'full-width' : ''}">
                 <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
                 <div class="detail-value">${renderDetailValue(key, row[key])}</div>
               </div>
             `)
+            .filter((html, index) => {
+              const key = sortedUngroupedKeys[index];
+              const hasValue = String(row[key] || '').trim() !== '';
+              const isForced = forceVisibleLabels.has(cleanLabel(key));
+              return hasValue || isForced;
+            })
             .join('');
           document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
           document.getElementById('modalMainDetails').innerHTML = mainDetails;

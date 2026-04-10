@@ -291,6 +291,23 @@
         gap: 10px;
         margin-top: 8px;
       }
+        .details-focus-panel {
+          margin-bottom: 12px;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          padding: 12px;
+          background: var(--surface-soft);
+        }
+        .details-focus-title {
+          margin: 0 0 10px;
+          font-size: 13px;
+          color: var(--muted);
+        }
+        .details-focus-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
         .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .detail-item { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; }
         .detail-label { font-size: 12px; color: var(--muted); }
@@ -505,6 +522,7 @@
             text-align: center;
             white-space: normal;
           }
+          .details-focus-grid,
           .details-grid { grid-template-columns: 1fr; }
           .stats-modal-content {
             width: 100%;
@@ -616,6 +634,10 @@
               <button class="danger" style="max-width:130px;" onclick="deleteSelectedRow()">Excluir linha</button>
               <button class="secondary" style="max-width:120px;" onclick="closeModal()">Fechar</button>
             </div>
+          </div>
+          <div class="details-focus-panel">
+            <h3 class="details-focus-title">Informações principais</h3>
+            <div class="details-focus-grid" id="modalMainDetails"></div>
           </div>
           <div class="details-grid" id="modalDetails"></div>
         </div>
@@ -939,15 +961,34 @@
                   state.selectedRowIndex = index;
           const rowKeys = Object.keys(row || {});
           const hiddenDetailLabels = ['Concluído'];
+          const mainDetailKeys = [
+            'Carimbo de data/hora',
+            'Digite seu nome:',
+            'Selecione o seu setor:',
+            'Este registro se refere a:'
+          ];
           const orderedKeys = [
             ...preferredOrder.filter((k) => rowKeys.includes(k)),
             ...rowKeys.filter((k) => !preferredOrder.includes(k))
           ];
+          const shouldRenderDetailItem = (key) => (
+            !key.startsWith('__')
+            && String(row[key] || '').trim() !== ''
+            && !hiddenDetailLabels.some((label) => cleanLabel(key) === cleanLabel(label))
+          );
+          const mainDetails = mainDetailKeys
+            .filter((key) => shouldRenderDetailItem(key))
+            .map((key) => `
+              <div class="detail-item">
+                <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
+                <div class="detail-value">${renderDetailValue(key, row[key])}</div>
+              </div>
+            `)
+            .join('');
           const details = orderedKeys
             .filter((key) => (
-              !key.startsWith('__')
-              && String(row[key] || '').trim() !== ''
-              && !hiddenDetailLabels.some((label) => cleanLabel(key) === cleanLabel(label))
+              shouldRenderDetailItem(key)
+              && !mainDetailKeys.includes(key)
             ))
             .map((key) => `
               <div class="detail-item">
@@ -957,6 +998,7 @@
             `)
             .join('');
           document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
+          document.getElementById('modalMainDetails').innerHTML = mainDetails;
           document.getElementById('modalDetails').innerHTML = details;
           document.getElementById('detailsModal').classList.add('open');
           updateModalBackgroundState();

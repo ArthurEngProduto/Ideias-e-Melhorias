@@ -1038,12 +1038,7 @@
             'Etapa ou atividade específica (se existir) :',
             'Qual é o tipo de contribuição neste processo?',
           ]);
-          const contributionStatusGroupBase = renderGroupedDetails('Contribuição, solução e status', [
-            'Qual é o tipo de contribuição neste processo?',
-            'Descreva sua ideia de solução:',
-          ]);
-          const contributionStatusGroup = `
-            ${contributionStatusGroupBase}
+          const statusGroup = `
             <div class="detail-group">
               <h3 class="detail-group-title">Status</h3>
               <div class="detail-group-grid">
@@ -1063,9 +1058,9 @@
             'Nome do processo:',
             'Etapa ou atividade específica (se existir) :',
             'Qual é o tipo de contribuição neste processo?',
-            'Descreva sua ideia de solução:',
           ]);
-          const groupedDetailsHtml = `${referenceValue === 'produto' ? productInfoGroup : processInfoGroup}${contributionStatusGroup}`;
+          const isProductRecord = referenceValue.includes('produto');
+          const groupedDetailsHtml = `${isProductRecord ? productInfoGroup : processInfoGroup}${statusGroup}`;
 
           const details = groupedDetailsHtml + orderedKeys
             .filter((key) => (

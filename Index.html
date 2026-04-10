@@ -789,7 +789,10 @@
 
         function renderStatsChartCard(chart) {
           const sectorField = 'Selecione o seu setor:';
-          if (cleanLabel(chart.field) === cleanLabel(sectorField)) {
+          const conclusionField = 'Status da conclusão';
+          const normalizedField = cleanLabel(chart.field);
+
+          if (normalizedField === cleanLabel(sectorField) || normalizedField === cleanLabel(conclusionField)) {
             return renderHorizontalBarChartCard(chart);
           }
           return renderPieChartCard(chart);
@@ -869,9 +872,9 @@
           const conclusionField = 'Status da conclusão';
           if (cleanLabel(chart.field) === cleanLabel(conclusionField)) {
             const label = cleanLabel(entry.label).toLowerCase();
-            if (label === 'concluídos' || label === 'concluidos') return '#86efac';
-            if (label === 'em andamento') return '#7f1d1d';
-            if (label === 'na fila') return '#facc15';
+            if (label === 'concluídos' || label === 'concluidos') return '#16a34a';
+            if (label === 'em andamento') return '#facc15';
+            if (label === 'na fila') return '#dc2626';
           }
 
           const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';

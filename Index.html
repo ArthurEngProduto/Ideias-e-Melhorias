@@ -576,7 +576,7 @@
           <table>
             <thead>
               <tr>
-                <th>Carimbo de data/hora</th>
+                <th>Data</th>
                 <th>Digite seu nome:</th>
                 <th>Selecione o seu setor:</th>
                 <th>Este registro se refere a:</th>
@@ -1319,12 +1319,19 @@
         }
 
         function cleanLabel(label) {
-          return String(label || '').replace(/\s+/g, ' ').trim();
+          const normalized = String(label || '').replace(/\s+/g, ' ').trim();
+          if (normalized === 'Carimbo de data/hora') return 'Data';
+          return normalized;
         }
 
         function renderDetailValue(key, value) {
           const text = String(value || '').trim();
           if (!text) return '-';
+
+          const timestampLabel = 'Carimbo de data/hora';
+          if (cleanLabel(key) === cleanLabel(timestampLabel)) {
+            return escapeHtml(formatTimestampToDate(text));
+          }
 
           const recurrenceLabel = 'Qual é a recorrência ou necessidade desta melhoria?';
           if (cleanLabel(key) === cleanLabel(recurrenceLabel)) {

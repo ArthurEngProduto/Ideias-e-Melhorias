@@ -870,7 +870,8 @@
           if (cleanLabel(chart.field) === cleanLabel(conclusionField)) {
             const label = cleanLabel(entry.label).toLowerCase();
             if (label === 'concluídos' || label === 'concluidos') return '#86efac';
-            if (label === 'em processo') return '#7f1d1d';
+            if (label === 'em andamento') return '#7f1d1d';
+            if (label === 'na fila') return '#facc15';
           }
 
           const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';

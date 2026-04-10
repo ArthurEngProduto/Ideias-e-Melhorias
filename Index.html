@@ -485,8 +485,12 @@
           </div>
           <div class="stats-filters">
             <div class="stats-filter-field">
-              <label for="statsMonthFilter" class="stats-filter-label">Filtrar por mês/ano</label>
-              <input id="statsMonthFilter" type="month" aria-label="Filtrar estatísticas por mês e ano" />
+              <label for="statsDateStartFilter" class="stats-filter-label">Data inicial</label>
+              <input id="statsDateStartFilter" type="date" aria-label="Filtrar estatísticas por data inicial" />
+            </div>
+            <div class="stats-filter-field">
+              <label for="statsDateEndFilter" class="stats-filter-label">Data final</label>
+              <input id="statsDateEndFilter" type="date" aria-label="Filtrar estatísticas por data final" />
             </div>
             <div class="stats-filter-actions">
               <button type="button" onclick="applyStatsDateFilter()">Aplicar</button>
@@ -524,7 +528,8 @@
           selectedRowIndex: null,
           selectedStatusRowIndex: null,
           stats: null,
-          statsMonth: ''
+          statsDateStart: '',
+          statsDateEnd: ''
         };
         let loadingCount = 0;
         const chartPalette = ['#2452d8', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#64748b'];
@@ -757,9 +762,13 @@
         }
 
         function openStatsModal() {
-          const monthInput = document.getElementById('statsMonthFilter');
-          if (monthInput) {
-            monthInput.value = state.statsMonth || '';
+          const startInput = document.getElementById('statsDateStartFilter');
+          const endInput = document.getElementById('statsDateEndFilter');
+          if (startInput) {
+            startInput.value = state.statsDateStart || '';
+          }
+          if (endInput) {
+            endInput.value = state.statsDateEnd || '';
           }
           fetchStats();
           document.getElementById('statsModal').classList.add('open');
@@ -783,17 +792,29 @@
         }
 
         function applyStatsDateFilter() {
-          const monthInput = document.getElementById('statsMonthFilter');
-          state.statsMonth = monthInput ? monthInput.value : '';
+          const startInput = document.getElementById('statsDateStartFilter');
+          const endInput = document.getElementById('statsDateEndFilter');
+          let startValue = startInput ? startInput.value : '';
+          let endValue = endInput ? endInput.value : '';
+
+          if (startValue && endValue && startValue > endValue) {
+            [startValue, endValue] = [endValue, startValue];
+            if (startInput) startInput.value = startValue;
+            if (endInput) endInput.value = endValue;
+          }
+
+          state.statsDateStart = startValue;
+          state.statsDateEnd = endValue;
           fetchStats();
         }
 
         function clearStatsDateFilter() {
-          state.statsMonth = '';
-          const monthInput = document.getElementById('statsMonthFilter');
-          if (monthInput) {
-            monthInput.value = '';
-          }
+          state.statsDateStart = '';
+          state.statsDateEnd = '';
+          const startInput = document.getElementById('statsDateStartFilter');
+          const endInput = document.getElementById('statsDateEndFilter');
+          if (startInput) startInput.value = '';
+          if (endInput) endInput.value = '';
           fetchStats();
         }
 
@@ -972,27 +993,31 @@
 
           return chartPalette[index % chartPalette.length];
         }
-        
+
         function getStatsFilters() {
           const filters = { ...(state.filters || {}) };
-          if (!state.statsMonth) return filters;
-
-          const monthMatch = String(state.statsMonth).match(/^(\d{4})-(\d{2})$/);
-          if (!monthMatch) return filters;
-
-          const year = Number(monthMatch[1]);
-          const month = Number(monthMatch[2]);
-          const lastDay = new Date(year, month, 0).getDate();
-          filters.timestampStart = `${monthMatch[1]}-${monthMatch[2]}-01`;
-          filters.timestampEnd = `${monthMatch[1]}-${monthMatch[2]}-${String(lastDay).padStart(2, '0')}`;
+          if (state.statsDateStart) filters.timestampStart = state.statsDateStart;
+          if (state.statsDateEnd) filters.timestampEnd = state.statsDateEnd;
           return filters;
         }
 
         function getStatsPeriodText() {
-          if (!state.statsMonth) return '';
-          const monthMatch = String(state.statsMonth).match(/^(\d{4})-(\d{2})$/);
-          if (!monthMatch) return '';
-          return ` no período ${monthMatch[2]}/${monthMatch[1]}`;
+          if (state.statsDateStart && state.statsDateEnd) {
+            return ` no período de ${formatDateForLabel(state.statsDateStart)} até ${formatDateForLabel(state.statsDateEnd)}`;
+          }
+          if (state.statsDateStart) {
+            return ` a partir de ${formatDateForLabel(state.statsDateStart)}`;
+          }
+          if (state.statsDateEnd) {
+            return ` até ${formatDateForLabel(state.statsDateEnd)}`;
+          }
+          return '';
+        }
+
+        function formatDateForLabel(rawDate) {
+          const match = String(rawDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (!match) return String(rawDate || '');
+          return `${match[3]}/${match[2]}/${match[1]}`;
         }
         
               function isConcludedValue(value) {

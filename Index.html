@@ -1054,6 +1054,7 @@
             processContributionValue,
           ].includes('ideia de melhoria em um processo');
           const isFrequentProcessProblem = processContributionValue === 'problema que acontece com frequência';
+          const isFrequentProductProblem = productContributionValue === 'problema que acontece com frequência';
           const productInfoGroup = renderGroupedDetails('Informações do produto', [
             'Nome do Produto:',
             'Modelo:',
@@ -1103,7 +1104,8 @@
           ]);
           const isProductRecord = referenceValue.includes('produto');
           const groupedDetailsHtml = `${isProductRecord ? productInfoGroup : processInfoGroup}`;
-                    const recurrenceFieldLabel = 'Qual é a recorrência ou necessidade desta melhoria?';
+          const recurrenceFieldLabel = 'Qual é a recorrência ou necessidade desta melhoria?';
+          const problemFieldLabel = 'Descreva o problema a ser corrigido no produto:';
           const solutionFieldLabel = 'Descreva sua ideia de solução:';
           const photoFieldLabel = 'Deseja anexar uma foto? (opcional)';
           const visibleUngroupedKeys = orderedKeys.filter((key) => (
@@ -1111,9 +1113,11 @@
             && !mainDetailKeys.includes(key)
             && !groupedKeys.has(key)
           ));
-          const extraForcedKeys = isImprovementIdea
+          const extraForcedKeys = isFrequentProductProblem
             ? [recurrenceFieldLabel, photoFieldLabel]
-            : [];
+            : isImprovementIdea
+              ? [recurrenceFieldLabel, photoFieldLabel]
+              : [];
           const forceVisibleLabels = new Set(extraForcedKeys.map((label) => cleanLabel(label)));
           const mergedUngroupedKeys = [...visibleUngroupedKeys];
           extraForcedKeys.forEach((forcedLabel) => {
@@ -1122,9 +1126,11 @@
               mergedUngroupedKeys.push(forcedKey);
             }
           });
-          const ungroupedKeyOrder = isImprovementIdea
-            ? [recurrenceFieldLabel, photoFieldLabel, solutionFieldLabel]
-            : null;
+          const ungroupedKeyOrder = isFrequentProductProblem
+            ? [recurrenceFieldLabel, photoFieldLabel, problemFieldLabel, solutionFieldLabel]
+            : isImprovementIdea
+              ? [recurrenceFieldLabel, photoFieldLabel, solutionFieldLabel]
+              : null;
           const sortedUngroupedKeys = !ungroupedKeyOrder
             ? mergedUngroupedKeys
             : mergedUngroupedKeys.sort((keyA, keyB) => {
@@ -1137,7 +1143,8 @@
 
           const details = groupedDetailsHtml + sortedUngroupedKeys
             .map((key) => `
-              <div class="detail-item ${isImprovementIdea && cleanLabel(key) === cleanLabel(solutionFieldLabel) ? 'full-width' : ''}">
+              <div class="detail-item ${((isImprovementIdea && cleanLabel(key) === cleanLabel(solutionFieldLabel))
+                || (isFrequentProductProblem && [problemFieldLabel, solutionFieldLabel].some((label) => cleanLabel(label) === cleanLabel(key)))) ? 'full-width' : ''}">
                 <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
                 <div class="detail-value">${renderDetailValue(key, row[key])}</div>
               </div>

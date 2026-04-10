@@ -85,6 +85,7 @@ function getPortalStats(filters) {
 function getConclusionStatusCounts_(rows) {
   let concluded = 0;
   let inProgress = 0;
+  let queued = 0;
 
   rows.forEach((row) => {
     const statusValue = getRowStatusValue_(row);
@@ -92,12 +93,17 @@ function getConclusionStatusCounts_(rows) {
       concluded += 1;
       return;
     }
-    inProgress += 1;
+    if (statusValue === 'Em andamento') {
+      inProgress += 1;
+      return;
+    }
+    queued += 1;
   });
 
   return [
     { label: 'Concluídos', count: concluded },
-    { label: 'Em processo', count: inProgress },
+    { label: 'Em andamento', count: inProgress },
+    { label: 'Na fila', count: queued },
   ];
 }
 

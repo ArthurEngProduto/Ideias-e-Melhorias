@@ -1038,17 +1038,6 @@
             'Etapa ou atividade específica (se existir) :',
             'Qual é o tipo de contribuição neste processo?',
           ]);
-          const statusGroup = `
-            <div class="detail-group">
-              <h3 class="detail-group-title">Status</h3>
-              <div class="detail-group-grid">
-                <div class="detail-item">
-                  <div class="detail-label">Status</div>
-                  <div class="detail-value">${escapeHtml(getWorkflowStatus(row))}</div>
-                </div>
-              </div>
-            </div>
-          `;
           const groupedKeys = new Set([
             'Nome do Produto:',
             'Modelo:',
@@ -1060,7 +1049,7 @@
             'Qual é o tipo de contribuição neste processo?',
           ]);
           const isProductRecord = referenceValue.includes('produto');
-          const groupedDetailsHtml = `${isProductRecord ? productInfoGroup : processInfoGroup}${statusGroup}`;
+          const groupedDetailsHtml = `${isProductRecord ? productInfoGroup : processInfoGroup}`;
 
           const details = groupedDetailsHtml + orderedKeys
             .filter((key) => (

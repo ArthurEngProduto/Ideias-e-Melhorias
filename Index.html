@@ -295,6 +295,30 @@
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
         .stats-empty { color: var(--muted); font-size: 14px; margin-top: 8px; }
+        .stats-filters {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: end;
+          gap: 10px;
+          margin: 6px 0 16px;
+        }
+        .stats-filter-field {
+          width: min(220px, 100%);
+        }
+        .stats-filter-label {
+          display: block;
+          margin-bottom: 6px;
+          color: var(--muted);
+          font-size: 12px;
+        }
+        .stats-filter-actions {
+          display: flex;
+          gap: 8px;
+        }
+        .stats-filter-actions button {
+          width: auto;
+          min-width: 90px;
+        }
         .loading-overlay {
           position: fixed;
           inset: 0;
@@ -459,6 +483,16 @@
             <h2 style="margin:0;">Estatísticas das respostas</h2>
             <button class="secondary" style="max-width:120px;" onclick="closeStatsModal()">Fechar</button>
           </div>
+          <div class="stats-filters">
+            <div class="stats-filter-field">
+              <label for="statsMonthFilter" class="stats-filter-label">Filtrar por mês/ano</label>
+              <input id="statsMonthFilter" type="month" aria-label="Filtrar estatísticas por mês e ano" />
+            </div>
+            <div class="stats-filter-actions">
+              <button type="button" onclick="applyStatsDateFilter()">Aplicar</button>
+              <button type="button" class="secondary" onclick="clearStatsDateFilter()">Limpar</button>
+            </div>
+          </div>
           <div class="summary" id="statsSummary" style="margin-top:0;"></div>
           <div class="stats-grid" id="statsCharts"></div>
           <div class="stats-empty" id="statsEmpty" style="display:none;">Não há dados para montar os gráficos com os filtros atuais.</div>
@@ -489,7 +523,8 @@
           filters: {},
           selectedRowIndex: null,
           selectedStatusRowIndex: null,
-          stats: null
+          stats: null,
+          statsMonth: ''
         };
         let loadingCount = 0;
         const chartPalette = ['#2452d8', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#64748b'];
@@ -722,13 +757,21 @@
         }
 
         function openStatsModal() {
+          const monthInput = document.getElementById('statsMonthFilter');
+          if (monthInput) {
+            monthInput.value = state.statsMonth || '';
+          }
+          fetchStats();
+          document.getElementById('statsModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function fetchStats() {
           showLoading();
           google.script.run
             .withSuccessHandler((stats) => {
               state.stats = stats || null;
               renderStatsModal();
-              document.getElementById('statsModal').classList.add('open');
-              updateModalBackgroundState();
               hideError();
               hideLoading();
             })
@@ -736,7 +779,22 @@
               showError(err);
               hideLoading();
             })
-            .getPortalStats(state.filters);
+            .getPortalStats(getStatsFilters());
+        }
+
+        function applyStatsDateFilter() {
+          const monthInput = document.getElementById('statsMonthFilter');
+          state.statsMonth = monthInput ? monthInput.value : '';
+          fetchStats();
+        }
+
+        function clearStatsDateFilter() {
+          state.statsMonth = '';
+          const monthInput = document.getElementById('statsMonthFilter');
+          if (monthInput) {
+            monthInput.value = '';
+          }
+          fetchStats();
         }
 
         function closeStatsModal() {
@@ -773,7 +831,8 @@
 
         function renderStatsModal() {
           const stats = state.stats || { total: 0, charts: [] };
-          document.getElementById('statsSummary').textContent = `Base para estatística: ${stats.total || 0} registro(s).`;
+          const periodSuffix = getStatsPeriodText();
+          document.getElementById('statsSummary').textContent = `Base para estatística: ${stats.total || 0} registro(s)${periodSuffix}.`;
           const chartsWrap = document.getElementById('statsCharts');
           const empty = document.getElementById('statsEmpty');
 
@@ -912,6 +971,28 @@
           }
 
           return chartPalette[index % chartPalette.length];
+        }
+        
+        function getStatsFilters() {
+          const filters = { ...(state.filters || {}) };
+          if (!state.statsMonth) return filters;
+
+          const monthMatch = String(state.statsMonth).match(/^(\d{4})-(\d{2})$/);
+          if (!monthMatch) return filters;
+
+          const year = Number(monthMatch[1]);
+          const month = Number(monthMatch[2]);
+          const lastDay = new Date(year, month, 0).getDate();
+          filters.timestampStart = `${monthMatch[1]}-${monthMatch[2]}-01`;
+          filters.timestampEnd = `${monthMatch[1]}-${monthMatch[2]}-${String(lastDay).padStart(2, '0')}`;
+          return filters;
+        }
+
+        function getStatsPeriodText() {
+          if (!state.statsMonth) return '';
+          const monthMatch = String(state.statsMonth).match(/^(\d{4})-(\d{2})$/);
+          if (!monthMatch) return '';
+          return ` no período ${monthMatch[2]}/${monthMatch[1]}`;
         }
         
               function isConcludedValue(value) {

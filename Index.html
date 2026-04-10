@@ -1004,15 +1004,32 @@
               </div>
             `)
             .join('');
-          const renderGroupedDetails = (title, keys) => {
+          const resolveRowKeyByAliases = (aliases) => {
+            const normalizedAliases = aliases.map((alias) => cleanLabel(alias));
+            return rowKeys.find((key) => normalizedAliases.includes(cleanLabel(key))) || null;
+          };
+          const renderGroupedDetails = (title, keys, options = {}) => {
+            const { forceFields = [] } = options;
             const groupItems = keys
-              .filter((key) => shouldRenderDetailItem(key))
-              .map((key) => `
-                <div class="detail-item">
-                  <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
-                  <div class="detail-value">${renderDetailValue(key, row[key])}</div>
-                </div>
-              `)
+              .map((keyConfig) => {
+                const keyOptions = typeof keyConfig === 'string'
+                  ? { aliases: [keyConfig], label: keyConfig }
+                  : keyConfig;
+                const rowKey = resolveRowKeyByAliases(keyOptions.aliases || [keyOptions.label]);
+                const fallbackLabel = (keyOptions.aliases && keyOptions.aliases[0]) || keyOptions.label || '';
+                const label = keyOptions.label || fallbackLabel;
+                const value = rowKey ? row[rowKey] : '';
+                const isForcedField = forceFields.includes(cleanLabel(label));
+                if (!isForcedField && !rowKey) return '';
+                if (!isForcedField && String(value || '').trim() === '') return '';
+
+                return `
+                  <div class="detail-item">
+                    <div class="detail-label">${escapeHtml(cleanLabel(label))}</div>
+                    <div class="detail-value">${rowKey ? renderDetailValue(rowKey, value) : '-'}</div>
+                  </div>
+                `;
+              })
               .join('');
 
             if (!groupItems) return '';
@@ -1026,6 +1043,8 @@
           };
 
           const referenceValue = String(row['Este registro se refere a:'] || '').trim().toLowerCase();
+          const processContributionValue = String(row['Qual é o tipo de contribuição neste processo?'] || '').trim().toLowerCase();
+          const isFrequentProcessProblem = processContributionValue === 'problema que acontece com frequência';
           const productInfoGroup = renderGroupedDetails('Informações do produto', [
             'Nome do Produto:',
             'Modelo:',
@@ -1033,11 +1052,36 @@
             'Qual é o tipo de contribuição neste produto',
           ]);
           const processInfoGroup = renderGroupedDetails('Informações do processo', [
-            'Em qual produto esse processo ocorre?',
-            'Nome do processo:',
-            'Etapa ou atividade específica (se existir) :',
-            'Qual é o tipo de contribuição neste processo?',
-          ]);
+            {
+              label: 'Em qual produto esse processo ocorre?',
+              aliases: [
+                'Em qual produto esse processo ocorre?',
+                'Em qual produto este processo ocorre?',
+              ],
+            },
+            { label: 'Nome do processo:', aliases: ['Nome do processo:'] },
+            {
+              label: 'Etapa ou atividade específica (se existir) :',
+              aliases: [
+                'Etapa ou atividade específica (se existir) :',
+                'Etapa ou atividade específica (se existir):',
+              ],
+            },
+            {
+              label: 'Qual é o tipo de contribuição neste processo?',
+              aliases: [
+                'Qual é o tipo de contribuição neste processo?',
+                'Qual é o tipo de contribuição neste processo',
+              ],
+            },
+          ], {
+            forceFields: isFrequentProcessProblem ? [
+              cleanLabel('Em qual produto esse processo ocorre?'),
+              cleanLabel('Nome do processo:'),
+              cleanLabel('Etapa ou atividade específica (se existir) :'),
+              cleanLabel('Qual é o tipo de contribuição neste processo?'),
+            ] : [],
+          });
           const groupedKeys = new Set([
             'Nome do Produto:',
             'Modelo:',

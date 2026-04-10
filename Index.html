@@ -309,6 +309,24 @@
           gap: 10px;
         }
         .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .detail-group {
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          padding: 12px;
+          background: var(--surface-soft);
+          grid-column: 1 / -1;
+        }
+        .detail-group-title {
+          margin: 0 0 10px;
+          font-size: 13px;
+          color: var(--muted);
+          font-weight: 700;
+        }
+        .detail-group-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
         .detail-item { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; }
         .detail-label { font-size: 12px; color: var(--muted); }
         .detail-value { margin-top: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
@@ -523,6 +541,7 @@
             white-space: normal;
           }
           .details-focus-grid,
+          .detail-group-grid,
           .details-grid { grid-template-columns: 1fr; }
           .stats-modal-content {
             width: 100%;
@@ -958,7 +977,7 @@
         function openModal(index) {
           const row = state.rows[index];
           if (!row) return;
-                  state.selectedRowIndex = index;
+          state.selectedRowIndex = index;
           const rowKeys = Object.keys(row || {});
           const hiddenDetailLabels = ['Concluído'];
           const mainDetailKeys = [
@@ -985,10 +1004,74 @@
               </div>
             `)
             .join('');
-          const details = orderedKeys
+          const renderGroupedDetails = (title, keys) => {
+            const groupItems = keys
+              .filter((key) => shouldRenderDetailItem(key))
+              .map((key) => `
+                <div class="detail-item">
+                  <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
+                  <div class="detail-value">${renderDetailValue(key, row[key])}</div>
+                </div>
+              `)
+              .join('');
+
+            if (!groupItems) return '';
+
+            return `
+              <div class="detail-group">
+                <h3 class="detail-group-title">${escapeHtml(title)}</h3>
+                <div class="detail-group-grid">${groupItems}</div>
+              </div>
+            `;
+          };
+
+          const referenceValue = String(row['Este registro se refere a:'] || '').trim().toLowerCase();
+          const productInfoGroup = renderGroupedDetails('Informações do produto', [
+            'Nome do Produto:',
+            'Modelo:',
+            'Tamanho:',
+            'Qual é o tipo de contribuição neste produto',
+          ]);
+          const processInfoGroup = renderGroupedDetails('Informações do processo', [
+            'Em qual produto esse processo ocorre?',
+            'Nome do processo:',
+            'Etapa ou atividade específica (se existir) :',
+            'Qual é o tipo de contribuição neste processo?',
+          ]);
+          const contributionStatusGroupBase = renderGroupedDetails('Contribuição, solução e status', [
+            'Qual é o tipo de contribuição neste processo?',
+            'Descreva sua ideia de solução:',
+          ]);
+          const contributionStatusGroup = `
+            ${contributionStatusGroupBase}
+            <div class="detail-group">
+              <h3 class="detail-group-title">Status</h3>
+              <div class="detail-group-grid">
+                <div class="detail-item">
+                  <div class="detail-label">Status</div>
+                  <div class="detail-value">${escapeHtml(getWorkflowStatus(row))}</div>
+                </div>
+              </div>
+            </div>
+          `;
+          const groupedKeys = new Set([
+            'Nome do Produto:',
+            'Modelo:',
+            'Tamanho:',
+            'Qual é o tipo de contribuição neste produto',
+            'Em qual produto esse processo ocorre?',
+            'Nome do processo:',
+            'Etapa ou atividade específica (se existir) :',
+            'Qual é o tipo de contribuição neste processo?',
+            'Descreva sua ideia de solução:',
+          ]);
+          const groupedDetailsHtml = `${referenceValue === 'produto' ? productInfoGroup : processInfoGroup}${contributionStatusGroup}`;
+
+          const details = groupedDetailsHtml + orderedKeys
             .filter((key) => (
               shouldRenderDetailItem(key)
               && !mainDetailKeys.includes(key)
+              && !groupedKeys.has(key)
             ))
             .map((key) => `
               <div class="detail-item">

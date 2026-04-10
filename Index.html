@@ -65,6 +65,27 @@
           color: var(--text);
           z-index: 2500;
         }
+        .refresh-toggle {
+          position: fixed;
+          top: 16px;
+          left: 16px;
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          padding: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 22px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          color: var(--text);
+          z-index: 2500;
+        }
+        .refresh-toggle[disabled] {
+          opacity: 0.65;
+          cursor: wait;
+        }
         body.modal-active {
           overflow: hidden;
         }
@@ -501,6 +522,14 @@
     </head>
     <body>
       <button
+        id="btnAtualizar"
+        class="refresh-toggle"
+        type="button"
+        aria-label="Atualizar dados"
+        title="Atualizar dados"
+        onclick="refreshPortalData()"
+      >↻</button>
+      <button
         id="themeToggle"
         class="theme-toggle"
         type="button"
@@ -747,6 +776,52 @@
             .getPortalData(state.filters, state.page, state.pageSize);
         }
 
+        function refreshPortalData() {
+          const refreshButton = document.getElementById('btnAtualizar');
+          if (refreshButton && refreshButton.disabled) return;
+
+          if (refreshButton) refreshButton.disabled = true;
+          setTopMeta('Atualizando dados...');
+          hideError();
+          state.selectedRowIndex = null;
+          state.selectedStatusRowIndex = null;
+          state.stats = null;
+
+          showLoading();
+          google.script.run
+            .withSuccessHandler((payload) => {
+              state.fields = payload.fields || [];
+              setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
+              setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
+              setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
+              setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Mapa de calor');
+              setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
+
+              google.script.run
+                .withSuccessHandler((data) => {
+                  state = { ...state, ...data };
+                  hideError();
+                  render();
+                  if (document.getElementById('statsModal').classList.contains('open')) {
+                    fetchStats();
+                  }
+                  hideLoading();
+                  if (refreshButton) refreshButton.disabled = false;
+                })
+                .withFailureHandler((err) => {
+                  showError(err);
+                  hideLoading();
+                  if (refreshButton) refreshButton.disabled = false;
+                })
+                .getPortalData(state.filters, state.page, state.pageSize);
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+              hideLoading();
+              if (refreshButton) refreshButton.disabled = false;
+            })
+            .getPortalBootstrap();
+        }
         function setSelectOptions(id, options, placeholder) {
           const select = document.getElementById(id);
           const html = [`<option value="">${escapeHtml(placeholder)}</option>`]

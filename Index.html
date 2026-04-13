@@ -466,9 +466,8 @@
         }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
         .legend-label {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          overflow-wrap: anywhere;
+          white-space: normal;
         }
         .legend-percent {
           justify-self: end;
@@ -476,6 +475,13 @@
           font-variant-numeric: tabular-nums;
         }
         .stats-empty { color: var(--muted); font-size: 14px; margin-top: 8px; }
+        .stats-print-title {
+          display: none;
+          margin: 0 0 4mm;
+          font-size: 20px;
+          font-weight: 700;
+          color: #1d2433;
+        }
         .stats-filters {
           display: flex;
           flex-wrap: wrap;
@@ -643,7 +649,7 @@
             width: 283mm !important;
             max-width: 283mm !important;
             max-height: none !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             margin: 0 auto !important;
             border: none !important;
             border-radius: 0 !important;
@@ -656,8 +662,11 @@
           body.print-stats #statsModal #statsEmpty {
             display: none !important;
           }
+          body.print-stats #statsModal .stats-print-title {
+            display: block !important;
+          }
           body.print-stats #statsModal .stats-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 4mm !important;
             align-items: stretch !important;
           }
@@ -703,6 +712,12 @@
           body.print-stats #statsModal .legend-list {
             gap: 1.2mm !important;
           }
+          body.print-stats #statsModal .legend-dot,
+          body.print-stats #statsModal .bar-fill,
+          body.print-stats #statsModal .donut-segment {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }  
       </style>
     </head>
     <body>
@@ -837,6 +852,7 @@
             </div>
           </div>
           <div class="summary" id="statsSummary" style="margin-top:0;"></div>
+          <h2 class="stats-print-title">Estatísticas das respostas</h2>
           <div class="stats-grid" id="statsCharts"></div>
           <div class="stats-empty" id="statsEmpty" style="display:none;">Não há dados para montar os gráficos com os filtros atuais.</div>
         </div>
@@ -1501,8 +1517,7 @@
         function renderPieChartCard(chart) {
           const values = (chart.values || [])
             .filter((entry) => entry.count > 0)
-            .sort((a, b) => Number(b.count || 0) - Number(a.count || 0))
-            .slice(0, 3);
+            .sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
           const total = values.reduce((acc, entry) => acc + Number(entry.count || 0), 0);
           if (!total) {
             return `

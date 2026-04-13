@@ -557,6 +557,58 @@
             min-height: auto;
           }
         }
+        @page {
+          size: A4 portrait;
+          margin: 10mm;
+        }
+        @media print {
+          html,
+          body {
+            width: 210mm;
+            height: 297mm;
+            margin: 0;
+            padding: 0;
+            overflow: hidden !important;
+            background: #fff !important;
+          }
+          * {
+            box-shadow: none !important;
+          }
+          *::-webkit-scrollbar {
+            display: none !important;
+          }
+          .container,
+          .theme-toggle,
+          .refresh-toggle,
+          #loadingOverlay,
+          #statsModal,
+          #statusPickerModal {
+            display: none !important;
+          }
+          #detailsModal {
+            display: block !important;
+            position: static !important;
+            inset: auto !important;
+            padding: 0 !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+          #detailsModal .modal-content {
+            width: 190mm !important;
+            max-width: 190mm !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin: 0 auto !important;
+            border: 1px solid #dce3f1 !important;
+            border-radius: 8px !important;
+            padding: 8mm !important;
+            background: #fff !important;
+          }
+          #detailsModal .print-hidden {
+            display: none !important;
+          }
+        }
       </style>
     </head>
     <body>
@@ -652,8 +704,9 @@
           <div class="modal-header">
             <h2 id="modalTitle" style="margin:0;">Detalhes do registro</h2>
             <div class="modal-actions">
-              <button class="danger" style="max-width:130px;" onclick="deleteSelectedRow()">Excluir linha</button>
-              <button class="secondary" style="max-width:120px;" onclick="closeModal()">Fechar</button>
+              <button class="danger print-hidden" style="max-width:130px;" onclick="deleteSelectedRow()">Excluir linha</button>
+              <button class="secondary print-hidden" style="max-width:120px;" onclick="printDetailsModal()">Imprimir</button>
+              <button class="secondary print-hidden" style="max-width:120px;" onclick="closeModal()">Fechar</button>
             </div>
           </div>
           <div class="details-focus-panel">
@@ -1194,6 +1247,10 @@
           document.getElementById('detailsModal').classList.remove('open');
           state.selectedRowIndex = null;
           updateModalBackgroundState();
+        }
+
+        function printDetailsModal() {
+          window.print();
         }
 
         function openStatsModal() {

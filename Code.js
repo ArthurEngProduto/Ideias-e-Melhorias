@@ -11,10 +11,12 @@ const DEFAULT_PAGE_SIZE = 20;
 const CONTRIBUTION_TYPE_FIELDS = {
   'Qual é o tipo de contribuição neste produto': [
     'Ideia de melhoria em um produto',
+    'Problema identificado',
     'Problema que acontece com frequência',
   ],
   'Qual é o tipo de contribuição neste processo?': [
     'Ideia de melhoria em um processo',
+    'Problema identificado',
     'Problema que acontece com frequência',
   ],
 };

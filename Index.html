@@ -1116,10 +1116,15 @@
             problemFieldLabel,
           ];
           const labelOverrides = {};
+          const statusFieldAliases = ['Status', 'Concluído'];
+          const statusRowKey = resolveRowKeyByAliases(statusFieldAliases);
+          const statusDisplayKey = statusRowKey || 'Status';
+          const statusValue = getWorkflowStatus(row);
           const visibleUngroupedKeys = orderedKeys.filter((key) => (
             shouldRenderDetailItem(key)
             && !mainDetailKeys.includes(key)
             && !groupedKeys.has(key)
+            && cleanLabel(key) !== cleanLabel(statusDisplayKey)
           ));
           const extraForcedKeys = isFrequentProblem
             ? [recurrenceFieldLabel, photoFieldLabel]
@@ -1156,7 +1161,7 @@
             }
           }
 
-          const details = groupedDetailsHtml + sortedUngroupedKeys
+          const detailsBody = groupedDetailsHtml + sortedUngroupedKeys
             .map((key) => `
               <div class="detail-item ${((isImprovementIdea && cleanLabel(key) === cleanLabel(solutionFieldLabel))
                 || (isFrequentProblem && [solutionFieldLabel, ...problemFieldAliases].some((label) => cleanLabel(label) === cleanLabel(key)))) ? 'full-width' : ''}">
@@ -1171,6 +1176,13 @@
               return hasValue || isForced;
             })
             .join('');
+          const statusDetail = `
+            <div class="detail-item full-width">
+              <div class="detail-label">Status</div>
+              <div class="detail-value">${renderDetailValue(statusDisplayKey, statusValue)}</div>
+            </div>
+          `;
+          const details = detailsBody + statusDetail;
           document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
           document.getElementById('modalMainDetails').innerHTML = mainDetails;
           document.getElementById('modalDetails').innerHTML = details;
@@ -1554,6 +1566,15 @@
             return getRecurrenceBadge(text);
           }
 
+          if (['Status', 'Concluído'].some((label) => cleanLabel(label) === cleanLabel(key))) {
+            const normalizedStatus = getWorkflowStatus({ Status: text });
+            const statusClass = normalizedStatus === 'Concluído'
+              ? 'workflow-done'
+              : normalizedStatus === 'Na fila'
+                ? 'workflow-stopped'
+                : 'workflow-progress';
+            return `<span class="status-badge ${statusClass}">${escapeHtml(normalizedStatus)}</span>`;
+          }
           const photoLabel = 'Deseja anexar uma foto? (opcional)';
           if (cleanLabel(key) !== cleanLabel(photoLabel)) {
             return escapeHtml(text);

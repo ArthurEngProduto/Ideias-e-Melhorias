@@ -1223,8 +1223,12 @@
             productContributionValue,
             processContributionValue,
           ].includes('ideia de melhoria em um processo');
-          const isFrequentProcessProblem = processContributionValue === 'problema que acontece com frequência';
-          const isFrequentProductProblem = productContributionValue === 'problema que acontece com frequência';
+          const problemContributionLabels = [
+            'problema identificado',
+            'problema que acontece com frequência',
+          ];
+          const isFrequentProcessProblem = problemContributionLabels.includes(processContributionValue);
+          const isFrequentProductProblem = problemContributionLabels.includes(productContributionValue);
           const isFrequentProblem = isFrequentProcessProblem || isFrequentProductProblem;
           const productInfoGroup = renderGroupedDetails('Informações do produto', [
             'Nome do Produto:',
@@ -1652,14 +1656,14 @@
           const productContributionField = 'Qual é o tipo de contribuição neste produto';
           if (cleanLabel(chart.field) === cleanLabel(productContributionField)) {
             const label = cleanLabel(entry.label).toLowerCase();
-            if (label.includes('problema que acontece com frequência')) return CHART_FAMILY.problemaFrequente;
+            if (label.includes('problema identificado') || label.includes('problema que acontece com frequência')) return CHART_FAMILY.problemaFrequente;
             return CHART_FAMILY.produto[index % CHART_FAMILY.produto.length];
           }
 
           const processContributionField = 'Qual é o tipo de contribuição neste processo?';
           if (cleanLabel(chart.field) === cleanLabel(processContributionField)) {
             const label = cleanLabel(entry.label).toLowerCase();
-            if (label.includes('problema que acontece com frequência')) return CHART_FAMILY.problemaFrequente;
+            if (label.includes('problema identificado') || label.includes('problema que acontece com frequência')) return CHART_FAMILY.problemaFrequente;
             return CHART_FAMILY.processo[index % CHART_FAMILY.processo.length];
           }
 

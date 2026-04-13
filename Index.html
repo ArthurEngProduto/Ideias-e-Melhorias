@@ -196,6 +196,15 @@
           gap: 10px;
           margin-bottom: 10px;
         }
+        .modal-title-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+        .modal-title-row h2 {
+          margin: 0;
+        }
         .modal-actions {
           display: flex;
           align-items: center;
@@ -702,7 +711,10 @@
       <div class="modal" id="detailsModal" onclick="handleModalBackdrop(event)">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 id="modalTitle" style="margin:0;">Detalhes do registro</h2>
+            <div class="modal-title-row">
+              <h2 id="modalTitle">Detalhes do registro</h2>
+              <span id="modalStatusBadge" class="status-badge workflow-progress">Em andamento</span>
+            </div>
             <div class="modal-actions">
               <button class="danger print-hidden" style="max-width:130px;" onclick="deleteSelectedRow()">Excluir linha</button>
               <button class="secondary print-hidden" style="max-width:120px;" onclick="printDetailsModal()">Imprimir</button>
@@ -1229,18 +1241,21 @@
               return hasValue || isForced;
             })
             .join('');
-          const statusDetail = `
-            <div class="detail-item full-width">
-              <div class="detail-label">Status</div>
-              <div class="detail-value">${renderDetailValue(statusDisplayKey, statusValue)}</div>
-            </div>
-          `;
-          const details = detailsBody + statusDetail;
+          const details = detailsBody;
           document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
+          const modalStatusBadge = document.getElementById('modalStatusBadge');
+          modalStatusBadge.textContent = statusValue;
+          modalStatusBadge.className = `status-badge ${getStatusBadgeClassByStatus(statusValue)}`;
           document.getElementById('modalMainDetails').innerHTML = mainDetails;
           document.getElementById('modalDetails').innerHTML = details;
           document.getElementById('detailsModal').classList.add('open');
           updateModalBackgroundState();
+        }
+
+        function getStatusBadgeClassByStatus(status) {
+          if (status === 'Concluído') return 'workflow-done';
+          if (status === 'Na fila') return 'workflow-stopped';
+          return 'workflow-progress';
         }
 
         function closeModal() {

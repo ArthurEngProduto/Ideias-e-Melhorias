@@ -492,6 +492,21 @@
         .stats-filter-field {
           width: min(220px, 100%);
         }
+        .stats-filter-field.sectors {
+          width: min(300px, 100%);
+        }
+        .stats-filter-field select[multiple] {
+          min-height: 112px;
+        }
+        .stats-sector-actions {
+          display: flex;
+          gap: 8px;
+          margin-top: 8px;
+        }
+        .stats-sector-actions button {
+          width: auto;
+          min-width: 88px;
+        }
         .stats-filter-label {
           display: block;
           margin-bottom: 6px;
@@ -846,9 +861,17 @@
               <label for="statsDateEndFilter" class="stats-filter-label">Data final</label>
               <input id="statsDateEndFilter" type="date" aria-label="Filtrar estatísticas por data final" />
             </div>
+            <div class="stats-filter-field sectors">
+              <label for="statsSectorFilter" class="stats-filter-label">Setores</label>
+              <select id="statsSectorFilter" multiple aria-label="Filtrar estatísticas por setores"></select>
+              <div class="stats-sector-actions">
+                <button type="button" class="secondary" onclick="selectAllStatsSectors()">Todos</button>
+                <button type="button" class="secondary" onclick="clearStatsSectorFilter()">Limpar</button>
+              </div>
+            </div>
             <div class="stats-filter-actions">
-              <button type="button" onclick="applyStatsDateFilter()">Aplicar</button>
-              <button type="button" class="secondary" onclick="clearStatsDateFilter()">Limpar</button>
+              <button type="button" onclick="applyStatsFilters()">Aplicar</button>
+              <button type="button" class="secondary" onclick="clearStatsFilters()">Limpar</button>
             </div>
           </div>
           <div class="summary" id="statsSummary" style="margin-top:0;"></div>
@@ -884,7 +907,9 @@
           selectedStatusRowIndex: null,
           stats: null,
           statsDateStart: '',
-          statsDateEnd: ''
+          statsDateEnd: '',
+          statsSelectedSectors: [],
+          statsAvailableSectors: []
         };
         let loadingCount = 0;
         const DONUT_CUTOUT_RATIO = 0.62;
@@ -954,12 +979,14 @@
           google.script.run
             .withSuccessHandler((payload) => {
               state.fields = payload.fields || [];
+              state.statsAvailableSectors = payload.options.sectors || [];
               setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
 
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
               setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
               setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
+              setStatsSectorOptions(state.statsAvailableSectors);
               addFilterListeners();
 
               loadData();
@@ -1003,12 +1030,13 @@
           google.script.run
             .withSuccessHandler((payload) => {
               state.fields = payload.fields || [];
+              state.statsAvailableSectors = payload.options.sectors || [];
               setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
               setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
               setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
-
+              setStatsSectorOptions(state.statsAvailableSectors);
               google.script.run
                 .withSuccessHandler((data) => {
                   state = { ...state, ...data };
@@ -1409,6 +1437,7 @@
           if (endInput) {
             endInput.value = state.statsDateEnd || '';
           }
+          syncStatsSectorSelectionUi();
           fetchStats();
           document.getElementById('statsModal').classList.add('open');
           updateModalBackgroundState();
@@ -1430,9 +1459,11 @@
             .getPortalStats(getStatsFilters());
         }
 
+
         function applyStatsDateFilter() {
           const startInput = document.getElementById('statsDateStartFilter');
           const endInput = document.getElementById('statsDateEndFilter');
+          const sectorSelect = document.getElementById('statsSectorFilter');
           let startValue = startInput ? startInput.value : '';
           let endValue = endInput ? endInput.value : '';
 
@@ -1444,16 +1475,36 @@
 
           state.statsDateStart = startValue;
           state.statsDateEnd = endValue;
+          state.statsSelectedSectors = getSelectedValuesFromElement(sectorSelect);
           fetchStats();
         }
 
-        function clearStatsDateFilter() {
+        function clearStatsFilters() {
           state.statsDateStart = '';
           state.statsDateEnd = '';
+          state.statsSelectedSectors = [];
           const startInput = document.getElementById('statsDateStartFilter');
           const endInput = document.getElementById('statsDateEndFilter');
+          const sectorSelect = document.getElementById('statsSectorFilter');
           if (startInput) startInput.value = '';
           if (endInput) endInput.value = '';
+          if (sectorSelect) {
+            Array.from(sectorSelect.options).forEach((option) => {
+              option.selected = false;
+            });
+          }
+          fetchStats();
+        }
+
+        function clearStatsSectorFilter() {
+          state.statsSelectedSectors = [];
+          syncStatsSectorSelectionUi();
+          fetchStats();
+        }
+
+        function selectAllStatsSectors() {
+          state.statsSelectedSectors = [...(state.statsAvailableSectors || [])];
+          syncStatsSectorSelectionUi();
           fetchStats();
         }
 
@@ -1701,6 +1752,11 @@
           const filters = { ...(state.filters || {}) };
           if (state.statsDateStart) filters.timestampStart = state.statsDateStart;
           if (state.statsDateEnd) filters.timestampEnd = state.statsDateEnd;
+          if (state.statsSelectedSectors && state.statsSelectedSectors.length) {
+            filters.sectors = state.statsSelectedSectors.slice();
+          } else {
+            delete filters.sectors;
+          }
           return filters;
         }
 
@@ -1747,6 +1803,40 @@
               });
             }
           });
+        }
+
+        function setStatsSectorOptions(options) {
+          const select = document.getElementById('statsSectorFilter');
+          if (!select) return;
+
+          const safeOptions = options || [];
+          const selectedSet = new Set(state.statsSelectedSectors || []);
+          select.innerHTML = safeOptions
+            .map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`)
+            .join('');
+          Array.from(select.options).forEach((option) => {
+            option.selected = selectedSet.has(option.value);
+          });
+
+          select.onchange = () => {
+            state.statsSelectedSectors = getSelectedValuesFromElement(select);
+            fetchStats();
+          };
+        }
+
+        function syncStatsSectorSelectionUi() {
+          const select = document.getElementById('statsSectorFilter');
+          if (!select) return;
+
+          const selectedSet = new Set(state.statsSelectedSectors || []);
+          Array.from(select.options).forEach((option) => {
+            option.selected = selectedSet.has(option.value);
+          });
+        }
+
+        function getSelectedValuesFromElement(select) {
+          if (!select) return [];
+          return Array.from(select.selectedOptions || []).map((option) => option.value);
         }
 
         function cleanLabel(label) {

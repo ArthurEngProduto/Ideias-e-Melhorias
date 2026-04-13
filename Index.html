@@ -1055,6 +1055,7 @@
           ].includes('ideia de melhoria em um processo');
           const isFrequentProcessProblem = processContributionValue === 'problema que acontece com frequência';
           const isFrequentProductProblem = productContributionValue === 'problema que acontece com frequência';
+          const isFrequentProblem = isFrequentProcessProblem || isFrequentProductProblem;
           const productInfoGroup = renderGroupedDetails('Informações do produto', [
             'Nome do Produto:',
             'Modelo:',
@@ -1108,12 +1109,18 @@
           const problemFieldLabel = 'Descreva o problema a ser corrigido no produto:';
           const solutionFieldLabel = 'Descreva sua ideia de solução:';
           const photoFieldLabel = 'Deseja anexar uma foto? (opcional)';
+          const problemFieldAliases = [
+            'Descreva o problema a ser corrigido no produto/processo:',
+            'Descreva o problema a ser corrigido no processo:',
+            problemFieldLabel,
+          ];
+          const labelOverrides = {};
           const visibleUngroupedKeys = orderedKeys.filter((key) => (
             shouldRenderDetailItem(key)
             && !mainDetailKeys.includes(key)
             && !groupedKeys.has(key)
           ));
-          const extraForcedKeys = isFrequentProductProblem
+          const extraForcedKeys = isFrequentProblem
             ? [recurrenceFieldLabel, photoFieldLabel]
             : isImprovementIdea
               ? [recurrenceFieldLabel, photoFieldLabel]
@@ -1126,8 +1133,8 @@
               mergedUngroupedKeys.push(forcedKey);
             }
           });
-          const ungroupedKeyOrder = isFrequentProductProblem
-            ? [recurrenceFieldLabel, photoFieldLabel, problemFieldLabel, solutionFieldLabel]
+          const ungroupedKeyOrder = isFrequentProblem
+            ? [recurrenceFieldLabel, photoFieldLabel, ...problemFieldAliases, solutionFieldLabel]
             : isImprovementIdea
               ? [recurrenceFieldLabel, photoFieldLabel, solutionFieldLabel]
               : null;
@@ -1141,11 +1148,18 @@
               return safeIndexA - safeIndexB;
             });
 
+          if (isFrequentProblem) {
+            const problemKey = resolveRowKeyByAliases(problemFieldAliases);
+            if (problemKey) {
+              labelOverrides[problemKey] = 'Descreva o problema a ser corrigido no produto/processo:';
+            }
+          }
+
           const details = groupedDetailsHtml + sortedUngroupedKeys
             .map((key) => `
               <div class="detail-item ${((isImprovementIdea && cleanLabel(key) === cleanLabel(solutionFieldLabel))
-                || (isFrequentProductProblem && [problemFieldLabel, solutionFieldLabel].some((label) => cleanLabel(label) === cleanLabel(key)))) ? 'full-width' : ''}">
-                <div class="detail-label">${escapeHtml(cleanLabel(key))}</div>
+                || (isFrequentProblem && [solutionFieldLabel, ...problemFieldAliases].some((label) => cleanLabel(label) === cleanLabel(key)))) ? 'full-width' : ''}">
+                <div class="detail-label">${escapeHtml(cleanLabel(labelOverrides[key] || key))}</div>
                 <div class="detail-value">${renderDetailValue(key, row[key])}</div>
               </div>
             `)

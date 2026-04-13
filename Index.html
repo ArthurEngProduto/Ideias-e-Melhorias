@@ -618,6 +618,91 @@
             display: none !important;
           }
         }
+          body.print-stats {
+            width: 297mm !important;
+            height: 210mm !important;
+          }
+          body.print-stats #detailsModal,
+          body.print-stats #statusPickerModal,
+          body.print-stats .container,
+          body.print-stats .theme-toggle,
+          body.print-stats .refresh-toggle,
+          body.print-stats #loadingOverlay {
+            display: none !important;
+          }
+          body.print-stats #statsModal {
+            display: block !important;
+            position: static !important;
+            inset: auto !important;
+            padding: 0 !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+          body.print-stats #statsModal .modal-content {
+            width: 283mm !important;
+            max-width: 283mm !important;
+            max-height: none !important;
+            overflow: hidden !important;
+            margin: 0 auto !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+          }
+          body.print-stats #statsModal .modal-header,
+          body.print-stats #statsModal .stats-filters,
+          body.print-stats #statsModal #statsSummary,
+          body.print-stats #statsModal #statsEmpty {
+            display: none !important;
+          }
+          body.print-stats #statsModal .stats-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 4mm !important;
+            align-items: stretch !important;
+          }
+          body.print-stats #statsModal .stats-card {
+            min-height: 0 !important;
+            padding: 3mm !important;
+            border: 1px solid #dce3f1 !important;
+            border-radius: 8px !important;
+            gap: 2mm !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          body.print-stats #statsModal .stats-title {
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+          }
+          body.print-stats #statsModal .stats-subtitle,
+          body.print-stats #statsModal .legend-item,
+          body.print-stats #statsModal .bar-label,
+          body.print-stats #statsModal .bar-value,
+          body.print-stats #statsModal .legend-percent {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+          }
+          body.print-stats #statsModal .donut-wrap {
+            width: 34mm !important;
+            height: 34mm !important;
+          }
+          body.print-stats #statsModal .donut-total-value {
+            font-size: 15px !important;
+          }
+          body.print-stats #statsModal .donut-total-label {
+            font-size: 9px !important;
+            margin-top: 1px !important;
+          }
+          body.print-stats #statsModal .bar-chart {
+            gap: 1.5mm !important;
+            margin: 1mm 0 2mm !important;
+          }
+          body.print-stats #statsModal .bar-track {
+            height: 8px !important;
+          }
+          body.print-stats #statsModal .legend-list {
+            gap: 1.2mm !important;
+          }
       </style>
     </head>
     <body>
@@ -732,7 +817,10 @@
         <div class="modal-content stats-modal-content">
           <div class="modal-header">
             <h2 style="margin:0;">Estatísticas das respostas</h2>
-            <button class="secondary" style="max-width:120px;" onclick="closeStatsModal()">Fechar</button>
+            <div class="modal-actions">
+              <button class="secondary" style="max-width:160px;" onclick="printStatsModal()">Imprimir gráficos</button>
+              <button class="secondary" style="max-width:120px;" onclick="closeStatsModal()">Fechar</button>
+            </div>
           </div>
           <div class="stats-filters">
             <div class="stats-filter-field">
@@ -1266,6 +1354,30 @@
 
         function printDetailsModal() {
           window.print();
+        }
+
+        function printStatsModal() {
+          const printStyleId = 'stats-print-page-style';
+          const existingStyle = document.getElementById(printStyleId);
+          if (existingStyle) existingStyle.remove();
+
+          const pageStyle = document.createElement('style');
+          pageStyle.id = printStyleId;
+          pageStyle.textContent = '@page { size: A4 landscape; margin: 6mm; }';
+          document.head.appendChild(pageStyle);
+
+          document.body.classList.add('print-stats');
+
+          const cleanup = () => {
+            document.body.classList.remove('print-stats');
+            const styleNode = document.getElementById(printStyleId);
+            if (styleNode) styleNode.remove();
+            window.removeEventListener('afterprint', cleanup);
+          };
+
+          window.addEventListener('afterprint', cleanup);
+          window.print();
+          setTimeout(cleanup, 1000);
         }
 
         function openStatsModal() {

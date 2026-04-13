@@ -144,7 +144,9 @@ function getFilteredRows_(filters) {
     if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
     if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
     if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
-    if (normalizedFilters.sector && getFieldValue_(row, 'Selecione o seu setor:') !== normalizedFilters.sector) return false;
+    const rowSector = getFieldValue_(row, 'Selecione o seu setor:');
+    if (normalizedFilters.sectors.length && !normalizedFilters.sectors.includes(rowSector)) return false;
+    if (normalizedFilters.sector && rowSector !== normalizedFilters.sector) return false;
     if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
     if (normalizedFilters.recurrence && getFieldValue_(row, 'Qual é a recorrência ou necessidade desta melhoria?') !== normalizedFilters.recurrence) return false;
     if (normalizedFilters.status && getRowStatusValue_(row) !== normalizedFilters.status) return false;
@@ -533,11 +535,18 @@ function normalizeFilters_(filters) {
   const timestampStart = String(filters.timestampStart || filters.timestamp || '').trim().toLowerCase();
   const timestampEnd = String(filters.timestampEnd || filters.timestamp || '').trim().toLowerCase();
 
+  const normalizedSectors = Array.isArray(filters.sectors)
+    ? filters.sectors
+        .map((value) => String(value || '').trim())
+        .filter((value, index, array) => value && array.indexOf(value) === index)
+    : [];
+
   return {
     timestampStart,
 
     timestampEnd,
     name: String(filters.name || '').trim().toLowerCase(),
+    sectors: normalizedSectors,
     sector: String(filters.sector || '').trim(),
     reference: String(filters.reference || '').trim(),
     recurrence: String(filters.recurrence || '').trim(),

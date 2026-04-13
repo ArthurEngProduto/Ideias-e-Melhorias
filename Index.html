@@ -493,15 +493,63 @@
           width: min(220px, 100%);
         }
         .stats-filter-field.sectors {
-          width: min(300px, 100%);
+          width: min(320px, 100%);
+          position: relative;
         }
-        .stats-filter-field select[multiple] {
-          min-height: 112px;
+        .stats-sector-trigger {
+          text-align: left;
+          background: var(--surface);
+          color: var(--text);
+          border: 1px solid var(--line);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .stats-sector-trigger::after {
+          content: '▾';
+          font-size: 12px;
+          color: var(--muted);
+        }
+        .stats-sector-dropdown {
+          display: none;
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 0;
+          width: 100%;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 10px;
+          z-index: 1200;
+          box-shadow: 0 10px 24px rgba(29, 36, 51, 0.16);
+        }
+        .stats-sector-dropdown.open {
+          display: block;
+        }
+        .stats-sector-checkboxes {
+          max-height: 180px;
+          overflow: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+        .stats-sector-checkbox {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          color: var(--text);
+          cursor: pointer;
+        }
+        .stats-sector-checkbox input {
+          width: auto;
+          padding: 0;
         }
         .stats-sector-actions {
           display: flex;
           gap: 8px;
-          margin-top: 8px;
         }
         .stats-sector-actions button {
           width: auto;
@@ -732,7 +780,7 @@
           body.print-stats #statsModal .donut-segment {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-          }  
+          }
       </style>
     </head>
     <body>
@@ -861,12 +909,15 @@
               <label for="statsDateEndFilter" class="stats-filter-label">Data final</label>
               <input id="statsDateEndFilter" type="date" aria-label="Filtrar estatísticas por data final" />
             </div>
-            <div class="stats-filter-field sectors">
-              <label for="statsSectorFilter" class="stats-filter-label">Setores</label>
-              <select id="statsSectorFilter" multiple aria-label="Filtrar estatísticas por setores"></select>
-              <div class="stats-sector-actions">
-                <button type="button" class="secondary" onclick="selectAllStatsSectors()">Todos</button>
-                <button type="button" class="secondary" onclick="clearStatsSectorFilter()">Limpar</button>
+            <div class="stats-filter-field sectors" id="statsSectorFilterWrap">
+              <label for="statsSectorToggle" class="stats-filter-label">Setores</label>
+              <button id="statsSectorToggle" type="button" class="stats-sector-trigger" aria-haspopup="true" aria-expanded="false" onclick="toggleStatsSectorDropdown(event)">Selecionar setores</button>
+              <div id="statsSectorDropdown" class="stats-sector-dropdown" aria-label="Lista de setores">
+                <div id="statsSectorCheckboxes" class="stats-sector-checkboxes"></div>
+                <div class="stats-sector-actions">
+                  <button type="button" class="secondary" onclick="selectAllStatsSectors()">Todos</button>
+                  <button type="button" class="secondary" onclick="clearStatsSectorFilter()">Limpar</button>
+                </div>
               </div>
             </div>
             <div class="stats-filter-actions">
@@ -1463,7 +1514,6 @@
         function applyStatsDateFilter() {
           const startInput = document.getElementById('statsDateStartFilter');
           const endInput = document.getElementById('statsDateEndFilter');
-          const sectorSelect = document.getElementById('statsSectorFilter');
           let startValue = startInput ? startInput.value : '';
           let endValue = endInput ? endInput.value : '';
 
@@ -1475,8 +1525,12 @@
 
           state.statsDateStart = startValue;
           state.statsDateEnd = endValue;
-          state.statsSelectedSectors = getSelectedValuesFromElement(sectorSelect);
+
           fetchStats();
+        }
+
+        function applyStatsFilters() {
+          applyStatsDateFilter();
         }
 
         function clearStatsFilters() {
@@ -1485,14 +1539,9 @@
           state.statsSelectedSectors = [];
           const startInput = document.getElementById('statsDateStartFilter');
           const endInput = document.getElementById('statsDateEndFilter');
-          const sectorSelect = document.getElementById('statsSectorFilter');
           if (startInput) startInput.value = '';
           if (endInput) endInput.value = '';
-          if (sectorSelect) {
-            Array.from(sectorSelect.options).forEach((option) => {
-              option.selected = false;
-            });
-          }
+          syncStatsSectorSelectionUi();
           fetchStats();
         }
 
@@ -1806,37 +1855,73 @@
         }
 
         function setStatsSectorOptions(options) {
-          const select = document.getElementById('statsSectorFilter');
-          if (!select) return;
+          const container = document.getElementById('statsSectorCheckboxes');
+          if (!container) return;
 
           const safeOptions = options || [];
           const selectedSet = new Set(state.statsSelectedSectors || []);
-          select.innerHTML = safeOptions
-            .map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`)
+          container.innerHTML = safeOptions
+            .map((item, index) => {
+              const inputId = `statsSectorOption${index}`;
+              const checked = selectedSet.has(item) ? 'checked' : '';
+              return `<label class="stats-sector-checkbox" for="${inputId}"><input id="${inputId}" type="checkbox" value="${escapeHtml(item)}" ${checked} onchange="onStatsSectorCheckboxChange()" /> <span>${escapeHtml(item)}</span></label>`;
+            })
             .join('');
-          Array.from(select.options).forEach((option) => {
-            option.selected = selectedSet.has(option.value);
-          });
 
-          select.onchange = () => {
-            state.statsSelectedSectors = getSelectedValuesFromElement(select);
-            fetchStats();
-          };
+          syncStatsSectorSelectionUi();
         }
 
+        function onStatsSectorCheckboxChange() {
+          const checkboxes = document.querySelectorAll('#statsSectorCheckboxes input[type="checkbox"]');
+          state.statsSelectedSectors = Array.from(checkboxes)
+            .filter((checkbox) => checkbox.checked)
+            .map((checkbox) => checkbox.value);
+          updateStatsSectorButtonLabel();
+        }
+         
         function syncStatsSectorSelectionUi() {
-          const select = document.getElementById('statsSectorFilter');
-          if (!select) return;
-
-          const selectedSet = new Set(state.statsSelectedSectors || []);
-          Array.from(select.options).forEach((option) => {
-            option.selected = selectedSet.has(option.value);
+          const checkboxes = document.querySelectorAll('#statsSectorCheckboxes input[type="checkbox"]');
+         const selectedSet = new Set(state.statsSelectedSectors || []);
+          checkboxes.forEach((checkbox) => {
+            checkbox.checked = selectedSet.has(checkbox.value);
           });
+          updateStatsSectorButtonLabel();
         }
 
-        function getSelectedValuesFromElement(select) {
-          if (!select) return [];
-          return Array.from(select.selectedOptions || []).map((option) => option.value);
+        function updateStatsSectorButtonLabel() {
+          const button = document.getElementById('statsSectorToggle');
+          if (!button) return;
+
+          const selectedCount = (state.statsSelectedSectors || []).length;
+          if (!selectedCount) {
+            button.textContent = 'Selecionar setores';
+            return;
+          }
+
+          if (selectedCount === 1) {
+            button.textContent = state.statsSelectedSectors[0];
+            return;
+          }
+
+          button.textContent = `${selectedCount} setores selecionados`;
+        }
+
+        function toggleStatsSectorDropdown(event) {
+          if (event) event.stopPropagation();
+          const dropdown = document.getElementById('statsSectorDropdown');
+          const trigger = document.getElementById('statsSectorToggle');
+          if (!dropdown || !trigger) return;
+          const willOpen = !dropdown.classList.contains('open');
+          dropdown.classList.toggle('open', willOpen);
+          trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        }
+
+        function closeStatsSectorDropdown() {
+          const dropdown = document.getElementById('statsSectorDropdown');
+          const trigger = document.getElementById('statsSectorToggle');
+          if (!dropdown || !trigger) return;
+          dropdown.classList.remove('open');
+          trigger.setAttribute('aria-expanded', 'false');
         }
 
         function cleanLabel(label) {
@@ -2002,6 +2087,14 @@
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#039;');
         }
+
+        document.addEventListener('click', (event) => {
+          const wrap = document.getElementById('statsSectorFilterWrap');
+          if (!wrap) return;
+          if (!wrap.contains(event.target)) {
+            closeStatsSectorDropdown();
+          }
+        });
 
         initializeTheme();
         boot();

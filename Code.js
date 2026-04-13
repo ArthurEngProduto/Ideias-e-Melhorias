@@ -185,8 +185,10 @@ function deletePortalRow(rowNumber) {
     rowObject[header] = rowValues[index] || '';
   });
 
-  const deletionSummary = deleteFormResponseForRow_(rowObject);
-  sheet.deleteRow(numericRow);
+  const deletionSummary = deleteFormResponseForRow_(rowObject, sheet);
+  if (!(deletionSummary.deletedFromForm && deletionSummary.formLinkedToPortalSheet)) {
+    sheet.deleteRow(numericRow);
+  }
 
   return {
     success: true,
@@ -245,16 +247,18 @@ function resolveSpreadsheet_() {
   );
 }
 
-function deleteFormResponseForRow_(row) {
+function deleteFormResponseForRow_(row, portalSheet) {
   const form = getLinkedForm_();
   if (!form) {
     return {
       deletedFromForm: false,
       deletedFromResponsesSheet: false,
+      formLinkedToPortalSheet: false,
     };
   }
 
   let deletedFromForm = false;
+  const formLinkedToPortalSheet = isFormLinkedToPortalSheet_(form, portalSheet);
 
   const responseId = findResponseId_(row);
   if (responseId) {
@@ -268,12 +272,34 @@ function deleteFormResponseForRow_(row) {
     }
   }
 
-  const deletedFromResponsesSheet = deleteFromLinkedResponsesSheet_(form, row);
+  const deletedFromResponsesSheet = deleteFromLinkedResponsesSheet_(form, row, portalSheet);
 
   return {
     deletedFromForm,
     deletedFromResponsesSheet,
+    formLinkedToPortalSheet,
   };
+}
+
+function isFormLinkedToPortalSheet_(form, portalSheet) {
+  if (!portalSheet) return false;
+
+  try {
+    const destinationId = form.getDestinationId();
+    if (!destinationId) return false;
+
+    const responsesSpreadsheet = SpreadsheetApp.openById(destinationId);
+    const responsesSheet = getResponsesSheet_(responsesSpreadsheet);
+    if (!responsesSheet) return false;
+
+    return (
+      responsesSpreadsheet.getId() === portalSheet.getParent().getId() &&
+      responsesSheet.getSheetId() === portalSheet.getSheetId()
+    );
+  } catch (error) {
+    Logger.log('Falha ao validar vínculo da aba de respostas: %s', error);
+    return false;
+  }
 }
 
 function getLinkedForm_() {
@@ -336,7 +362,7 @@ function findFormResponseByTimestamp_(form, row) {
   return null;
 }
 
-function deleteFromLinkedResponsesSheet_(form, row) {
+function deleteFromLinkedResponsesSheet_(form, row, portalSheet) {
   try {
     const destinationId = form.getDestinationId();
     if (!destinationId) return false;
@@ -344,6 +370,13 @@ function deleteFromLinkedResponsesSheet_(form, row) {
     const responsesSpreadsheet = SpreadsheetApp.openById(destinationId);
     const responsesSheet = getResponsesSheet_(responsesSpreadsheet);
     if (!responsesSheet) return false;
+    if (
+      portalSheet &&
+      responsesSpreadsheet.getId() === portalSheet.getParent().getId() &&
+      responsesSheet.getSheetId() === portalSheet.getSheetId()
+    ) {
+      return false;
+    }
 
     return deleteRowByTimestampAndName_(responsesSheet, row);
   } catch (error) {

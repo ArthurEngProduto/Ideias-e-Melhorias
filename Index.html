@@ -615,10 +615,10 @@
             <thead>
               <tr>
                 <th>Data</th>
-                <th>Digite seu nome:</th>
-                <th>Selecione o seu setor:</th>
-                <th>Este registro se refere a:</th>
-              <th>Mapa de calor</th>
+                <th>Nome</th>
+                <th>Setor</th>
+                <th>Produto/Processo</th>
+              <th>Recorrência</th>
               <th>Status</th>
               </tr>
               <tr class="filter-row">
@@ -788,7 +788,7 @@
 
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
               setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
-              setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Mapa de calor');
+              setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
               addFilterListeners();
 
@@ -836,7 +836,7 @@
               setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
               setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
-              setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Mapa de calor');
+              setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
 
               google.script.run

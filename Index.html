@@ -751,7 +751,7 @@
             max-height: none !important;
             overflow: visible !important;
             margin: 0 auto !important;
-            border: 1px solid #dce3f1 !important;
+            border: 1px solid #9ca3af !important;
             border-radius: 8px !important;
             padding: 8mm !important;
             background: #fff !important;
@@ -759,7 +759,67 @@
           #detailsModal .print-hidden {
             display: none !important;
           }
-        }
+
+          /* Legibilidade no print */
+          #detailsModal,
+          #detailsModal *,
+          #statsModal,
+          #statsModal * {
+            color: #000 !important;
+            text-shadow: none !important;
+            -webkit-text-fill-color: #000 !important;
+          }
+          #detailsModal .meta,
+          #detailsModal .summary,
+          #detailsModal .detail-label,
+          #detailsModal .stats-subtitle,
+          #detailsModal .stats-empty,
+          #detailsModal .muted,
+          #detailsModal .text-muted,
+          #detailsModal [class*="muted"],
+          #detailsModal [class*="secondary"],
+          #statsModal .meta,
+          #statsModal .summary,
+          #statsModal .detail-label,
+          #statsModal .stats-subtitle,
+          #statsModal .stats-empty,
+          #statsModal .muted,
+          #statsModal .text-muted,
+          #statsModal [class*="muted"],
+          #statsModal [class*="secondary"] {
+            color: #000 !important;
+            -webkit-text-fill-color: #000 !important;
+          }
+          #detailsModal input,
+          #detailsModal textarea,
+          #detailsModal select,
+          #detailsModal .panel,
+          #detailsModal .table-wrap,
+          #detailsModal table,
+          #detailsModal th,
+          #detailsModal td,
+          #detailsModal .modal-content,
+          #detailsModal .detail-item,
+          #detailsModal .detail-group,
+          #statsModal input,
+          #statsModal textarea,
+          #statsModal select,
+          #statsModal .panel,
+          #statsModal .table-wrap,
+          #statsModal table,
+          #statsModal th,
+          #statsModal td,
+          #statsModal .modal-content,
+          #statsModal .stats-card {
+            border-color: #9ca3af !important;
+          }
+          #detailsModal input::placeholder,
+          #detailsModal textarea::placeholder,
+          #statsModal input::placeholder,
+          #statsModal textarea::placeholder {
+            color: #000 !important;
+            opacity: 1 !important;
+          }
           body.print-stats {
             width: 297mm !important;
             height: 210mm !important;
@@ -806,10 +866,11 @@
             gap: 4mm !important;
             align-items: stretch !important;
           }
+          
           body.print-stats #statsModal .stats-card {
             min-height: 0 !important;
             padding: 3mm !important;
-            border: 1px solid #dce3f1 !important;
+            border: 1px solid #9ca3af !important;
             border-radius: 8px !important;
             gap: 2mm !important;
             break-inside: avoid !important;
@@ -854,6 +915,7 @@
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+        }
       </style>
     </head>
     <body>

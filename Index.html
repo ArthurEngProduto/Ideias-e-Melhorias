@@ -721,52 +721,12 @@
             padding: 0;
             overflow: hidden !important;
             background: #fff !important;
-            color: #000 !important;
-            color-scheme: light !important;
-            forced-color-adjust: none !important;
           }
           * {
             box-shadow: none !important;
           }
           *::-webkit-scrollbar {
             display: none !important;
-          }
-          #detailsModal,
-          #detailsModal *,
-          #statsModal,
-          #statsModal * {
-            color: #000 !important;
-            border-color: #9ca3af !important;
-            background-color: #fff !important;
-            color-scheme: light !important;
-          }
-          #statsModal svg,
-          #statsModal svg *,
-          #statsModal .donut-segment {
-            background-color: transparent !important;
-            color: inherit !important;
-          }
-          #detailsModal input,
-          #detailsModal textarea,
-          #detailsModal select,
-          #statsModal input,
-          #statsModal textarea,
-          #statsModal select {
-            background: #fff !important;
-            color: #000 !important;
-            border: 1px solid #9ca3af !important;
-          }
-          #detailsModal .summary,
-          #detailsModal .date-range span,
-          #detailsModal .empty,
-          #detailsModal .detail-label,
-          #statsModal .stats-subtitle,
-          #statsModal .legend-item,
-          #statsModal .bar-label,
-          #statsModal .bar-value,
-          #statsModal .legend-percent,
-          #statsModal .stats-empty {
-            color: #000 !important;
           }
           .container,
           .theme-toggle,
@@ -791,7 +751,7 @@
             max-height: none !important;
             overflow: visible !important;
             margin: 0 auto !important;
-            border: 1px solid #9ca3af !important;
+            border: 1px solid #dce3f1 !important;
             border-radius: 8px !important;
             padding: 8mm !important;
             background: #fff !important;
@@ -799,15 +759,10 @@
           #detailsModal .print-hidden {
             display: none !important;
           }
+        }
           body.print-stats {
             width: 297mm !important;
             height: 210mm !important;
-            color: #000 !important;
-            background: #fff !important;
-            color-scheme: light !important;
-          }
-          body.print-stats {
-            overflow: hidden !important;
           }
           body.print-stats #detailsModal,
           body.print-stats #statusPickerModal,
@@ -854,7 +809,7 @@
           body.print-stats #statsModal .stats-card {
             min-height: 0 !important;
             padding: 3mm !important;
-            border: 1px solid #9ca3af !important;
+            border: 1px solid #dce3f1 !important;
             border-radius: 8px !important;
             gap: 2mm !important;
             break-inside: avoid !important;
@@ -895,19 +850,10 @@
           }
           body.print-stats #statsModal .legend-dot,
           body.print-stats #statsModal .bar-fill,
-          body.print-stats #statsModal .donut-chart,
           body.print-stats #statsModal .donut-segment {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-        }   
-          body.print-stats #statsModal .donut-chart {
-            transform: none !important;
-          }
-          body.print-stats #statsModal .donut-segment {
-            stroke-opacity: 1 !important;
-            stroke-width: 34 !important;
-          }   
       </style>
     </head>
     <body>

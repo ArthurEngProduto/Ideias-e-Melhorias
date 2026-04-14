@@ -740,6 +740,12 @@
             background-color: #fff !important;
             color-scheme: light !important;
           }
+          #statsModal svg,
+          #statsModal svg *,
+          #statsModal .donut-segment {
+            background-color: transparent !important;
+            color: inherit !important;
+          }
           #detailsModal input,
           #detailsModal textarea,
           #detailsModal select,
@@ -889,11 +895,19 @@
           }
           body.print-stats #statsModal .legend-dot,
           body.print-stats #statsModal .bar-fill,
+          body.print-stats #statsModal .donut-chart,
           body.print-stats #statsModal .donut-segment {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-        }       
+        }   
+          body.print-stats #statsModal .donut-chart {
+            transform: none !important;
+          }
+          body.print-stats #statsModal .donut-segment {
+            stroke-opacity: 1 !important;
+            stroke-width: 34 !important;
+          }   
       </style>
     </head>
     <body>

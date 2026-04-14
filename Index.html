@@ -1258,7 +1258,6 @@
           });
           state.tableSelectedSectors = [];
           syncTableSectorSelectionUi();
-          applyFilters();
         }
 
         function render() {
@@ -1969,7 +1968,6 @@
             .filter((checkbox) => checkbox.checked)
             .map((checkbox) => checkbox.value);
           updateTableSectorButtonLabel();
-          applyFilters();
         }
 
         function syncTableSectorSelectionUi() {
@@ -2020,13 +2018,11 @@
         function selectAllTableSectors() {
           state.tableSelectedSectors = (state.tableAvailableSectors || []).slice();
           syncTableSectorSelectionUi();
-          applyFilters();
         }
 
         function clearTableSectorFilter() {
           state.tableSelectedSectors = [];
           syncTableSectorSelectionUi();
-          applyFilters();
         }
         function setStatsSectorOptions(options) {
           const container = document.getElementById('statsSectorCheckboxes');

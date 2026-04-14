@@ -147,6 +147,68 @@
         tbody tr:hover { background: var(--surface-soft); }
         .filter-row th { background: var(--surface); border-bottom: 1px solid var(--line); }
         .filter-row input, .filter-row select { padding: 8px; font-size: 13px; }
+        .table-sector-filter-wrap {
+          position: relative;
+        }
+        .table-sector-trigger {
+          width: 100%;
+          text-align: left;
+          padding-right: 28px;
+          position: relative;
+        }
+        .table-sector-trigger::after {
+          content: '▾';
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+          color: var(--muted);
+        }
+        .table-sector-dropdown {
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 0;
+          right: 0;
+          min-width: 230px;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 8px;
+          box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+          display: none;
+          z-index: 30;
+        }
+        .table-sector-dropdown.open {
+          display: block;
+        }
+        .table-sector-checkboxes {
+          max-height: 190px;
+          overflow: auto;
+          display: grid;
+          gap: 6px;
+          margin-bottom: 8px;
+          padding-right: 2px;
+        }
+        .table-sector-checkbox {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+          color: var(--text);
+        }
+        .table-sector-checkbox input {
+          width: auto;
+          margin: 0;
+        }
+        .table-sector-actions {
+          display: flex;
+          gap: 6px;
+        }
+        .table-sector-actions button {
+          padding: 7px 8px;
+          font-size: 12px;
+        }
         body.dark-mode .filter-row input[type="date"]::-webkit-calendar-picker-indicator {
           filter: invert(1);
           opacity: 1;
@@ -855,7 +917,18 @@
                   </div>
                 </th>
                 <th><input id="nameFilter" placeholder="Filtrar por nome" /></th>
-                <th><select id="sectorFilter"></select></th>
+                <th>
+                  <div class="table-sector-filter-wrap" id="tableSectorFilterWrap">
+                    <button id="tableSectorToggle" type="button" class="table-sector-trigger" aria-haspopup="true" aria-expanded="false" onclick="toggleTableSectorDropdown(event)">Todos os setores</button>
+                    <div id="tableSectorDropdown" class="table-sector-dropdown" aria-label="Lista de setores da tabela">
+                      <div id="tableSectorCheckboxes" class="table-sector-checkboxes"></div>
+                      <div class="table-sector-actions">
+                        <button type="button" class="secondary" onclick="selectAllTableSectors()">Todos</button>
+                        <button type="button" class="secondary" onclick="clearTableSectorFilter()">Limpar</button>
+                      </div>
+                    </div>
+                  </div>
+                </th>
                 <th><select id="referenceFilter"></select></th>
               <th><select id="recurrenceFilter"></select></th>
               <th><select id="statusFilter"></select></th>
@@ -959,6 +1032,8 @@
           stats: null,
           statsDateStart: '',
           statsDateEnd: '',
+          tableSelectedSectors: [],
+          tableAvailableSectors: [],
           statsSelectedSectors: [],
           statsAvailableSectors: []
         };
@@ -1030,11 +1105,12 @@
           google.script.run
             .withSuccessHandler((payload) => {
               state.fields = payload.fields || [];
+              state.tableAvailableSectors = payload.options.sectors || [];
               state.statsAvailableSectors = payload.options.sectors || [];
               setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
 
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
-              setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
+              setMainSectorOptions(state.tableAvailableSectors);
               setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
               setStatsSectorOptions(state.statsAvailableSectors);
@@ -1081,10 +1157,11 @@
           google.script.run
             .withSuccessHandler((payload) => {
               state.fields = payload.fields || [];
+              state.tableAvailableSectors = payload.options.sectors || [];
               state.statsAvailableSectors = payload.options.sectors || [];
               setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
-              setSelectOptions('sectorFilter', payload.options.sectors, 'Todos os setores');
+              setMainSectorOptions(state.tableAvailableSectors);
               setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
               setStatsSectorOptions(state.statsAvailableSectors);
@@ -1121,6 +1198,25 @@
           select.innerHTML = html;
         }
 
+        function setMainSectorOptions(options) {
+          const container = document.getElementById('tableSectorCheckboxes');
+          if (!container) return;
+
+          const safeOptions = options || [];
+          const selectedSet = new Set(state.tableSelectedSectors || []);
+          state.tableSelectedSectors = state.tableSelectedSectors.filter((item) => safeOptions.includes(item));
+
+          container.innerHTML = safeOptions
+            .map((item, index) => {
+              const inputId = `tableSectorOption${index}`;
+              const checked = selectedSet.has(item) ? 'checked' : '';
+              return `<label class="table-sector-checkbox" for="${inputId}"><input id="${inputId}" type="checkbox" value="${escapeHtml(item)}" ${checked} onchange="onTableSectorCheckboxChange()" /> <span>${escapeHtml(item)}</span></label>`;
+            })
+            .join('');
+
+          syncTableSectorSelectionUi();
+        }
+
         function applyFilters() {
           state.page = 1;
                   let timestampStart = document.getElementById('timestampStartFilter').value;
@@ -1134,7 +1230,7 @@
             timestampStart,
             timestampEnd,
             name: document.getElementById('nameFilter').value,
-            sector: document.getElementById('sectorFilter').value,
+            sectors: state.tableSelectedSectors.slice(),
             reference: document.getElementById('referenceFilter').value,
             recurrence: document.getElementById('recurrenceFilter').value,
             status: document.getElementById('statusFilter').value
@@ -1146,9 +1242,11 @@
           ['timestampStartFilter', 'timestampEndFilter', 'nameFilter'].forEach((id) => {
             document.getElementById(id).value = '';
           });
-          ['sectorFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
+          ['referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
             document.getElementById(id).value = '';
           });
+          state.tableSelectedSectors = [];
+          syncTableSectorSelectionUi();
           applyFilters();
         }
 
@@ -1843,7 +1941,7 @@
         }
 
         function addFilterListeners() {
-          ['timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'sectorFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
+          ['timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
             const el = document.getElementById(id);
             el.addEventListener('change', applyFilters);
             if (el.tagName === 'INPUT') {
@@ -1854,6 +1952,69 @@
           });
         }
 
+          function onTableSectorCheckboxChange() {
+          const checkboxes = document.querySelectorAll('#tableSectorCheckboxes input[type="checkbox"]');
+          state.tableSelectedSectors = Array.from(checkboxes)
+            .filter((checkbox) => checkbox.checked)
+            .map((checkbox) => checkbox.value);
+          updateTableSectorButtonLabel();
+          applyFilters();
+        }
+
+        function syncTableSectorSelectionUi() {
+          const checkboxes = document.querySelectorAll('#tableSectorCheckboxes input[type="checkbox"]');
+          const selectedSet = new Set(state.tableSelectedSectors || []);
+          checkboxes.forEach((checkbox) => {
+            checkbox.checked = selectedSet.has(checkbox.value);
+          });
+          updateTableSectorButtonLabel();
+        }
+
+        function updateTableSectorButtonLabel() {
+          const button = document.getElementById('tableSectorToggle');
+          if (!button) return;
+
+          const selectedCount = (state.tableSelectedSectors || []).length;
+          if (!selectedCount) {
+            button.textContent = 'Todos os setores';
+            return;
+          }
+          if (selectedCount === 1) {
+            button.textContent = state.tableSelectedSectors[0];
+            return;
+          }
+          button.textContent = `${selectedCount} setores selecionados`;
+        }
+
+        function toggleTableSectorDropdown(event) {
+          if (event) event.stopPropagation();
+          const dropdown = document.getElementById('tableSectorDropdown');
+          const trigger = document.getElementById('tableSectorToggle');
+          if (!dropdown || !trigger) return;
+          const willOpen = !dropdown.classList.contains('open');
+          dropdown.classList.toggle('open', willOpen);
+          trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        }
+
+        function closeTableSectorDropdown() {
+          const dropdown = document.getElementById('tableSectorDropdown');
+          const trigger = document.getElementById('tableSectorToggle');
+          if (!dropdown || !trigger) return;
+          dropdown.classList.remove('open');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        function selectAllTableSectors() {
+          state.tableSelectedSectors = (state.tableAvailableSectors || []).slice();
+          syncTableSectorSelectionUi();
+          applyFilters();
+        }
+
+        function clearTableSectorFilter() {
+          state.tableSelectedSectors = [];
+          syncTableSectorSelectionUi();
+          applyFilters();
+        }
         function setStatsSectorOptions(options) {
           const container = document.getElementById('statsSectorCheckboxes');
           if (!container) return;
@@ -2054,6 +2215,7 @@
             return;
           }
 
+         
           const confirmed = window.confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.');
           if (!confirmed) return;
 
@@ -2089,6 +2251,10 @@
         }
 
         document.addEventListener('click', (event) => {
+          const tableWrap = document.getElementById('tableSectorFilterWrap');
+          if (tableWrap && !tableWrap.contains(event.target)) {
+            closeTableSectorDropdown();
+          }
           const wrap = document.getElementById('statsSectorFilterWrap');
           if (!wrap) return;
           if (!wrap.contains(event.target)) {

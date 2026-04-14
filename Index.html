@@ -821,35 +821,33 @@
             opacity: 1 !important;
           }
           body.print-stats {
-            width: 297mm !important;
-            height: 210mm !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
           }
-          body.print-stats #detailsModal,
-          body.print-stats #statusPickerModal,
-          body.print-stats .container,
-          body.print-stats .theme-toggle,
-          body.print-stats .refresh-toggle,
-          body.print-stats #loadingOverlay {
+          body.print-stats > * {
             display: none !important;
           }
           body.print-stats #statsModal {
             display: block !important;
-            position: static !important;
-            inset: auto !important;
+            position: fixed !important;
+            inset: 0 !important;
+            margin: 0 !important;
             padding: 0 !important;
-            background: transparent !important;
+            background: #fff !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
           }
           body.print-stats #statsModal .modal-content {
-            width: 283mm !important;
-            max-width: 283mm !important;
+            width: 100% !important;
+            max-width: none !important;
+            height: 100% !important;
             max-height: none !important;
-            overflow: visible !important;
-            margin: 0 auto !important;
+            overflow: hidden !important;
+            margin: 0 !important;
             border: none !important;
             border-radius: 0 !important;
-            padding: 0 !important;
+            padding: 4mm !important;  
             background: #fff !important;
           }
           body.print-stats #statsModal .modal-header,
@@ -865,7 +863,9 @@
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 4mm !important;
             align-items: stretch !important;
-          }
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          } 
           
           body.print-stats #statsModal .stats-card {
             min-height: 0 !important;
@@ -1640,9 +1640,11 @@
           document.head.appendChild(pageStyle);
 
           document.body.classList.add('print-stats');
+          document.documentElement.classList.add('print-stats');
 
           const cleanup = () => {
             document.body.classList.remove('print-stats');
+            document.documentElement.classList.remove('print-stats');
             const styleNode = document.getElementById(printStyleId);
             if (styleNode) styleNode.remove();
             window.removeEventListener('afterprint', cleanup);
@@ -1650,7 +1652,7 @@
 
           window.addEventListener('afterprint', cleanup);
           window.print();
-          setTimeout(cleanup, 1000);
+          setTimeout(cleanup, 1500);
         }
 
         function openStatsModal() {

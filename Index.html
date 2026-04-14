@@ -155,6 +155,14 @@
           text-align: left;
           padding-right: 28px;
           position: relative;
+          border: 1px solid var(--line);
+          background: var(--surface);
+          color: var(--text);
+        }
+        .table-sector-trigger.active {
+          background: var(--primary);
+          border-color: var(--primary);
+          color: #fff;
         }
         .table-sector-trigger::after {
           content: '▾';
@@ -164,6 +172,9 @@
           transform: translateY(-50%);
           pointer-events: none;
           color: var(--muted);
+        }
+        .table-sector-trigger.active::after {
+          color: #fff;
         }
         .table-sector-dropdown {
           position: absolute;
@@ -1975,6 +1986,8 @@
           if (!button) return;
 
           const selectedCount = (state.tableSelectedSectors || []).length;
+          button.classList.toggle('active', selectedCount > 0);
+
           if (!selectedCount) {
             button.textContent = 'Todos os setores';
             return;

@@ -1957,6 +1957,7 @@
           document.getElementById('reportAttachmentInput').value = '';
           clearReportValidationError(); 
           document.getElementById('reportTextInput').readOnly = hasReport;
+          setReportAttachmentEditable(!hasReport);
           document.getElementById('saveReportButton').style.display = hasReport ? 'none' : 'inline-flex';
           document.getElementById('editReportButton').style.display = hasReport ? 'inline-flex' : 'none';
           document.getElementById('deleteReportButton').style.display = hasReport ? 'inline-flex' : 'none';
@@ -2019,9 +2020,17 @@
           updateModalBackgroundState();
         }
 
+        function setReportAttachmentEditable(isEditable) {
+          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
+          if (!reportAttachmentInput) return;
+          reportAttachmentInput.disabled = !isEditable;
+          if (!isEditable) reportAttachmentInput.value = '';
+        }
+
         function enableReportEditing() {
           const reportInput = document.getElementById('reportTextInput');
           reportInput.readOnly = false;
+          setReportAttachmentEditable(true);
           document.getElementById('saveReportButton').style.display = 'inline-flex';
           document.getElementById('editReportButton').style.display = 'none';
           document.getElementById('reportPrintActions').style.display = 'none';
@@ -2127,6 +2136,7 @@
               document.getElementById('reportTextInput').value = '';
               document.getElementById('reportTextInput').readOnly = false;
               document.getElementById('reportModalTitle').textContent = 'Relatório de conclusão (pendente)';
+              setReportAttachmentEditable(true);
               document.getElementById('saveReportButton').style.display = 'inline-flex';
               document.getElementById('editReportButton').style.display = 'none';
               document.getElementById('deleteReportButton').style.display = 'none';

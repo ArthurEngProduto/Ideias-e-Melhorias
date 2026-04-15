@@ -1211,8 +1211,8 @@
             <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
             <div id="reportValidationError" class="report-validation-error">Preencha o campo obrigatório</div>
           </div>
-          <div class="report-print-actions print-hidden">
-            <button class="report-primary-action" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
+          <div id="reportPrintActions" class="report-print-actions print-hidden">
+            <button id="printReportButton" class="report-primary-action" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
           </div>
           <div class="modal-actions report-actions print-hidden">
             <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar</button>
@@ -1939,6 +1939,7 @@
           document.getElementById('saveReportButton').style.display = hasReport ? 'none' : 'inline-flex';
           document.getElementById('editReportButton').style.display = hasReport ? 'inline-flex' : 'none';
           document.getElementById('deleteReportButton').style.display = hasReport ? 'inline-flex' : 'none';
+          document.getElementById('reportPrintActions').style.display = hasReport ? 'flex' : 'none';
 
           const productInfoItems = [
             { label: 'Nome do produto', value: row['Nome do Produto:'] || '' },
@@ -2002,6 +2003,7 @@
           reportInput.readOnly = false;
           document.getElementById('saveReportButton').style.display = 'inline-flex';
           document.getElementById('editReportButton').style.display = 'none';
+          document.getElementById('reportPrintActions').style.display = 'none';
           reportInput.focus();
           const textLength = reportInput.value.length;
           reportInput.setSelectionRange(textLength, textLength);

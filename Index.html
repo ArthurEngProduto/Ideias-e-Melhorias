@@ -463,6 +463,15 @@
           align-items: center;
         }
       }
+        #editReportButton {
+          background: #2563eb;
+          border: 1px solid #2563eb;
+          color: #fff;
+        }
+        #editReportButton:hover {
+          background: #1d4ed8;
+          border-color: #1d4ed8;
+        }
         .details-focus-panel {
           margin-bottom: 12px;
           border: 1px solid var(--line);
@@ -1912,9 +1921,13 @@
         }
 
         function enableReportEditing() {
-          document.getElementById('reportTextInput').readOnly = false;
+          const reportInput = document.getElementById('reportTextInput');
+          reportInput.readOnly = false;
           document.getElementById('saveReportButton').style.display = 'inline-flex';
           document.getElementById('editReportButton').style.display = 'none';
+          reportInput.focus();
+          const textLength = reportInput.value.length;
+          reportInput.setSelectionRange(textLength, textLength);
         }
         function closeReportModal() {
           document.getElementById('reportModal').classList.remove('open');

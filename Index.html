@@ -1422,6 +1422,7 @@
 
       function renderReportTag(row, workflowStatus, index) {
         if (workflowStatus !== 'Concluído') {
+          return '';
           return '<button class="report-tag-button" type="button" disabled>-</button>';
         }
         const reportText = getConclusionReportValue(row);

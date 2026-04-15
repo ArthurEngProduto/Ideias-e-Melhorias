@@ -1831,13 +1831,18 @@
             { label: 'Tamanho', value: row['Tamanho:'] || '' },
             { label: 'Tipo de contribuição (produto)', value: row['Qual é o tipo de contribuição neste produto'] || '' },
           ].filter((item) => String(item.value || '').trim() !== '');
+          const problemDescription = String(
+            row['Descreva o problema a ser corrigido no produto:']
+            || row['Descreva o problema a ser corrigido no processo:']
+            || ''
+          ).trim();
 
           const contextItems = [
             { label: 'Data', value: formatTimestampToDate(row['Carimbo de data/hora']) },
             { label: 'Nome', value: row['Digite seu nome:'] || '-' },
             { label: 'Setor', value: row['Selecione o seu setor:'] || '-' },
             { label: 'Referência', value: row['Este registro se refere a:'] || '-' },
-            { label: 'Problema', value: row['Descreva o problema a ser corrigido no produto:'] || row['Descreva o problema a ser corrigido no processo:'] || '-', full: true },
+            ...(problemDescription ? [{ label: 'Problema', value: problemDescription, full: true }] : []),
             ...productInfoItems, 
           ];
           document.getElementById('reportContextGrid').innerHTML = contextItems

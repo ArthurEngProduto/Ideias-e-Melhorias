@@ -2085,6 +2085,8 @@
           const changedInput = event && event.target ? event.target : null;
           if (changedInput && changedInput.files && changedInput.files.length > 0) {
             ensureTrailingEmptyReportAttachmentInput();
+          } else {
+            normalizeReportAttachmentInputRows();
           }
           updateReportAttachmentRemoveButton();
         }
@@ -2094,10 +2096,7 @@
           const reportAttachmentInput = row ? row.querySelector('.report-file-input') : document.getElementById('reportAttachmentInput');
           if (!reportAttachmentInput || reportAttachmentInput.disabled) return;
           reportAttachmentInput.value = '';
-          if (row && row.parentElement && row.parentElement.children.length > 1 && reportAttachmentInput.id !== 'reportAttachmentInput') {
-            row.remove();
-          }
-          ensureTrailingEmptyReportAttachmentInput();
+          normalizeReportAttachmentInputRows();
           updateReportAttachmentRemoveButton();
         }
 
@@ -2124,18 +2123,53 @@
         }
 
         function ensureTrailingEmptyReportAttachmentInput() {
+          normalizeReportAttachmentInputRows();
+        }
+
+        function normalizeReportAttachmentInputRows() {
           const wrap = document.getElementById('reportAttachmentInputs');
           if (!wrap) return;
-          const inputs = getReportAttachmentInputs();
-          if (!inputs.length) {
+          const rows = Array.from(wrap.querySelectorAll('.report-file-input-row'));
+          if (!rows.length) {
             resetReportAttachmentInputs();
             return;
           }
-          const lastInput = inputs[inputs.length - 1];
-          const hasSelectedFile = Boolean(lastInput.files && lastInput.files.length > 0);
-          if (hasSelectedFile && !lastInput.disabled) {
-            wrap.appendChild(createReportAttachmentInputRow());
+          
+          const rowsWithFiles = rows.filter((row) => {
+            const input = row.querySelector('.report-file-input');
+            return Boolean(input && input.files && input.files.length > 0);
+          });
+          const isDisabled = rows.every((row) => {
+            const input = row.querySelector('.report-file-input');
+            return Boolean(input && input.disabled);
+          });
+
+          if (!rowsWithFiles.length) {
+            resetReportAttachmentInputs();
+            if (isDisabled) {
+              getReportAttachmentInputs().forEach((input) => {
+                input.disabled = true;
+              });
+            }
+            return;
           }
+
+          wrap.innerHTML = '';
+          rowsWithFiles.forEach((row) => wrap.appendChild(row));
+
+          const trailingEmptyRow = createReportAttachmentInputRow();
+          const trailingEmptyInput = trailingEmptyRow.querySelector('.report-file-input');
+          if (trailingEmptyInput) trailingEmptyInput.disabled = isDisabled;
+          wrap.appendChild(trailingEmptyRow);
+
+          const inputs = getReportAttachmentInputs();
+          inputs.forEach((input, index) => {
+            if (index === 0) {
+              input.id = 'reportAttachmentInput';
+            } else {
+              input.removeAttribute('id');
+            }
+          });
         }
 
         function resetReportAttachmentInputs() {

@@ -449,6 +449,15 @@
           min-height: 160px;
           resize: vertical;
         }
+        .report-actions {
+          justify-content: flex-end;
+          margin-top: 12px;
+        }
+        #saveReportButton {
+          padding: 6px 12px;
+          font-size: 12px;
+          max-width: 90px;
+        }
       }
         .details-focus-panel {
           margin-bottom: 12px;
@@ -1121,8 +1130,8 @@
             <label for="reportTextInput" class="report-form-label">Solução aplicada <span style="color:#dc2626;">*</span></label>
             <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
           </div>
-          <div class="modal-actions" style="justify-content:flex-end;margin-top:12px;">
-            <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar relatório</button>
+          <div class="modal-actions report-actions">
+            <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar</button>
           </div>
         </div>
       </div>

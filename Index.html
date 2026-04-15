@@ -457,6 +457,22 @@
           min-height: 160px;
           resize: vertical;
         }
+        .report-file-field {
+          margin-top: 12px;
+        }
+        .report-file-input {
+          width: 100%;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 8px;
+          background: var(--surface);
+          color: var(--text);
+        }
+        .report-file-help {
+          margin-top: 6px;
+          font-size: 12px;
+          color: var(--muted);
+        }
         .report-actions {
           justify-content: flex-end;
           margin-top: 12px;
@@ -1210,6 +1226,11 @@
             <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
             <div id="reportValidationError" class="report-validation-error">Preencha o campo obrigatório</div>
           </div>
+          <div class="report-file-field">
+            <label for="reportAttachmentInput" class="report-form-label">Anexar arquivo (imagem da solução)</label>
+            <input id="reportAttachmentInput" class="report-file-input" type="file" accept="image/*" />
+            <div class="report-file-help">Campo opcional para anexar imagem da solução, se necessário.</div>
+          </div>
           <div id="reportPrintActions" class="report-print-actions print-hidden">
             <button id="printReportButton" class="report-primary-action" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
           </div>
@@ -1933,6 +1954,7 @@
           const hasReport = Boolean(reportText);
           document.getElementById('reportModalTitle').textContent = hasReport ? 'Relatório de conclusão' : 'Relatório de conclusão (pendente)';
           document.getElementById('reportTextInput').value = reportText;
+          document.getElementById('reportAttachmentInput').value = '';
           clearReportValidationError(); 
           document.getElementById('reportTextInput').readOnly = hasReport;
           document.getElementById('saveReportButton').style.display = hasReport ? 'none' : 'inline-flex';
@@ -2011,6 +2033,8 @@
           document.getElementById('reportModal').classList.remove('open');
           closeReportDeleteConfirmModal();
           clearReportValidationError();
+          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
+          if (reportAttachmentInput) reportAttachmentInput.value = '';
           state.selectedReportRowIndex = null;
           updateModalBackgroundState();
         }

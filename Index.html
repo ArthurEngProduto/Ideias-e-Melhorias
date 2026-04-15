@@ -1129,6 +1129,10 @@
           <div class="report-context">
             <div class="report-context-grid" id="reportContextGrid"></div>
           </div>
+          <div id="reportProblemWrap" style="display:none;">
+            <label for="reportProblemText" class="report-form-label">Problema</label>
+            <textarea id="reportProblemText" class="report-form-textarea" readonly></textarea>
+          </div>
           <div>
             <label for="reportTextInput" class="report-form-label">Solução aplicada <span style="color:#dc2626;">*</span></label>
             <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
@@ -1862,7 +1866,6 @@
             { label: 'Nome', value: row['Digite seu nome:'] || '-' },
             { label: 'Setor', value: row['Selecione o seu setor:'] || '-' },
             { label: 'Referência', value: row['Este registro se refere a:'] || '-' },
-            ...(problemDescription ? [{ label: 'Problema', value: problemDescription, full: true }] : []),
             ...productInfoItems, 
           ];
           document.getElementById('reportContextGrid').innerHTML = contextItems
@@ -1874,6 +1877,15 @@
             `)
             .join('');
 
+          const problemWrap = document.getElementById('reportProblemWrap');
+          const problemText = document.getElementById('reportProblemText');
+          if (problemDescription) {
+            problemText.value = problemDescription;
+            problemWrap.style.display = 'block';
+          } else {
+            problemText.value = '';
+            problemWrap.style.display = 'none';
+          }
           document.getElementById('reportModal').classList.add('open');
           updateModalBackgroundState();
         }

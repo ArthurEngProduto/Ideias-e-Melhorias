@@ -368,11 +368,79 @@
       .status-picker-modal-content {
         width: min(360px, 95vw);
       }
-      .status-picker-options {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 8px;
+        .status-picker-options {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 8px;
+        }
+        .report-tag-button {
+          border-radius: 999px;
+          padding: 6px 10px;
+          min-width: 150px;
+          text-align: center;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          border: 1px solid #2563eb;
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+        .report-tag-button.report-ready {
+          background: #2563eb;
+          color: #fff;
+        }
+        .report-tag-button[disabled] {
+          border-color: #cbd5e1;
+          background: #f8fafc;
+          color: #94a3b8;
+          cursor: default;
+        }
+        .report-modal-content {
+          width: min(680px, 96vw);
+        }
+        .report-context {
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          background: var(--surface-soft);
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+        .report-context-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+        .report-context-item {
+          border: 1px solid var(--line-soft);
+          border-radius: 8px;
+          padding: 8px 10px;
+          background: var(--surface);
+        }
+        .report-context-item.full {
+          grid-column: 1 / -1;
+        }
+        .report-label {
+          font-size: 12px;
+          color: var(--muted);
+        }
+        .report-value {
+          margin-top: 4px;
+          font-size: 14px;
+          word-break: break-word;
+          white-space: pre-wrap;
+        }
+        .report-form-label {
+          display: block;
+          margin-bottom: 6px;
+          font-size: 13px;
+          color: var(--muted);
+          font-weight: 700;
+        }
+        .report-form-textarea {
+          min-height: 160px;
+          resize: vertical;
+        }
       }
         .details-focus-panel {
           margin-bottom: 12px;
@@ -733,7 +801,8 @@
           .refresh-toggle,
           #loadingOverlay,
           #statsModal,
-          #statusPickerModal {
+          #statusPickerModal,
+          #reportModal {
             display: none !important;
           }
           #detailsModal {
@@ -766,6 +835,7 @@
           }
           body.print-stats #detailsModal,
           body.print-stats #statusPickerModal,
+          body.print-stats #reportModal,
           body.print-stats .container,
           body.print-stats .theme-toggle,
           body.print-stats .refresh-toggle,
@@ -918,6 +988,7 @@
                 <th>Produto/Processo</th>
               <th>Recorrência</th>
               <th>Status</th>
+              <th>Relatório</th>
               </tr>
               <tr class="filter-row">
                 <th>
@@ -943,6 +1014,7 @@
                 <th><select id="referenceFilter"></select></th>
               <th><select id="recurrenceFilter"></select></th>
               <th><select id="statusFilter"></select></th>
+              <th></th>
               </tr>
             </thead>
             <tbody id="rowsTable"></tbody>
@@ -1025,6 +1097,24 @@
             <button class="status-tag-button status-done" type="button" onclick="selectStatus('Concluído')">Concluído</button>
             <button class="status-tag-button status-progress" type="button" onclick="selectStatus('Em andamento')">Em andamento</button>
             <button class="status-tag-button status-queue" type="button" onclick="selectStatus('Na fila')">Na fila</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal" id="reportModal" onclick="handleReportModalBackdrop(event)">
+        <div class="modal-content report-modal-content">
+          <div class="modal-header">
+            <h2 id="reportModalTitle" style="margin:0;font-size:18px;">Relatório de conclusão</h2>
+            <button class="secondary" style="max-width:120px;" onclick="closeReportModal()">Fechar</button>
+          </div>
+          <div class="report-context">
+            <div class="report-context-grid" id="reportContextGrid"></div>
+          </div>
+          <div>
+            <label for="reportTextInput" class="report-form-label">Solução aplicada <span style="color:#dc2626;">*</span></label>
+            <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
+          </div>
+          <div class="modal-actions" style="justify-content:flex-end;margin-top:12px;">
+            <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar relatório</button>
           </div>
         </div>
       </div>
@@ -1286,6 +1376,7 @@
           const recurrenceBadge = getRecurrenceBadge(recurrence);
           const workflowStatus = getWorkflowStatus(row);
           const statusContent = renderWorkflowStatusTag(workflowStatus, index);
+          const reportContent = renderReportTag(row, workflowStatus, index);
           return `
             <tr onclick="openModal(${index})">
               <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
@@ -1294,6 +1385,7 @@
               <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
               <td>${recurrenceBadge}</td>
               <td>${statusContent}</td>
+              <td>${reportContent}</td>
 
             </tr>
           `;
@@ -1319,6 +1411,25 @@
         return 'status-progress';
       }
 
+      function getConclusionReportValue(row) {
+        return String(
+          row['Relatório de conclusão']
+          || row['Relatorio de conclusao']
+          || row['Relatório']
+          || ''
+        ).trim();
+      }
+
+      function renderReportTag(row, workflowStatus, index) {
+        if (workflowStatus !== 'Concluído') {
+          return '<button class="report-tag-button" type="button" disabled>-</button>';
+        }
+        const reportText = getConclusionReportValue(row);
+        const hasReport = Boolean(reportText);
+        const buttonClass = hasReport ? 'report-tag-button report-ready' : 'report-tag-button';
+        const buttonLabel = hasReport ? 'Acessar relatório' : 'Aguardando relatório';
+        return `<button class="${buttonClass}" type="button" onclick="openReportModal(event, ${index})">${escapeHtml(buttonLabel)}</button>`;
+      }
         function getRecurrenceBadge(recurrence) {
           if (!recurrence) return '-';
 
@@ -1701,6 +1812,78 @@
           closeStatusPickerModal();
         }
 
+        function openReportModal(event, index) {
+          if (event) event.stopPropagation();
+          const row = state.rows[index];
+          if (!row) return;
+          state.selectedReportRowIndex = index;
+          const reportText = getConclusionReportValue(row);
+          const hasReport = Boolean(reportText);
+          document.getElementById('reportModalTitle').textContent = hasReport ? 'Relatório de conclusão' : 'Relatório de conclusão (pendente)';
+          document.getElementById('reportTextInput').value = reportText;
+          document.getElementById('reportTextInput').readOnly = hasReport;
+          document.getElementById('saveReportButton').style.display = hasReport ? 'none' : 'inline-flex';
+
+          const contextItems = [
+            { label: 'Data', value: formatTimestampToDate(row['Carimbo de data/hora']) },
+            { label: 'Nome', value: row['Digite seu nome:'] || '-' },
+            { label: 'Setor', value: row['Selecione o seu setor:'] || '-' },
+            { label: 'Referência', value: row['Este registro se refere a:'] || '-' },
+            { label: 'Status', value: getWorkflowStatus(row) },
+            { label: 'Problema', value: row['Descreva o problema a ser corrigido no produto:'] || row['Descreva o problema a ser corrigido no processo:'] || '-', full: true },
+          ];
+          document.getElementById('reportContextGrid').innerHTML = contextItems
+            .map((item) => `
+              <div class="report-context-item ${item.full ? 'full' : ''}">
+                <div class="report-label">${escapeHtml(item.label)}</div>
+                <div class="report-value">${escapeHtml(item.value)}</div>
+              </div>
+            `)
+            .join('');
+
+          document.getElementById('reportModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function closeReportModal() {
+          document.getElementById('reportModal').classList.remove('open');
+          state.selectedReportRowIndex = null;
+          updateModalBackgroundState();
+        }
+
+        function handleReportModalBackdrop(event) {
+          if (event.target && event.target.id === 'reportModal') closeReportModal();
+        }
+
+        function saveConclusionReport() {
+          if (state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined) return;
+          const row = state.rows[state.selectedReportRowIndex];
+          if (!row || !row.__rowNumber) {
+            showError('Não foi possível identificar a linha para salvar o relatório.');
+            return;
+          }
+
+          const reportText = String(document.getElementById('reportTextInput').value || '').trim();
+          if (!reportText) {
+            showError('O campo "Solução aplicada" é obrigatório.');
+            return;
+          }
+
+          showLoading();
+          google.script.run
+            .withSuccessHandler((result) => {
+              row['Relatório de conclusão'] = result.report || reportText;
+              render();
+              hideError();
+              closeReportModal();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+              hideLoading();
+            })
+            .saveConclusionReport(row.__rowNumber, reportText);
+        }
         function renderStatsModal() {
           const stats = state.stats || { total: 0, charts: [] };
           const periodSuffix = getStatsPeriodText();
@@ -2212,6 +2395,9 @@
             .withSuccessHandler(() => {
               row.Status = status;
               row['Concluído'] = status;
+              if (status !== 'Concluído') {
+                state.selectedReportRowIndex = null;
+              }
               render();
               hideError();
             })

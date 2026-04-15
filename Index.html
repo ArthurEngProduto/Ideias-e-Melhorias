@@ -460,6 +460,11 @@
         .report-file-field {
           margin-top: 12px;
         }
+        .report-file-input-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
         .report-file-input {
           width: 100%;
           border: 1px solid var(--line);
@@ -467,6 +472,25 @@
           padding: 8px;
           background: var(--surface);
           color: var(--text);
+        }
+        .report-file-remove-button {
+          width: 34px;
+          min-width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          padding: 0;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          background: #dc2626;
+          border: 1px solid #dc2626;
+          color: #fff;
+          font-size: 16px;
+          line-height: 1;
+          font-weight: 700;
+        }
+        .report-file-remove-button.visible {
+          display: inline-flex;
         }
         .report-file-help {
           margin-top: 6px;
@@ -1228,7 +1252,19 @@
           </div>
           <div class="report-file-field">
             <label for="reportAttachmentInput" class="report-form-label">Anexar arquivo (imagem da solução)</label>
-            <input id="reportAttachmentInput" class="report-file-input" type="file" accept="image/*" />
+            <div class="report-file-input-row">
+              <input id="reportAttachmentInput" class="report-file-input" type="file" accept="image/*" onchange="handleReportAttachmentChange()" />
+              <button
+                id="removeReportAttachmentButton"
+                class="report-file-remove-button"
+                type="button"
+                title="Remover arquivo selecionado"
+                aria-label="Remover arquivo selecionado"
+                onclick="clearReportAttachmentSelection()"
+              >
+                ✕
+              </button>
+            </div>
             <div class="report-file-help">Campo opcional para anexar imagem da solução, se necessário.</div>
           </div>
           <div id="reportPrintActions" class="report-print-actions print-hidden">
@@ -2025,6 +2061,28 @@
           if (!reportAttachmentInput) return;
           reportAttachmentInput.disabled = !isEditable;
           if (!isEditable) reportAttachmentInput.value = '';
+          updateReportAttachmentRemoveButton();
+        }
+
+        function updateReportAttachmentRemoveButton() {
+          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
+          const removeButton = document.getElementById('removeReportAttachmentButton');
+          if (!reportAttachmentInput || !removeButton) return;
+          const hasFileSelected = Boolean(reportAttachmentInput.files && reportAttachmentInput.files.length > 0);
+          const canRemove = hasFileSelected && !reportAttachmentInput.disabled;
+          removeButton.classList.toggle('visible', canRemove);
+          removeButton.disabled = !canRemove;
+        }
+
+        function handleReportAttachmentChange() {
+          updateReportAttachmentRemoveButton();
+        }
+
+        function clearReportAttachmentSelection() {
+          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
+          if (!reportAttachmentInput || reportAttachmentInput.disabled) return;
+          reportAttachmentInput.value = '';
+          updateReportAttachmentRemoveButton();
         }
 
         function enableReportEditing() {
@@ -2044,6 +2102,7 @@
           clearReportValidationError();
           const reportAttachmentInput = document.getElementById('reportAttachmentInput');
           if (reportAttachmentInput) reportAttachmentInput.value = '';
+          updateReportAttachmentRemoveButton();
           state.selectedReportRowIndex = null;
           updateModalBackgroundState();
         }

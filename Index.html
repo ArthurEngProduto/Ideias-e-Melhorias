@@ -470,12 +470,12 @@
           align-items: center;
         }
       }
-        #editReportButton {
+        .report-primary-action {
           background: #2563eb;
           border: 1px solid #2563eb;
           color: #fff;
         }
-        #editReportButton:hover {
+        .report-primary-action:hover {
           background: #1d4ed8;
           border-color: #1d4ed8;
         }
@@ -488,14 +488,10 @@
           background: #b91c1c;
           border-color: #b91c1c;
         }
-        .report-print-button {
-          background: #2563eb;
-          border: 1px solid #2563eb;
-          color: #fff;
-        }
-        .report-print-button:hover {
-          background: #1d4ed8;
-          border-color: #1d4ed8;
+        .report-print-actions {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 10px;
         }
         .details-focus-panel {
           margin-bottom: 12px;
@@ -1193,8 +1189,7 @@
             <h2 id="reportModalTitle" style="margin:0;font-size:18px;">Relatório de conclusão</h2>
             <div class="modal-actions">
               <button id="deleteReportButton" class="print-hidden" style="max-width:140px;display:none;" type="button" onclick="requestDeleteReport()">Excluir relatório</button>
-              <button id="editReportButton" class="print-hidden" style="max-width:120px;display:none;" type="button" onclick="enableReportEditing()">Editar</button>
-              <button class="report-print-button print-hidden" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
+              <button id="editReportButton" class="report-primary-action print-hidden" style="max-width:120px;display:none;" type="button" onclick="enableReportEditing()">Editar</button>
               <button class="secondary print-hidden" style="max-width:120px;" onclick="closeReportModal()">Fechar</button>
             </div>
           </div>
@@ -1209,6 +1204,9 @@
             <label for="reportTextInput" class="report-form-label">Solução aplicada <span style="color:#dc2626;">*</span></label>
             <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
             <div id="reportValidationError" class="report-validation-error">Preencha o campo obrigatório</div>
+          </div>
+          <div class="report-print-actions print-hidden">
+            <button class="report-primary-action" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
           </div>
           <div class="modal-actions report-actions print-hidden">
             <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar</button>

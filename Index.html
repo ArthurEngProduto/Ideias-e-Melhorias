@@ -1830,7 +1830,6 @@
             { label: 'Nome', value: row['Digite seu nome:'] || '-' },
             { label: 'Setor', value: row['Selecione o seu setor:'] || '-' },
             { label: 'Referência', value: row['Este registro se refere a:'] || '-' },
-            { label: 'Status', value: getWorkflowStatus(row) },
             { label: 'Problema', value: row['Descreva o problema a ser corrigido no produto:'] || row['Descreva o problema a ser corrigido no processo:'] || '-', full: true },
           ];
           document.getElementById('reportContextGrid').innerHTML = contextItems

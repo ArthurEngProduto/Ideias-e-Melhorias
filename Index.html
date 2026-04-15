@@ -1125,7 +1125,10 @@
         <div class="modal-content report-modal-content">
           <div class="modal-header">
             <h2 id="reportModalTitle" style="margin:0;font-size:18px;">Relatório de conclusão</h2>
-            <button class="secondary" style="max-width:120px;" onclick="closeReportModal()">Fechar</button>
+            <div class="modal-actions">
+              <button id="editReportButton" class="secondary" style="max-width:120px;display:none;" type="button" onclick="enableReportEditing()">Editar</button>
+              <button class="secondary" style="max-width:120px;" onclick="closeReportModal()">Fechar</button>
+            </div>
           </div>
           <div class="report-context">
             <div class="report-context-grid" id="reportContextGrid"></div>
@@ -1849,6 +1852,7 @@
           document.getElementById('reportTextInput').value = reportText;
           document.getElementById('reportTextInput').readOnly = hasReport;
           document.getElementById('saveReportButton').style.display = hasReport ? 'none' : 'inline-flex';
+          document.getElementById('editReportButton').style.display = hasReport ? 'inline-flex' : 'none';
 
           const productInfoItems = [
             { label: 'Nome do produto', value: row['Nome do Produto:'] || '' },
@@ -1907,6 +1911,11 @@
           updateModalBackgroundState();
         }
 
+        function enableReportEditing() {
+          document.getElementById('reportTextInput').readOnly = false;
+          document.getElementById('saveReportButton').style.display = 'inline-flex';
+          document.getElementById('editReportButton').style.display = 'none';
+        }
         function closeReportModal() {
           document.getElementById('reportModal').classList.remove('open');
           state.selectedReportRowIndex = null;

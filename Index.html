@@ -488,6 +488,15 @@
           background: #b91c1c;
           border-color: #b91c1c;
         }
+        .report-print-button {
+          background: #2563eb;
+          border: 1px solid #2563eb;
+          color: #fff;
+        }
+        .report-print-button:hover {
+          background: #1d4ed8;
+          border-color: #1d4ed8;
+        }
         .details-focus-panel {
           margin-bottom: 12px;
           border: 1px solid var(--line);
@@ -970,6 +979,38 @@
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          body.print-report #detailsModal,
+          body.print-report #statsModal,
+          body.print-report #statusPickerModal,
+          body.print-report .container,
+          body.print-report .theme-toggle,
+          body.print-report .refresh-toggle,
+          body.print-report #loadingOverlay {
+            display: none !important;
+          }
+          body.print-report #reportModal {
+            display: block !important;
+            position: static !important;
+            inset: auto !important;
+            padding: 0 !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+          body.print-report #reportModal .modal-content {
+            width: 190mm !important;
+            max-width: 190mm !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin: 0 auto !important;
+            border: 1px solid #dce3f1 !important;
+            border-radius: 8px !important;
+            padding: 8mm !important;
+            background: #fff !important;
+          }
+          body.print-report #reportModal .print-hidden {
+            display: none !important;
+          }
       </style>
     </head>
     <body>
@@ -1151,9 +1192,10 @@
           <div class="modal-header">
             <h2 id="reportModalTitle" style="margin:0;font-size:18px;">Relatório de conclusão</h2>
             <div class="modal-actions">
-              <button id="deleteReportButton" style="max-width:140px;display:none;" type="button" onclick="requestDeleteReport()">Excluir relatório</button>
-              <button id="editReportButton" style="max-width:120px;display:none;" type="button" onclick="enableReportEditing()">Editar</button>
-              <button class="secondary" style="max-width:120px;" onclick="closeReportModal()">Fechar</button>
+              <button id="deleteReportButton" class="print-hidden" style="max-width:140px;display:none;" type="button" onclick="requestDeleteReport()">Excluir relatório</button>
+              <button id="editReportButton" class="print-hidden" style="max-width:120px;display:none;" type="button" onclick="enableReportEditing()">Editar</button>
+              <button class="report-print-button print-hidden" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
+              <button class="secondary print-hidden" style="max-width:120px;" onclick="closeReportModal()">Fechar</button>
             </div>
           </div>
           <div class="report-context">
@@ -1168,7 +1210,7 @@
             <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
             <div id="reportValidationError" class="report-validation-error">Preencha o campo obrigatório</div>
           </div>
-          <div class="modal-actions report-actions">
+          <div class="modal-actions report-actions print-hidden">
             <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar</button>
           </div>
         </div>
@@ -1968,6 +2010,18 @@
           updateModalBackgroundState();
         }
 
+        function printReportModal() {
+          document.body.classList.add('print-report');
+
+          const cleanup = () => {
+            document.body.classList.remove('print-report');
+            window.removeEventListener('afterprint', cleanup);
+          };
+
+          window.addEventListener('afterprint', cleanup);
+          window.print();
+          setTimeout(cleanup, 1000);
+        }
         function handleReportModalBackdrop(event) {
           if (event.target && event.target.id === 'reportModal') closeReportModal();
         }

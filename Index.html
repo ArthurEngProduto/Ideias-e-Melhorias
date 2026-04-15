@@ -497,6 +497,18 @@
           font-size: 12px;
           color: var(--muted);
         }
+        .report-file-print-summary {
+          display: none;
+          margin-top: 6px;
+          font-size: 13px;
+          color: var(--text);
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 8px 10px;
+          background: var(--surface);
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
         .report-actions {
           justify-content: flex-end;
           margin-top: 12px;
@@ -1066,6 +1078,18 @@
             border-width: 1.3px !important;
             border-style: solid !important;
           }
+          body.print-report #reportModal .report-file-input-row,
+          body.print-report #reportModal .report-file-help {
+            display: none !important;
+          }
+          body.print-report #reportModal .report-file-print-summary {
+            display: block !important;
+            border-color: #4b5563 !important;
+            border-width: 1.3px !important;
+            border-style: solid !important;
+            background: #fff !important;
+            color: #111827 !important;
+          }
       </style>
     </head>
     <body>
@@ -1282,6 +1306,7 @@
             </div>
             <div class="report-file-help">Campo opcional para anexar imagem da solução, se necessário.</div>
           </div>
+            <div id="reportAttachmentPrintSummary" class="report-file-print-summary">Nenhum arquivo escolhido</div>
           <div id="reportPrintActions" class="report-print-actions print-hidden">
             <button id="printReportButton" class="report-primary-action" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
           </div>
@@ -2217,6 +2242,7 @@
         }
 
         function printReportModal() {
+          updateReportAttachmentPrintSummary();
           document.body.classList.add('print-report');
 
           const cleanup = () => {
@@ -2227,6 +2253,18 @@
           window.addEventListener('afterprint', cleanup);
           window.print();
           setTimeout(cleanup, 1000);
+        }
+
+        function updateReportAttachmentPrintSummary() {
+          const summaryElement = document.getElementById('reportAttachmentPrintSummary');
+          if (!summaryElement) return;
+          const attachmentNames = getReportAttachmentInputs()
+            .filter((input) => input && input.files && input.files.length > 0)
+            .map((input) => input.files[0].name)
+            .filter((name) => Boolean(String(name || '').trim()));
+          summaryElement.textContent = attachmentNames.length
+            ? attachmentNames.join('\n')
+            : 'Nenhum arquivo escolhido';
         }
         function handleReportModalBackdrop(event) {
           if (event.target && event.target.id === 'reportModal') closeReportModal();

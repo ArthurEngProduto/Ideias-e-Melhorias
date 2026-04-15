@@ -1856,6 +1856,21 @@
             { label: 'Tamanho', value: row['Tamanho:'] || '' },
             { label: 'Tipo de contribuição (produto)', value: row['Qual é o tipo de contribuição neste produto'] || '' },
           ].filter((item) => String(item.value || '').trim() !== '');
+          const processInfoItems = [
+            {
+              label: 'Produto do processo',
+              value: row['Em qual produto esse processo ocorre?'] || row['Em qual produto este processo ocorre?'] || '',
+            },
+            { label: 'Nome do processo', value: row['Nome do processo:'] || '' },
+            {
+              label: 'Etapa/atividade específica',
+              value: row['Etapa ou atividade específica (se existir) :'] || row['Etapa ou atividade específica (se existir):'] || '',
+            },
+            {
+              label: 'Tipo de contribuição (processo)',
+              value: row['Qual é o tipo de contribuição neste processo?'] || row['Qual é o tipo de contribuição neste processo'] || '',
+            },
+          ].filter((item) => String(item.value || '').trim() !== '');
           const problemDescription = String(
             row['Descreva o problema a ser corrigido no produto:']
             || row['Descreva o problema a ser corrigido no processo:']
@@ -1867,7 +1882,8 @@
             { label: 'Nome', value: row['Digite seu nome:'] || '-' },
             { label: 'Setor', value: row['Selecione o seu setor:'] || '-' },
             { label: 'Referência', value: row['Este registro se refere a:'] || '-' },
-            ...productInfoItems, 
+            ...productInfoItems,
+            ...processInfoItems,
           ];
           document.getElementById('reportContextGrid').innerHTML = contextItems
             .map((item) => `

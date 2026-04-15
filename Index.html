@@ -454,6 +454,13 @@
           justify-content: flex-end;
           margin-top: 12px;
         }
+        .report-validation-error {
+          margin-top: 8px;
+          color: #dc2626;
+          font-size: 13px;
+          font-weight: 600;
+          display: none;
+        }
         #saveReportButton {
           padding: 6px 12px;
           font-size: 12px;
@@ -1149,6 +1156,7 @@
           <div>
             <label for="reportTextInput" class="report-form-label">Solução aplicada <span style="color:#dc2626;">*</span></label>
             <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
+            <div id="reportValidationError" class="report-validation-error">Preencha o campo obrigatório</div>
           </div>
           <div class="modal-actions report-actions">
             <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar</button>
@@ -1859,6 +1867,7 @@
           const hasReport = Boolean(reportText);
           document.getElementById('reportModalTitle').textContent = hasReport ? 'Relatório de conclusão' : 'Relatório de conclusão (pendente)';
           document.getElementById('reportTextInput').value = reportText;
+          clearReportValidationError(); 
           document.getElementById('reportTextInput').readOnly = hasReport;
           document.getElementById('saveReportButton').style.display = hasReport ? 'none' : 'inline-flex';
           document.getElementById('editReportButton').style.display = hasReport ? 'inline-flex' : 'none';
@@ -1931,6 +1940,7 @@
         }
         function closeReportModal() {
           document.getElementById('reportModal').classList.remove('open');
+          clearReportValidationError();
           state.selectedReportRowIndex = null;
           updateModalBackgroundState();
         }
@@ -1949,9 +1959,10 @@
 
           const reportText = String(document.getElementById('reportTextInput').value || '').trim();
           if (!reportText) {
-            showError('O campo "Solução aplicada" é obrigatório.');
+            showReportValidationError();
             return;
           }
+          clearReportValidationError();
 
           showLoading();
           google.script.run
@@ -1963,10 +1974,31 @@
               hideLoading();
             })
             .withFailureHandler((err) => {
+              const message = err && err.message ? err.message : String(err || '');
+              const missingRequiredReport = (
+                (message.includes('Solução aplicada') && message.includes('obrigatório'))
+                || (message.includes('relatório de conclusão') && message.includes('obrigatório'))
+              );
+              if (missingRequiredReport) {
+                showReportValidationError();
+                hideLoading();
+                return;
+              }
               showError(err);
               hideLoading();
             })
             .saveConclusionReport(row.__rowNumber, reportText);
+        }
+        function showReportValidationError() {
+          const errorEl = document.getElementById('reportValidationError');
+          if (!errorEl) return;
+          errorEl.style.display = 'block';
+        }
+
+        function clearReportValidationError() {
+          const errorEl = document.getElementById('reportValidationError');
+          if (!errorEl) return;
+          errorEl.style.display = 'none';
         }
         function renderStatsModal() {
           const stats = state.stats || { total: 0, charts: [] };

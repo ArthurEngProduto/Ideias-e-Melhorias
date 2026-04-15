@@ -168,6 +168,28 @@ function updateRowStatus(rowNumber, status) {
   return { success: true, rowNumber: numericRow, status: normalizedStatus };
 }
 
+function saveConclusionReport(rowNumber, reportText) {
+  const numericRow = Number(rowNumber);
+  if (!numericRow || numericRow < 2) {
+    throw new Error('Linha inválida para salvar o relatório.');
+  }
+
+  const normalizedReport = String(reportText || '').trim();
+  if (!normalizedReport) {
+    throw new Error('O relatório de conclusão é obrigatório.');
+  }
+
+  const sheet = getSheet_();
+  if (numericRow > sheet.getLastRow()) {
+    throw new Error('A linha informada não existe mais na planilha.');
+  }
+
+  const reportColumn = getConclusionReportColumnIndex_(sheet);
+  sheet.getRange(numericRow, reportColumn).setValue(normalizedReport);
+
+  return { success: true, rowNumber: numericRow, report: normalizedReport };
+}
+
 function deletePortalRow(rowNumber) {
   const numericRow = Number(rowNumber);
   if (!numericRow || numericRow < 2) {
@@ -227,6 +249,25 @@ function getStatusColumnIndex_(sheet) {
   }
 
   return 18;
+}
+
+function getConclusionReportColumnIndex_(sheet) {
+  const reportHeader = 'Relatório de conclusão';
+  const headers = sheet
+    .getRange(1, 1, 1, sheet.getLastColumn())
+    .getDisplayValues()[0]
+    .map((header) => normalizeHeader_(header));
+  const normalizedReportHeader = normalizeHeader_(reportHeader);
+
+  for (let i = 0; i < headers.length; i += 1) {
+    if (headers[i] === normalizedReportHeader) {
+      return i + 1;
+    }
+  }
+
+  const newColumn = headers.length + 1;
+  sheet.getRange(1, newColumn).setValue(reportHeader);
+  return newColumn;
 }
 
 function normalizeRowStatus_(status) {

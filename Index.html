@@ -1252,18 +1252,19 @@
           </div>
           <div class="report-file-field">
             <label for="reportAttachmentInput" class="report-form-label">Anexar arquivo (imagem da solução)</label>
-            <div class="report-file-input-row">
-              <input id="reportAttachmentInput" class="report-file-input" type="file" accept="image/*" onchange="handleReportAttachmentChange()" />
-              <button
-                id="removeReportAttachmentButton"
-                class="report-file-remove-button"
-                type="button"
-                title="Remover arquivo selecionado"
-                aria-label="Remover arquivo selecionado"
-                onclick="clearReportAttachmentSelection()"
-              >
-                ✕
-              </button>
+            <div id="reportAttachmentInputs">
+              <div class="report-file-input-row">
+                <input id="reportAttachmentInput" class="report-file-input" type="file" accept="image/*" onchange="handleReportAttachmentChange(event)" />
+                <button
+                  class="report-file-remove-button"
+                  type="button"
+                  title="Remover arquivo selecionado"
+                  aria-label="Remover arquivo selecionado"
+                  onclick="clearReportAttachmentSelection(this)"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <div class="report-file-help">Campo opcional para anexar imagem da solução, se necessário.</div>
           </div>
@@ -1990,7 +1991,7 @@
           const hasReport = Boolean(reportText);
           document.getElementById('reportModalTitle').textContent = hasReport ? 'Relatório de conclusão' : 'Relatório de conclusão (pendente)';
           document.getElementById('reportTextInput').value = reportText;
-          document.getElementById('reportAttachmentInput').value = '';
+          resetReportAttachmentInputs();
           clearReportValidationError(); 
           document.getElementById('reportTextInput').readOnly = hasReport;
           setReportAttachmentEditable(!hasReport);
@@ -2057,34 +2058,95 @@
         }
 
         function setReportAttachmentEditable(isEditable) {
-          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
-          if (!reportAttachmentInput) return;
-          reportAttachmentInput.disabled = !isEditable;
-          if (!isEditable) reportAttachmentInput.value = '';
+          const reportAttachmentInputs = getReportAttachmentInputs();
+          if (!reportAttachmentInputs.length) return;
+          reportAttachmentInputs.forEach((input) => {
+            input.disabled = !isEditable;
+          });
+          if (!isEditable) {
+            resetReportAttachmentInputs();
+          }
+          ensureTrailingEmptyReportAttachmentInput();
           updateReportAttachmentRemoveButton();
         }
 
         function updateReportAttachmentRemoveButton() {
-          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
-          const removeButton = document.getElementById('removeReportAttachmentButton');
-          if (!reportAttachmentInput || !removeButton) return;
-          const hasFileSelected = Boolean(reportAttachmentInput.files && reportAttachmentInput.files.length > 0);
-          const canRemove = hasFileSelected && !reportAttachmentInput.disabled;
-          removeButton.classList.toggle('visible', canRemove);
-          removeButton.disabled = !canRemove;
+          getReportAttachmentInputs().forEach((input) => {
+            const removeButton = input.parentElement ? input.parentElement.querySelector('.report-file-remove-button') : null;
+            if (!removeButton) return;
+            const hasFileSelected = Boolean(input.files && input.files.length > 0);
+            const canRemove = hasFileSelected && !input.disabled;
+            removeButton.classList.toggle('visible', canRemove);
+            removeButton.disabled = !canRemove;
+          });
         }
 
-        function handleReportAttachmentChange() {
+        function handleReportAttachmentChange(event) {
+          const changedInput = event && event.target ? event.target : null;
+          if (changedInput && changedInput.files && changedInput.files.length > 0) {
+            ensureTrailingEmptyReportAttachmentInput();
+          }
           updateReportAttachmentRemoveButton();
         }
 
-        function clearReportAttachmentSelection() {
-          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
+        function clearReportAttachmentSelection(buttonElement) {
+          const row = buttonElement ? buttonElement.closest('.report-file-input-row') : null;
+          const reportAttachmentInput = row ? row.querySelector('.report-file-input') : document.getElementById('reportAttachmentInput');
           if (!reportAttachmentInput || reportAttachmentInput.disabled) return;
           reportAttachmentInput.value = '';
+          if (row && row.parentElement && row.parentElement.children.length > 1 && reportAttachmentInput.id !== 'reportAttachmentInput') {
+            row.remove();
+          }
+          ensureTrailingEmptyReportAttachmentInput();
           updateReportAttachmentRemoveButton();
         }
 
+        function getReportAttachmentInputs() {
+          return Array.from(document.querySelectorAll('#reportAttachmentInputs .report-file-input'));
+        }
+
+        function createReportAttachmentInputRow() {
+          const row = document.createElement('div');
+          row.className = 'report-file-input-row';
+          row.innerHTML = `
+            <input class="report-file-input" type="file" accept="image/*" onchange="handleReportAttachmentChange(event)" />
+            <button
+              class="report-file-remove-button"
+              type="button"
+              title="Remover arquivo selecionado"
+              aria-label="Remover arquivo selecionado"
+              onclick="clearReportAttachmentSelection(this)"
+            >
+              ✕
+            </button>
+          `;
+          return row;
+        }
+
+        function ensureTrailingEmptyReportAttachmentInput() {
+          const wrap = document.getElementById('reportAttachmentInputs');
+          if (!wrap) return;
+          const inputs = getReportAttachmentInputs();
+          if (!inputs.length) {
+            resetReportAttachmentInputs();
+            return;
+          }
+          const lastInput = inputs[inputs.length - 1];
+          const hasSelectedFile = Boolean(lastInput.files && lastInput.files.length > 0);
+          if (hasSelectedFile && !lastInput.disabled) {
+            wrap.appendChild(createReportAttachmentInputRow());
+          }
+        }
+
+        function resetReportAttachmentInputs() {
+          const wrap = document.getElementById('reportAttachmentInputs');
+          if (!wrap) return;
+          wrap.innerHTML = '';
+          const firstRow = createReportAttachmentInputRow();
+          const firstInput = firstRow.querySelector('.report-file-input');
+          if (firstInput) firstInput.id = 'reportAttachmentInput';
+          wrap.appendChild(firstRow);
+        }
         function enableReportEditing() {
           const reportInput = document.getElementById('reportTextInput');
           reportInput.readOnly = false;
@@ -2100,8 +2162,7 @@
           document.getElementById('reportModal').classList.remove('open');
           closeReportDeleteConfirmModal();
           clearReportValidationError();
-          const reportAttachmentInput = document.getElementById('reportAttachmentInput');
-          if (reportAttachmentInput) reportAttachmentInput.value = '';
+          resetReportAttachmentInputs();
           updateReportAttachmentRemoveButton();
           state.selectedReportRowIndex = null;
           updateModalBackgroundState();

@@ -479,6 +479,15 @@
           background: #1d4ed8;
           border-color: #1d4ed8;
         }
+        #deleteReportButton {
+          background: #dc2626;
+          border: 1px solid #dc2626;
+          color: #fff;
+        }
+        #deleteReportButton:hover {
+          background: #b91c1c;
+          border-color: #b91c1c;
+        }
         .details-focus-panel {
           margin-bottom: 12px;
           border: 1px solid var(--line);
@@ -1142,6 +1151,7 @@
           <div class="modal-header">
             <h2 id="reportModalTitle" style="margin:0;font-size:18px;">Relatório de conclusão</h2>
             <div class="modal-actions">
+              <button id="deleteReportButton" style="max-width:140px;display:none;" type="button" onclick="requestDeleteReport()">Excluir relatório</button>
               <button id="editReportButton" style="max-width:120px;display:none;" type="button" onclick="enableReportEditing()">Editar</button>
               <button class="secondary" style="max-width:120px;" onclick="closeReportModal()">Fechar</button>
             </div>
@@ -1163,7 +1173,18 @@
           </div>
         </div>
       </div>
-
+      <div class="modal" id="reportDeleteConfirmModal" onclick="handleReportDeleteConfirmBackdrop(event)">
+        <div class="modal-content status-picker-modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;font-size:18px;">Confirmação</h2>
+          </div>
+          <p style="margin: 0 0 14px;">Deseja excluir este relatório?</p>
+          <div class="modal-actions" style="justify-content:flex-end;">
+            <button class="secondary" style="max-width:100px;" type="button" onclick="closeReportDeleteConfirmModal()">Não</button>
+            <button class="danger-button" style="max-width:100px;" type="button" onclick="confirmDeleteReport()">Sim</button>
+          </div>
+        </div>
+      </div>
       <script>
         let state = {
           page: 1,
@@ -1871,6 +1892,7 @@
           document.getElementById('reportTextInput').readOnly = hasReport;
           document.getElementById('saveReportButton').style.display = hasReport ? 'none' : 'inline-flex';
           document.getElementById('editReportButton').style.display = hasReport ? 'inline-flex' : 'none';
+          document.getElementById('deleteReportButton').style.display = hasReport ? 'inline-flex' : 'none';
 
           const productInfoItems = [
             { label: 'Nome do produto', value: row['Nome do Produto:'] || '' },
@@ -1940,6 +1962,7 @@
         }
         function closeReportModal() {
           document.getElementById('reportModal').classList.remove('open');
+          closeReportDeleteConfirmModal();
           clearReportValidationError();
           state.selectedReportRowIndex = null;
           updateModalBackgroundState();
@@ -1988,6 +2011,53 @@
               hideLoading();
             })
             .saveConclusionReport(row.__rowNumber, reportText);
+        }
+        function requestDeleteReport() {
+          if (state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined) return;
+          document.getElementById('reportDeleteConfirmModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function closeReportDeleteConfirmModal() {
+          document.getElementById('reportDeleteConfirmModal').classList.remove('open');
+          updateModalBackgroundState();
+        }
+
+        function handleReportDeleteConfirmBackdrop(event) {
+          if (event.target && event.target.id === 'reportDeleteConfirmModal') closeReportDeleteConfirmModal();
+        }
+
+        function confirmDeleteReport() {
+          if (state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined) return;
+          const row = state.rows[state.selectedReportRowIndex];
+          if (!row || !row.__rowNumber) {
+            closeReportDeleteConfirmModal();
+            showError('Não foi possível identificar a linha para excluir o relatório.');
+            return;
+          }
+
+          showLoading();
+          google.script.run
+            .withSuccessHandler(() => {
+              row['Relatório de conclusão'] = '';
+              row['Relatorio de conclusao'] = '';
+              document.getElementById('reportTextInput').value = '';
+              document.getElementById('reportTextInput').readOnly = false;
+              document.getElementById('reportModalTitle').textContent = 'Relatório de conclusão (pendente)';
+              document.getElementById('saveReportButton').style.display = 'inline-flex';
+              document.getElementById('editReportButton').style.display = 'none';
+              document.getElementById('deleteReportButton').style.display = 'none';
+              clearReportValidationError();
+              render();
+              hideError();
+              closeReportDeleteConfirmModal();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+              hideLoading();
+            })
+            .deleteConclusionReport(row.__rowNumber);
         }
         function showReportValidationError() {
           const errorEl = document.getElementById('reportValidationError');

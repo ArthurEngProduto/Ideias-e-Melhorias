@@ -1301,7 +1301,7 @@
             <label for="reportAttachmentInput" class="report-form-label">Anexar arquivo (imagem da solução)</label>
             <div id="reportAttachmentInputs">
               <div class="report-file-input-row">
-                <input id="reportAttachmentInput" class="report-file-input" type="file" accept="image/*" onchange="handleReportAttachmentChange(event)" />
+                <input id="reportAttachmentInput" class="report-file-input" type="file" onchange="handleReportAttachmentChange(event)" />
                 <button
                   class="report-file-remove-button"
                   type="button"
@@ -2159,7 +2159,7 @@
           const row = document.createElement('div');
           row.className = 'report-file-input-row';
           row.innerHTML = `
-            <input class="report-file-input" type="file" accept="image/*" onchange="handleReportAttachmentChange(event)" />
+            <input class="report-file-input" type="file" onchange="handleReportAttachmentChange(event)" />
             <button
               class="report-file-remove-button"
               type="button"
@@ -2282,6 +2282,36 @@
           if (event.target && event.target.id === 'reportModal') closeReportModal();
         }
 
+        function readFileAsBase64(file) {
+          return new Promise((resolve, reject) => {
+            if (!file) {
+              reject(new Error('Arquivo inválido para upload.'));
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = String(reader.result || '');
+              const base64Content = result.includes(',') ? result.split(',')[1] : result;
+              resolve({
+                fileName: file.name || '',
+                mimeType: file.type || '',
+                base64Content,
+              });
+            };
+            reader.onerror = () => reject(new Error(`Falha ao ler o arquivo "${file.name || 'sem nome'}".`));
+            reader.readAsDataURL(file);
+          });
+        }
+
+        function collectReportAttachmentsForUpload() {
+          const selectedFiles = getReportAttachmentInputs()
+            .filter((input) => input && input.files && input.files.length > 0)
+            .map((input) => input.files[0]);
+
+          if (!selectedFiles.length) return Promise.resolve([]);
+          return Promise.all(selectedFiles.map((file) => readFileAsBase64(file)));
+        }
+
         function saveConclusionReport() {
           if (state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined) return;
           const row = state.rows[state.selectedReportRowIndex];
@@ -2298,29 +2328,43 @@
           clearReportValidationError();
 
           showLoading();
-          google.script.run
-            .withSuccessHandler((result) => {
-              row['Relatório de conclusão'] = result.report || reportText;
-              render();
-              hideError();
-              closeReportModal();
-              hideLoading();
+          collectReportAttachmentsForUpload()
+            .then((attachments) => {
+              google.script.run
+                .withSuccessHandler((result) => {
+                  row['Relatório de conclusão'] = result.report || reportText;
+                  if (result && Array.isArray(result.attachmentLinks) && result.attachmentLinks.length) {
+                    const currentLinks = String(row['Imagens de conclusão'] || '').trim();
+                    const updatedLinks = currentLinks
+                      ? `${currentLinks}@${result.attachmentLinks.join('@')}`
+                      : result.attachmentLinks.join('@');
+                    row['Imagens de conclusão'] = updatedLinks;
+                  }
+                  render();
+                  hideError();
+                  closeReportModal();
+                  hideLoading();
+                })
+                .withFailureHandler((err) => {
+                  const message = err && err.message ? err.message : String(err || '');
+                  const missingRequiredReport = (
+                    (message.includes('Solução aplicada') && message.includes('obrigatório'))
+                    || (message.includes('relatório de conclusão') && message.includes('obrigatório'))
+                  );
+                  if (missingRequiredReport) {
+                    showReportValidationError();
+                    hideLoading();
+                    return;
+                  }
+                  showError(err);
+                  hideLoading();
+                })
+                .saveConclusionReportWithAttachments(row.__rowNumber, reportText, attachments);
             })
-            .withFailureHandler((err) => {
-              const message = err && err.message ? err.message : String(err || '');
-              const missingRequiredReport = (
-                (message.includes('Solução aplicada') && message.includes('obrigatório'))
-                || (message.includes('relatório de conclusão') && message.includes('obrigatório'))
-              );
-              if (missingRequiredReport) {
-                showReportValidationError();
-                hideLoading();
-                return;
-              }
+            .catch((err) => {
               showError(err);
               hideLoading();
-            })
-            .saveConclusionReport(row.__rowNumber, reportText);
+            });
         }
         function requestDeleteReport() {
           if (state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined) return;

@@ -525,6 +525,11 @@
           display: grid;
           gap: 4px;
         }
+        .report-file-links-list li {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
         .report-file-links-list a {
           color: var(--primary);
           word-break: break-all;
@@ -532,6 +537,22 @@
         }
         .report-file-links-list a:hover {
           text-decoration: underline;
+        }
+        .report-file-delete-link-button {
+          width: 24px;
+          min-width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          padding: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #dc2626;
+          border: 1px solid #dc2626;
+          color: #fff;
+          font-size: 14px;
+          line-height: 1;
+          font-weight: 700;
         }
         .report-file-print-summary {
           display: none;
@@ -1366,6 +1387,18 @@
           </div>
         </div>
       </div>
+      <div class="modal" id="reportAttachmentDeleteConfirmModal" onclick="handleReportAttachmentDeleteConfirmBackdrop(event)">
+        <div class="modal-content status-picker-modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;font-size:18px;">Confirmação</h2>
+          </div>
+          <p style="margin: 0 0 14px;">Deseja apagar este arquivo?</p>
+          <div class="modal-actions" style="justify-content:flex-end;">
+            <button class="secondary" style="max-width:100px;" type="button" onclick="closeReportAttachmentDeleteConfirmModal()">Não</button>
+            <button class="danger-button" style="max-width:100px;" type="button" onclick="confirmDeleteReportAttachment()">Sim</button>
+          </div>
+        </div>
+      </div>
       <script>
         let state = {
           page: 1,
@@ -1383,7 +1416,8 @@
           tableSelectedSectors: [],
           tableAvailableSectors: [],
           statsSelectedSectors: [],
-          statsAvailableSectors: []
+          statsAvailableSectors: [],
+          selectedReportAttachmentDeleteIndex: null
         };
         let loadingCount = 0;
         const DONUT_CUTOUT_RATIO = 0.62;
@@ -2270,6 +2304,10 @@
           document.getElementById('saveReportButton').style.display = 'inline-flex';
           document.getElementById('editReportButton').style.display = 'none';
           document.getElementById('reportPrintActions').style.display = 'none';
+          const row = state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined
+            ? null
+            : state.rows[state.selectedReportRowIndex];
+          renderReportAttachmentLinks(row);
           reportInput.focus();
           const textLength = reportInput.value.length;
           reportInput.setSelectionRange(textLength, textLength);
@@ -2277,6 +2315,7 @@
         function closeReportModal() {
           document.getElementById('reportModal').classList.remove('open');
           closeReportDeleteConfirmModal();
+          closeReportAttachmentDeleteConfirmModal();
           clearReportValidationError();
           resetReportAttachmentInputs();
           updateReportAttachmentRemoveButton();
@@ -2331,6 +2370,8 @@
           const wrap = document.getElementById('reportAttachmentLinks');
           if (!wrap) return;
           const links = parseReportAttachmentLinks(row ? row['Imagens de conclusão'] : '');
+          const reportInput = document.getElementById('reportTextInput');
+          const canDeleteLinks = Boolean(reportInput && !reportInput.readOnly);
           if (!links.length) {
             wrap.innerHTML = '';
             wrap.style.display = 'none';
@@ -2340,10 +2381,64 @@
           wrap.innerHTML = `
             <div class="report-file-links-title">Links de arquivos já anexados:</div>
             <ul class="report-file-links-list">
-              ${links.map((link, index) => `<li><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Arquivo ${index + 1}</a></li>`).join('')}
+              ${links.map((link, index) => `
+                <li>
+                  <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Arquivo ${index + 1}</a>
+                  ${canDeleteLinks
+                    ? `<button class="report-file-delete-link-button" type="button" title="Apagar arquivo anexado" aria-label="Apagar arquivo anexado" onclick="requestDeleteReportAttachment(${index})">✕</button>`
+                    : ''}
+                </li>
+              `).join('')}
             </ul>
           `;
           wrap.style.display = 'block';
+        }
+        function requestDeleteReportAttachment(attachmentIndex) {
+          if (state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined) return;
+          const numericAttachmentIndex = Number(attachmentIndex);
+          if (!Number.isInteger(numericAttachmentIndex) || numericAttachmentIndex < 0) return;
+          state.selectedReportAttachmentDeleteIndex = numericAttachmentIndex;
+          document.getElementById('reportAttachmentDeleteConfirmModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function closeReportAttachmentDeleteConfirmModal() {
+          document.getElementById('reportAttachmentDeleteConfirmModal').classList.remove('open');
+          state.selectedReportAttachmentDeleteIndex = null;
+          updateModalBackgroundState();
+        }
+
+        function handleReportAttachmentDeleteConfirmBackdrop(event) {
+          if (event.target && event.target.id === 'reportAttachmentDeleteConfirmModal') closeReportAttachmentDeleteConfirmModal();
+        }
+
+        function confirmDeleteReportAttachment() {
+          if (state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined) return;
+          const attachmentIndex = state.selectedReportAttachmentDeleteIndex;
+          const row = state.rows[state.selectedReportRowIndex];
+          if (!row || !row.__rowNumber || !Number.isInteger(attachmentIndex) || attachmentIndex < 0) {
+            closeReportAttachmentDeleteConfirmModal();
+            showError('Não foi possível identificar o arquivo para exclusão.');
+            return;
+          }
+
+          showLoading();
+          google.script.run
+            .withSuccessHandler((result) => {
+              const updatedLinks = result && Array.isArray(result.links) ? result.links : [];
+              row['Imagens de conclusão'] = updatedLinks.join('@');
+              renderReportAttachmentLinks(row);
+              updateReportAttachmentPrintSummary();
+              hideError();
+              closeReportAttachmentDeleteConfirmModal();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              closeReportAttachmentDeleteConfirmModal();
+              showError(err);
+              hideLoading();
+            })
+            .deleteConclusionAttachment(row.__rowNumber, attachmentIndex);
         }
         function handleReportModalBackdrop(event) {
           if (event.target && event.target.id === 'reportModal') closeReportModal();

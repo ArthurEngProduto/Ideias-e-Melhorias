@@ -8,6 +8,9 @@
 const SPREADSHEET_ID = ''; // Ex: '1AbC...xyz'
 const SHEET_NAME = ''; // vazio = primeira aba
 const DEFAULT_PAGE_SIZE = 20;
+const CONCLUSION_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1HwupfZk7S3VwRyRhNTUsc3j5UMeY8WAs';
+const CONCLUSION_IMAGES_COLUMN_INDEX = 20; // Coluna T
+const CONCLUSION_IMAGES_HEADER = 'Imagens de conclusão';
 const CONTRIBUTION_TYPE_FIELDS = {
   'Qual é o tipo de contribuição neste produto': [
     'Ideia de melhoria em um produto',
@@ -169,6 +172,10 @@ function updateRowStatus(rowNumber, status) {
 }
 
 function saveConclusionReport(rowNumber, reportText) {
+  return saveConclusionReportWithAttachments(rowNumber, reportText, []);
+}
+
+function saveConclusionReportWithAttachments(rowNumber, reportText, attachments) {
   const numericRow = Number(rowNumber);
   if (!numericRow || numericRow < 2) {
     throw new Error('Linha inválida para salvar o relatório.');
@@ -187,7 +194,15 @@ function saveConclusionReport(rowNumber, reportText) {
   const reportColumn = getConclusionReportColumnIndex_(sheet);
   sheet.getRange(numericRow, reportColumn).setValue(normalizedReport);
 
-  return { success: true, rowNumber: numericRow, report: normalizedReport };
+  const uploadedLinks = uploadConclusionAttachments_(attachments || []);
+  if (uploadedLinks.length) {
+    const imagesColumn = getConclusionImagesColumnIndex_(sheet);
+    const currentValue = String(sheet.getRange(numericRow, imagesColumn).getDisplayValue() || '').trim();
+    const mergedLinks = mergeAttachmentLinks_(currentValue, uploadedLinks);
+    sheet.getRange(numericRow, imagesColumn).setValue(mergedLinks);
+  }
+
+  return { success: true, rowNumber: numericRow, report: normalizedReport, attachmentLinks: uploadedLinks };
 }
 
 function deletePortalRow(rowNumber) {
@@ -270,6 +285,70 @@ function getConclusionReportColumnIndex_(sheet) {
   return newColumn;
 }
 
+function getConclusionImagesColumnIndex_(sheet) {
+  const currentHeader = normalizeHeader_(sheet.getRange(1, CONCLUSION_IMAGES_COLUMN_INDEX).getDisplayValue());
+  const expectedHeader = normalizeHeader_(CONCLUSION_IMAGES_HEADER);
+
+  if (currentHeader !== expectedHeader) {
+    sheet.getRange(1, CONCLUSION_IMAGES_COLUMN_INDEX).setValue(CONCLUSION_IMAGES_HEADER);
+  }
+
+  return CONCLUSION_IMAGES_COLUMN_INDEX;
+}
+
+function uploadConclusionAttachments_(attachments) {
+  if (!Array.isArray(attachments) || !attachments.length) return [];
+
+  const folder = DriveApp.getFolderById(getDriveFolderIdFromUrl_(CONCLUSION_DRIVE_FOLDER_URL));
+
+  return attachments
+    .map((file) => normalizeAttachmentPayload_(file))
+    .filter((file) => file && file.base64Content)
+    .map((file) => {
+      const blob = Utilities.newBlob(
+        Utilities.base64Decode(file.base64Content),
+        file.mimeType || 'application/octet-stream',
+        file.fileName || `anexo-${new Date().getTime()}`
+      );
+      const createdFile = folder.createFile(blob);
+      return createdFile.getUrl();
+    });
+}
+
+function normalizeAttachmentPayload_(file) {
+  if (!file || typeof file !== 'object') return null;
+  const fileName = String(file.fileName || file.name || '').trim();
+  const mimeType = String(file.mimeType || file.type || '').trim();
+  const base64Content = String(file.base64Content || file.base64 || '').trim();
+  if (!base64Content) return null;
+
+  return {
+    fileName,
+    mimeType,
+    base64Content,
+  };
+}
+
+function getDriveFolderIdFromUrl_(folderUrl) {
+  const url = String(folderUrl || '').trim();
+  const match = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (!match || !match[1]) {
+    throw new Error('Não foi possível identificar o ID da pasta de destino no Google Drive.');
+  }
+  return match[1];
+}
+
+function mergeAttachmentLinks_(existingValue, newLinks) {
+  const existingLinks = String(existingValue || '')
+    .split('@')
+    .map((item) => String(item || '').trim())
+    .filter((item) => item);
+  const additionalLinks = (newLinks || [])
+    .map((item) => String(item || '').trim())
+    .filter((item) => item);
+
+  return existingLinks.concat(additionalLinks).join('@');
+}
 function normalizeRowStatus_(status) {
   const normalized = String(status || '').trim().toLowerCase();
   if (!normalized) return 'Na fila';

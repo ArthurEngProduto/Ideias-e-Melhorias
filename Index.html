@@ -2561,10 +2561,13 @@
             .withSuccessHandler(() => {
               row['Relatório de conclusão'] = '';
               row['Relatorio de conclusao'] = '';
+              row['Imagens de conclusão'] = ''; 
               document.getElementById('reportTextInput').value = '';
               document.getElementById('reportTextInput').readOnly = false;
               document.getElementById('reportModalTitle').textContent = 'Relatório de conclusão (pendente)';
               setReportAttachmentEditable(true);
+              renderReportAttachmentLinks(row);
+              updateReportAttachmentPrintSummary();
               document.getElementById('saveReportButton').style.display = 'inline-flex';
               document.getElementById('editReportButton').style.display = 'none';
               document.getElementById('deleteReportButton').style.display = 'none';

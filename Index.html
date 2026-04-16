@@ -456,15 +456,16 @@
         }
         .report-form-textarea {
           width: 100%;
-          min-height: 220px;
           box-sizing: border-box;
           padding: 10px;
           border: 1px solid var(--line);
           border-radius: 8px;
           background: transparent;
           color: var(--text);
-          min-height: 160px;
-          resize: vertical;
+          min-height: 46px;
+          line-height: 1.4;
+          resize: none;
+          overflow: hidden;
         }
         .report-file-field {
           margin-top: 12px;
@@ -2106,6 +2107,7 @@
           renderReportAttachmentLinks(row);
           document.getElementById('reportModalTitle').textContent = hasReport ? 'Relatório de conclusão' : 'Relatório de conclusão (pendente)';
           document.getElementById('reportTextInput').value = reportText;
+          autoResizeTextarea(document.getElementById('reportTextInput'));
           resetReportAttachmentInputs();
           clearReportValidationError(); 
           document.getElementById('reportTextInput').readOnly = hasReport;
@@ -2164,11 +2166,16 @@
           if (problemDescription) {
             problemText.value = problemDescription;
             problemWrap.style.display = 'block';
+            autoResizeTextarea(problemText);
           } else {
             problemText.value = '';
             problemWrap.style.display = 'none';
           }
           document.getElementById('reportModal').classList.add('open');
+          requestAnimationFrame(() => {
+            autoResizeTextarea(document.getElementById('reportTextInput'));
+            autoResizeTextarea(problemWrap.style.display === 'none' ? null : document.getElementById('reportProblemText'));
+          });
           updateModalBackgroundState();
         }
 
@@ -2303,6 +2310,7 @@
           const reportInput = document.getElementById('reportTextInput');
           state.isReportEditing = true;
           reportInput.readOnly = false;
+          autoResizeTextarea(reportInput);
           setReportAttachmentEditable(true);
           document.getElementById('saveReportButton').style.display = 'inline-flex';
           document.getElementById('editReportButton').style.display = 'none';
@@ -2325,6 +2333,25 @@
           state.isReportEditing = false; 
           state.selectedReportRowIndex = null;
           updateModalBackgroundState();
+        }
+
+        function autoResizeTextarea(textarea) {
+          if (!textarea) return;
+          textarea.style.height = '0px';
+          textarea.style.height = `${Math.max(textarea.scrollHeight, 46)}px`;
+        }
+
+        function setupReportTextareaAutoResize() {
+          ['reportTextInput', 'reportProblemText'].forEach((id) => {
+            const textarea = document.getElementById(id);
+            if (!textarea) return;
+            textarea.addEventListener('input', () => autoResizeTextarea(textarea));
+            autoResizeTextarea(textarea);
+          });
+          window.addEventListener('resize', () => {
+            autoResizeTextarea(document.getElementById('reportTextInput'));
+            autoResizeTextarea(document.getElementById('reportProblemText'));
+          });
         }
 
         function printReportModal() {
@@ -2563,6 +2590,7 @@
               row['Relatorio de conclusao'] = '';
               row['Imagens de conclusão'] = ''; 
               document.getElementById('reportTextInput').value = '';
+              autoResizeTextarea(document.getElementById('reportTextInput'));
               document.getElementById('reportTextInput').readOnly = false;
               document.getElementById('reportModalTitle').textContent = 'Relatório de conclusão (pendente)';
               setReportAttachmentEditable(true);
@@ -3172,6 +3200,7 @@
         });
 
         initializeTheme();
+        setupReportTextareaAutoResize();
         boot();
       </script>
     </body>

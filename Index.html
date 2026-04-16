@@ -1417,7 +1417,8 @@
           tableAvailableSectors: [],
           statsSelectedSectors: [],
           statsAvailableSectors: [],
-          selectedReportAttachmentDeleteIndex: null
+          selectedReportAttachmentDeleteIndex: null,
+          isReportEditing: false
         };
         let loadingCount = 0;
         const DONUT_CUTOUT_RATIO = 0.62;
@@ -2101,6 +2102,7 @@
           state.selectedReportRowIndex = index;
           const reportText = getConclusionReportValue(row);
           const hasReport = Boolean(reportText);
+          state.isReportEditing = !hasReport;
           renderReportAttachmentLinks(row);
           document.getElementById('reportModalTitle').textContent = hasReport ? 'Relatório de conclusão' : 'Relatório de conclusão (pendente)';
           document.getElementById('reportTextInput').value = reportText;
@@ -2299,6 +2301,7 @@
         }
         function enableReportEditing() {
           const reportInput = document.getElementById('reportTextInput');
+          state.isReportEditing = true;
           reportInput.readOnly = false;
           setReportAttachmentEditable(true);
           document.getElementById('saveReportButton').style.display = 'inline-flex';
@@ -2319,6 +2322,7 @@
           clearReportValidationError();
           resetReportAttachmentInputs();
           updateReportAttachmentRemoveButton();
+          state.isReportEditing = false; 
           state.selectedReportRowIndex = null;
           updateModalBackgroundState();
         }
@@ -2370,8 +2374,7 @@
           const wrap = document.getElementById('reportAttachmentLinks');
           if (!wrap) return;
           const links = parseReportAttachmentLinks(row ? row['Imagens de conclusão'] : '');
-          const reportInput = document.getElementById('reportTextInput');
-          const canDeleteLinks = Boolean(reportInput && !reportInput.readOnly);
+          const canDeleteLinks = Boolean(state.isReportEditing);
           if (!links.length) {
             wrap.innerHTML = '';
             wrap.style.display = 'none';

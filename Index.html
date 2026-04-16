@@ -506,6 +506,33 @@
           font-size: 12px;
           color: var(--muted);
         }
+        .report-file-links {
+          margin-top: 8px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 8px 10px;
+          background: var(--surface);
+          font-size: 13px;
+        }
+        .report-file-links-title {
+          color: var(--muted);
+          font-weight: 700;
+          margin-bottom: 6px;
+        }
+        .report-file-links-list {
+          margin: 0;
+          padding-left: 18px;
+          display: grid;
+          gap: 4px;
+        }
+        .report-file-links-list a {
+          color: var(--primary);
+          word-break: break-all;
+          text-decoration: none;
+        }
+        .report-file-links-list a:hover {
+          text-decoration: underline;
+        }
         .report-file-print-summary {
           display: none;
           margin-top: 6px;
@@ -1315,6 +1342,7 @@
             </div>
             <div class="report-file-help">Campo opcional para anexar imagem da solução, se necessário.</div>
           </div>
+            <div id="reportAttachmentLinks" class="report-file-links" style="display:none;"></div>
             <div id="reportAttachmentPrintSummary" class="report-file-print-summary">Nenhum arquivo escolhido</div>
           <div id="reportPrintActions" class="report-print-actions print-hidden">
             <button id="printReportButton" class="report-primary-action" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
@@ -2037,6 +2065,7 @@
           state.selectedReportRowIndex = index;
           const reportText = getConclusionReportValue(row);
           const hasReport = Boolean(reportText);
+          renderReportAttachmentLinks(row);
           document.getElementById('reportModalTitle').textContent = hasReport ? 'Relatório de conclusão' : 'Relatório de conclusão (pendente)';
           document.getElementById('reportTextInput').value = reportText;
           resetReportAttachmentInputs();
@@ -2270,13 +2299,49 @@
         function updateReportAttachmentPrintSummary() {
           const summaryElement = document.getElementById('reportAttachmentPrintSummary');
           if (!summaryElement) return;
+          const row = state.selectedReportRowIndex === null || state.selectedReportRowIndex === undefined
+            ? null
+            : state.rows[state.selectedReportRowIndex];
+          const existingLinks = parseReportAttachmentLinks(row ? row['Imagens de conclusão'] : '');
           const attachmentNames = getReportAttachmentInputs()
             .filter((input) => input && input.files && input.files.length > 0)
             .map((input) => input.files[0].name)
             .filter((name) => Boolean(String(name || '').trim()));
-          summaryElement.textContent = attachmentNames.length
-            ? attachmentNames.join('\n')
-            : 'Nenhum arquivo escolhido';
+          const lines = [];
+          if (existingLinks.length) {
+            lines.push('Links já salvos:');
+            lines.push(...existingLinks);
+          }
+          if (attachmentNames.length) {
+            lines.push('Arquivos selecionados nesta edição:');
+            lines.push(...attachmentNames);
+          }
+          summaryElement.textContent = lines.length ? lines.join('\n') : 'Nenhum arquivo escolhido';
+        }
+        function parseReportAttachmentLinks(rawValue) {
+          return String(rawValue || '')
+            .split('@')
+            .map((item) => String(item || '').trim())
+            .filter((item) => /^https?:\/\//i.test(item));
+        }
+
+        function renderReportAttachmentLinks(row) {
+          const wrap = document.getElementById('reportAttachmentLinks');
+          if (!wrap) return;
+          const links = parseReportAttachmentLinks(row ? row['Imagens de conclusão'] : '');
+          if (!links.length) {
+            wrap.innerHTML = '';
+            wrap.style.display = 'none';
+            return;
+          }
+
+          wrap.innerHTML = `
+            <div class="report-file-links-title">Links de arquivos já anexados:</div>
+            <ul class="report-file-links-list">
+              ${links.map((link, index) => `<li><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Arquivo ${index + 1}</a></li>`).join('')}
+            </ul>
+          `;
+          wrap.style.display = 'block';
         }
         function handleReportModalBackdrop(event) {
           if (event.target && event.target.id === 'reportModal') closeReportModal();
@@ -2339,6 +2404,7 @@
                       ? `${currentLinks}@${result.attachmentLinks.join('@')}`
                       : result.attachmentLinks.join('@');
                     row['Imagens de conclusão'] = updatedLinks;
+                    renderReportAttachmentLinks(row);
                   }
                   render();
                   hideError();

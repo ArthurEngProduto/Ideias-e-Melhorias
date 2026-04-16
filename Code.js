@@ -205,6 +205,78 @@ function saveConclusionReportWithAttachments(rowNumber, reportText, attachments)
   return { success: true, rowNumber: numericRow, report: normalizedReport, attachmentLinks: uploadedLinks };
 }
 
+function deleteConclusionAttachment(rowNumber, attachmentIndex) {
+  const numericRow = Number(rowNumber);
+  const numericAttachmentIndex = Number(attachmentIndex);
+  if (!numericRow || numericRow < 2) {
+    throw new Error('Linha inválida para exclusão do anexo.');
+  }
+  if (!Number.isInteger(numericAttachmentIndex) || numericAttachmentIndex < 0) {
+    throw new Error('Anexo inválido para exclusão.');
+  }
+
+  const sheet = getSheet_();
+  if (numericRow > sheet.getLastRow()) {
+    throw new Error('A linha informada não existe mais na planilha.');
+  }
+
+  const imagesColumn = getConclusionImagesColumnIndex_(sheet);
+  const currentValue = String(sheet.getRange(numericRow, imagesColumn).getDisplayValue() || '').trim();
+  const links = parseAttachmentLinks_(currentValue);
+  if (numericAttachmentIndex >= links.length) {
+    throw new Error('O anexo selecionado não foi encontrado.');
+  }
+
+  const removedLink = links[numericAttachmentIndex];
+  const deletedFromDrive = deleteDriveFileByUrl_(removedLink);
+  links.splice(numericAttachmentIndex, 1);
+  sheet.getRange(numericRow, imagesColumn).setValue(links.join('@'));
+
+  return {
+    success: true,
+    rowNumber: numericRow,
+    removedLink,
+    deletedFromDrive,
+    links,
+  };
+}
+
+function deleteConclusionReport(rowNumber) {
+  const numericRow = Number(rowNumber);
+  if (!numericRow || numericRow < 2) {
+    throw new Error('Linha inválida para exclusão do relatório.');
+  }
+
+  const sheet = getSheet_();
+  if (numericRow > sheet.getLastRow()) {
+    throw new Error('A linha informada não existe mais na planilha.');
+  }
+
+  const reportColumn = getConclusionReportColumnIndex_(sheet);
+  const imagesColumn = getConclusionImagesColumnIndex_(sheet);
+  const currentLinks = parseAttachmentLinks_(sheet.getRange(numericRow, imagesColumn).getDisplayValue());
+  const deletedLinks = [];
+  const failedLinks = [];
+
+  currentLinks.forEach((link) => {
+    if (deleteDriveFileByUrl_(link)) {
+      deletedLinks.push(link);
+      return;
+    }
+    failedLinks.push(link);
+  });
+
+  sheet.getRange(numericRow, reportColumn).setValue('');
+  sheet.getRange(numericRow, imagesColumn).setValue('');
+
+  return {
+    success: true,
+    rowNumber: numericRow,
+    deletedLinks,
+    failedLinks,
+  };
+}
+
 function deletePortalRow(rowNumber) {
   const numericRow = Number(rowNumber);
   if (!numericRow || numericRow < 2) {
@@ -348,6 +420,40 @@ function mergeAttachmentLinks_(existingValue, newLinks) {
     .filter((item) => item);
 
   return existingLinks.concat(additionalLinks).join('@');
+}
+
+function parseAttachmentLinks_(rawValue) {
+  return String(rawValue || '')
+    .split('@')
+    .map((item) => String(item || '').trim())
+    .filter((item) => /^https?:\/\//i.test(item));
+}
+
+function deleteDriveFileByUrl_(fileUrl) {
+  const fileId = getDriveFileIdFromUrl_(fileUrl);
+  if (!fileId) return false;
+
+  try {
+    const file = DriveApp.getFileById(fileId);
+    file.setTrashed(true);
+    return true;
+  } catch (error) {
+    Logger.log('Falha ao apagar arquivo do Drive (%s): %s', fileId, error);
+    return false;
+  }
+}
+
+function getDriveFileIdFromUrl_(fileUrl) {
+  const url = String(fileUrl || '').trim();
+  if (!url) return '';
+
+  const fromPath = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (fromPath && fromPath[1]) return fromPath[1];
+
+  const fromQuery = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (fromQuery && fromQuery[1]) return fromQuery[1];
+
+  return '';
 }
 function normalizeRowStatus_(status) {
   const normalized = String(status || '').trim().toLowerCase();

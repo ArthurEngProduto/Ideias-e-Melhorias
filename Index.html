@@ -314,6 +314,10 @@
           border-top: none;
           border-bottom: 1px solid var(--line);
         }
+        .deployment-order-status-tag {
+          cursor: default;
+          pointer-events: none;
+        }
         .stats-modal-content {
           width: min(96vw, 1700px);
           max-height: 94vh;
@@ -2224,7 +2228,9 @@
           }
 
           tbody.innerHTML = queueRows
-            .map((row, index) => `
+            .map((row, index) => {
+              const rowStatus = getWorkflowStatus(row);
+              return `
               <tr>
                 <td>${index + 1}</td>
                 <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
@@ -2232,9 +2238,10 @@
                 <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
                 <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
                 <td>${escapeHtml(row['Qual é a recorrência ou necessidade desta melhoria?'] || '-')}</td>
-                <td>${escapeHtml(getWorkflowStatus(row))}</td>
+                <td><span class="status-tag-button ${getWorkflowStatusClass(rowStatus)} deployment-order-status-tag">${escapeHtml(rowStatus)}</span></td>
               </tr>
-            `)
+            `;
+            })
             .join('');
           summary.textContent = `${queueRows.length} registro(s) com etiqueta "Na fila".`;
         }

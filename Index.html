@@ -126,6 +126,12 @@
           display: flex;
           gap: 10px;
           justify-content: flex-end;
+          align-items: flex-start;
+        }
+        .toolbar-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
         input, select, button {
           width: 100%;
@@ -272,6 +278,33 @@
           border-radius: 12px;
           border: 1px solid var(--line);
           padding: 16px;
+        }
+        .deployment-order-summary {
+          margin: 0 0 10px;
+          color: var(--muted);
+          font-size: 13px;
+        }
+        .deployment-order-table-wrap {
+          overflow: auto;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+        }
+        .deployment-order-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 720px;
+        }
+        .deployment-order-table th,
+        .deployment-order-table td {
+          border-top: 1px solid var(--line-soft);
+          padding: 9px;
+          font-size: 13px;
+          text-align: left;
+        }
+        .deployment-order-table thead th {
+          background: var(--surface-soft);
+          border-top: none;
+          border-bottom: 1px solid var(--line);
         }
         .stats-modal-content {
           width: min(96vw, 1700px);
@@ -1217,7 +1250,10 @@
 
           <div class="toolbar">
             <button onclick="applyFilters()">Filtrar</button>
-            <button class="secondary" onclick="clearFilters()">Limpar</button>
+            <div class="toolbar-stack">
+              <button class="secondary" onclick="clearFilters()">Limpar</button>
+              <button class="secondary" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
+            </div>
             <button id="statsButton" class="secondary" onclick="openStatsModal()">Abrir estatísticas</button>
           </div>
 
@@ -1332,6 +1368,33 @@
           <h2 class="stats-print-title">Estatísticas das respostas</h2>
           <div class="stats-grid" id="statsCharts"></div>
           <div class="stats-empty" id="statsEmpty" style="display:none;">Não há dados para montar os gráficos com os filtros atuais.</div>
+        </div>
+      </div>
+      <div class="modal" id="deploymentOrderModal" onclick="handleDeploymentOrderModalBackdrop(event)">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;">Ordem de Implantação</h2>
+            <div class="modal-actions">
+              <button class="secondary" style="max-width:120px;" onclick="closeDeploymentOrderModal()">Fechar</button>
+            </div>
+          </div>
+          <p id="deploymentOrderSummary" class="deployment-order-summary">Carregando...</p>
+          <div class="deployment-order-table-wrap">
+            <table class="deployment-order-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Data</th>
+                  <th>Nome</th>
+                  <th>Setor</th>
+                  <th>Produto/Processo</th>
+                  <th>Recorrência</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="deploymentOrderRows"></tbody>
+            </table>
+          </div>
         </div>
       </div>
       <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
@@ -2101,6 +2164,66 @@
           if (event.target && event.target.id === 'statsModal') closeStatsModal();
         }
 
+        function openDeploymentOrderModal() {
+          document.getElementById('deploymentOrderModal').classList.add('open');
+          updateModalBackgroundState();
+          fetchDeploymentOrderRows();
+        }
+
+        function fetchDeploymentOrderRows() {
+          const filters = { ...(state.filters || {}), status: 'Na fila' };
+          const pageSize = 10000;
+          showLoading();
+          google.script.run
+            .withSuccessHandler((data) => {
+              const queueRows = (data && data.rows) ? data.rows : [];
+              renderDeploymentOrderRows(queueRows);
+              hideError();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              renderDeploymentOrderRows([]);
+              showError(err);
+              hideLoading();
+            })
+            .getPortalData(filters, 1, pageSize);
+        }
+
+        function renderDeploymentOrderRows(queueRows) {
+          const tbody = document.getElementById('deploymentOrderRows');
+          const summary = document.getElementById('deploymentOrderSummary');
+          if (!tbody || !summary) return;
+
+          if (!queueRows.length) {
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
+            summary.textContent = '0 registro(s) com etiqueta "Na fila".';
+            return;
+          }
+
+          tbody.innerHTML = queueRows
+            .map((row, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
+                <td>${escapeHtml(row['Digite seu nome:'] || '-')}</td>
+                <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
+                <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
+                <td>${escapeHtml(row['Qual é a recorrência ou necessidade desta melhoria?'] || '-')}</td>
+                <td>${escapeHtml(getWorkflowStatus(row))}</td>
+              </tr>
+            `)
+            .join('');
+          summary.textContent = `${queueRows.length} registro(s) com etiqueta "Na fila".`;
+        }
+
+        function closeDeploymentOrderModal() {
+          document.getElementById('deploymentOrderModal').classList.remove('open');
+          updateModalBackgroundState();
+        }
+
+        function handleDeploymentOrderModalBackdrop(event) {
+          if (event.target && event.target.id === 'deploymentOrderModal') closeDeploymentOrderModal();
+        }
                 function openStatusPickerModal(event, index) {
           if (event) event.stopPropagation();
           state.selectedStatusRowIndex = index;

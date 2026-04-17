@@ -1410,7 +1410,6 @@
             <table class="deployment-order-table">
               <thead>
                 <tr>
-                  <th>#</th>
                   <th>Data</th>
                   <th>Nome</th>
                   <th>Setor</th>
@@ -2222,22 +2221,22 @@
           if (!tbody || !summary) return;
 
           if (!queueRows.length) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
             summary.textContent = '0 registro(s) com etiqueta "Na fila".';
             return;
           }
 
           tbody.innerHTML = queueRows
-            .map((row, index) => {
+            .map((row) => {
               const rowStatus = getWorkflowStatus(row);
+              const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
               return `
               <tr>
-                <td>${index + 1}</td>
                 <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
                 <td>${escapeHtml(row['Digite seu nome:'] || '-')}</td>
                 <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
                 <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
-                <td>${escapeHtml(row['Qual é a recorrência ou necessidade desta melhoria?'] || '-')}</td>
+                <td>${getRecurrenceBadge(recurrence)}</td>
                 <td><span class="status-tag-button ${getWorkflowStatusClass(rowStatus)} deployment-order-status-tag">${escapeHtml(rowStatus)}</span></td>
               </tr>
             `;

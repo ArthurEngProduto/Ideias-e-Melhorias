@@ -297,6 +297,10 @@
           border: 1px solid var(--line);
           border-radius: 10px;
         }
+        .deployment-order-modal-content {
+          width: min(1200px, 98vw);
+          max-height: 92vh;
+        }
         .deployment-order-table {
           width: 100%;
           border-collapse: collapse;
@@ -1398,7 +1402,7 @@
         </div>
       </div>
       <div class="modal" id="deploymentOrderModal" onclick="handleDeploymentOrderModalBackdrop(event)">
-        <div class="modal-content">
+        <div class="modal-content deployment-order-modal-content">
           <div class="modal-header">
             <h2 style="margin:0;">Ordem de Implantação</h2>
             <div class="modal-actions">

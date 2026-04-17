@@ -124,14 +124,22 @@
         .toolbar {
           margin-top: 14px;
           display: flex;
-          gap: 10px;
-          justify-content: flex-end;
-          align-items: flex-start;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
         }
-        .toolbar-stack {
+        .toolbar-group {
           display: flex;
-          flex-direction: column;
           gap: 10px;
+          align-items: center;
+        }
+        .toolbar button {
+          width: auto;
+        }
+        .toolbar-standard-btn {
+          min-width: 180px;
+          text-align: center;
         }
         input, select, button {
           width: 100%;
@@ -975,6 +983,19 @@
           .stats-card {
             min-height: auto;
           }
+          .toolbar {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .toolbar-group {
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+          }
+          .toolbar-standard-btn {
+            min-width: 0;
+            width: 100%;
+          }
         }
         @page {
           size: A4 portrait;
@@ -1249,12 +1270,14 @@
           </div>
 
           <div class="toolbar">
-            <button onclick="applyFilters()">Filtrar</button>
-            <div class="toolbar-stack">
-              <button class="secondary" onclick="clearFilters()">Limpar</button>
-              <button class="secondary" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
+            <div class="toolbar-group toolbar-group-left">
+              <button class="secondary toolbar-standard-btn" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
+              <button id="statsButton" class="secondary toolbar-standard-btn" onclick="openStatsModal()">Abrir Estatísticas</button>
             </div>
-            <button id="statsButton" class="secondary" onclick="openStatsModal()">Abrir estatísticas</button>
+            <div class="toolbar-group toolbar-group-right">
+              <button class="toolbar-standard-btn" onclick="applyFilters()">Filtrar</button>
+              <button class="secondary toolbar-standard-btn" onclick="clearFilters()">Limpar</button>
+            </div>
           </div>
 
           <div class="status" id="statusBox"></div>

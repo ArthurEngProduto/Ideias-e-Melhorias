@@ -1750,7 +1750,14 @@
           if (!row) return;
           state.selectedRowIndex = index;
           const rowKeys = Object.keys(row || {});
-          const hiddenDetailLabels = ['Concluído'];
+          const hiddenDetailLabels = [
+            'Concluído',
+            'Relatório de conclusão',
+            'Relatorio de conclusao',
+            'Imagem de conlusão',
+            'Imagem de conclusão',
+            'Imagens de conclusão',
+          ];
           const mainDetailKeys = [
             'Carimbo de data/hora',
             'Digite seu nome:',

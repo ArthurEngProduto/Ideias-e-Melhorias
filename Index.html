@@ -167,8 +167,8 @@
         table { width: 100%; border-collapse: collapse; min-width: 860px; }
         thead th { text-align: left; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
         tbody td { border-top: 1px solid var(--line-soft); padding: 10px; font-size: 14px; }
-                thead th:nth-child(4),
-        tbody td:nth-child(4) {
+                thead th:nth-child(5),
+        tbody td:nth-child(5) {
           min-width: 155px;
         }
         tbody tr { cursor: pointer; }
@@ -1296,6 +1296,7 @@
           <table>
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Data</th>
                 <th>Nome</th>
                 <th>Setor</th>
@@ -1305,6 +1306,7 @@
               <th>Relatório</th>
               </tr>
               <tr class="filter-row">
+                <th></th>
                 <th>
                   <div class="date-range">
                     <input id="timestampStartFilter" type="date" aria-label="Filtrar por data inicial" />
@@ -1414,6 +1416,7 @@
             <table class="deployment-order-table">
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Data</th>
                   <th>Nome</th>
                   <th>Setor</th>
@@ -1776,6 +1779,7 @@
           const reportContent = renderReportTag(row, workflowStatus, index);
           return `
             <tr onclick="openModal(${index})">
+              <td>${escapeHtml(getRowIdValue(row))}</td>
               <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
               <td>${escapeHtml(row['Digite seu nome:'] || '-')}</td>
               <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
@@ -2225,7 +2229,7 @@
           if (!tbody || !summary) return;
 
           if (!queueRows.length) {
-            tbody.innerHTML = '<tr><td colspan="6">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
             summary.textContent = '0 registro(s) com etiqueta "Na fila".';
             return;
           }
@@ -2236,6 +2240,7 @@
               const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
               return `
               <tr>
+                <td>${escapeHtml(getRowIdValue(row))}</td>
                 <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
                 <td>${escapeHtml(row['Digite seu nome:'] || '-')}</td>
                 <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
@@ -3207,6 +3212,11 @@
           const normalized = String(label || '').replace(/\s+/g, ' ').trim();
           if (normalized === 'Carimbo de data/hora') return 'Data';
           return normalized;
+        }
+
+        function getRowIdValue(row) {
+          const directId = String(row.ID || row.Id || row.id || '').trim();
+          return directId || '-';
         }
 
         function renderDetailValue(key, value) {

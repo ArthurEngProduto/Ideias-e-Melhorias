@@ -1496,28 +1496,33 @@
                   <th>Critério</th>
                   <th>Nota (0 a 10)</th>
                   <th>Peso</th>
+                  <th>Pontuação Parcial</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Impacto Financeiro</td>
-                  <td><input id="evaluationScoreFinance" type="number" min="0" max="10" step="1" /></td>
-                  <td><input id="evaluationWeightFinance" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
+                  <td><input id="evaluationScoreFinance" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationWeightFinance" type="number" step="1" value="5" readonly /></td>
+                  <td><span id="evaluationPartialFinance">0</span></td>
                 </tr>
                 <tr>
                   <td>Ganho de Produtividade</td>
-                  <td><input id="evaluationScoreProductivity" type="number" min="0" max="10" step="1" /></td>
-                  <td><input id="evaluationWeightProductivity" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
+                  <td><input id="evaluationScoreProductivity" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationWeightProductivity" type="number" step="1" value="3" readonly /></td>
+                  <td><span id="evaluationPartialProductivity">0</span></td>  
                 </tr>
                 <tr>
                   <td>Facilidade de Implantação</td>
-                  <td><input id="evaluationScoreDeployment" type="number" min="0" max="10" step="1" /></td>
-                  <td><input id="evaluationWeightDeployment" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
+                  <td><input id="evaluationScoreDeployment" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationWeightDeployment" type="number" step="1" value="2" readonly /></td>
+                  <td><span id="evaluationPartialDeployment">0</span></td>
                 </tr>
                 <tr>
                   <td>Impacto na Qualidade</td>
-                  <td><input id="evaluationScoreQuality" type="number" min="0" max="10" step="1" /></td>
-                  <td><input id="evaluationWeightQuality" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
+                  <td><input id="evaluationScoreQuality" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationWeightQuality" type="number" step="1" value="4" readonly /></td>
+                  <td><span id="evaluationPartialQuality">0</span></td>
                 </tr>
               </tbody>
             </table>
@@ -1653,6 +1658,68 @@
           problemaFrequente: '#7f1d1d',
           default: ['#7EC8F8', '#9BD5FA', '#B9E3FC'],
         };
+        const EVALUATION_FIXED_WEIGHTS = {
+          finance: 5,
+          productivity: 3,
+          deployment: 2,
+          quality: 4,
+        };
+
+        function setFixedEvaluationWeights() {
+          const weightInputs = [
+            { id: 'evaluationWeightFinance', value: EVALUATION_FIXED_WEIGHTS.finance },
+            { id: 'evaluationWeightProductivity', value: EVALUATION_FIXED_WEIGHTS.productivity },
+            { id: 'evaluationWeightDeployment', value: EVALUATION_FIXED_WEIGHTS.deployment },
+            { id: 'evaluationWeightQuality', value: EVALUATION_FIXED_WEIGHTS.quality },
+          ];
+
+          weightInputs.forEach(({ id, value }) => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.value = String(value);
+            input.readOnly = true;
+          });
+        }
+
+        function parseEvaluationScore(inputId) {
+          const input = document.getElementById(inputId);
+          if (!input) return 0;
+          const score = Number(input.value);
+          if (!Number.isFinite(score)) return 0;
+          return Math.max(0, Math.min(10, score));
+        }
+
+        function updateEvaluationPartialScores() {
+          const partials = [
+            {
+              scoreId: 'evaluationScoreFinance',
+              partialId: 'evaluationPartialFinance',
+              weight: EVALUATION_FIXED_WEIGHTS.finance,
+            },
+            {
+              scoreId: 'evaluationScoreProductivity',
+              partialId: 'evaluationPartialProductivity',
+              weight: EVALUATION_FIXED_WEIGHTS.productivity,
+            },
+            {
+              scoreId: 'evaluationScoreDeployment',
+              partialId: 'evaluationPartialDeployment',
+              weight: EVALUATION_FIXED_WEIGHTS.deployment,
+            },
+            {
+              scoreId: 'evaluationScoreQuality',
+              partialId: 'evaluationPartialQuality',
+              weight: EVALUATION_FIXED_WEIGHTS.quality,
+            },
+          ];
+
+          partials.forEach(({ scoreId, partialId, weight }) => {
+            const partialOutput = document.getElementById(partialId);
+            if (!partialOutput) return;
+            const score = parseEvaluationScore(scoreId);
+            partialOutput.textContent = String(score * weight);
+          });
+        }
 
         function applyTheme(mode) {
           const isDarkMode = mode === 'dark';
@@ -1697,6 +1764,8 @@
         ];
 
         function boot() {
+          setFixedEvaluationWeights();
+          updateEvaluationPartialScores();
           showLoading();
           google.script.run
             .withSuccessHandler((payload) => {
@@ -2386,6 +2455,8 @@
             const rowOwner = rowInfo.name ? ` (${rowInfo.name})` : '';
             summary.textContent = `Preenchimento da avaliação para ${rowIdLabel}${rowOwner}.`;
           }
+          setFixedEvaluationWeights();
+          updateEvaluationPartialScores();
           document.getElementById('evaluationModal').classList.add('open');
           updateModalBackgroundState();
         }

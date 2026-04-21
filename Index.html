@@ -1636,7 +1636,8 @@
           statsAvailableSectors: [],
           selectedReportAttachmentDeleteIndex: null,
           isReportEditing: false,
-          selectedEvaluationRowNumber: null
+          selectedEvaluationRowNumber: null,
+          evaluationsByRowNumber: {}
         };
         let loadingCount = 0;
         const DONUT_CUTOUT_RATIO = 0.62;
@@ -1689,6 +1690,38 @@
           return Math.max(0, Math.min(10, score));
         }
 
+        function getEvaluationFormValues() {
+          return {
+            finance: parseEvaluationScore('evaluationScoreFinance'),
+            productivity: parseEvaluationScore('evaluationScoreProductivity'),
+            deployment: parseEvaluationScore('evaluationScoreDeployment'),
+            quality: parseEvaluationScore('evaluationScoreQuality'),
+          };
+        }
+
+        function setEvaluationFormValues(values) {
+          const safeValues = values || {};
+          const mapping = [
+            { inputId: 'evaluationScoreFinance', key: 'finance' },
+            { inputId: 'evaluationScoreProductivity', key: 'productivity' },
+            { inputId: 'evaluationScoreDeployment', key: 'deployment' },
+            { inputId: 'evaluationScoreQuality', key: 'quality' },
+          ];
+          mapping.forEach(({ inputId, key }) => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const rawValue = safeValues[key];
+            input.value = Number.isFinite(Number(rawValue)) ? String(Number(rawValue)) : '';
+          });
+          updateEvaluationPartialScores();
+        }
+
+        function saveCurrentEvaluationByRow() {
+          const rowNumber = state.selectedEvaluationRowNumber;
+          if (!rowNumber) return;
+          state.evaluationsByRowNumber[rowNumber] = getEvaluationFormValues();
+        }
+
         function updateEvaluationPartialScores() {
           const partials = [
             {
@@ -1719,6 +1752,8 @@
             const score = parseEvaluationScore(scoreId);
             partialOutput.textContent = String(score * weight);
           });
+        
+          saveCurrentEvaluationByRow();
         }
 
         function applyTheme(mode) {
@@ -2456,7 +2491,8 @@
             summary.textContent = `Preenchimento da avaliação para ${rowIdLabel}${rowOwner}.`;
           }
           setFixedEvaluationWeights();
-          updateEvaluationPartialScores();
+          const savedEvaluation = state.evaluationsByRowNumber[state.selectedEvaluationRowNumber];
+          setEvaluationFormValues(savedEvaluation || null);
           document.getElementById('evaluationModal').classList.add('open');
           updateModalBackgroundState();
         }

@@ -1569,6 +1569,18 @@
           </div>
         </div>
       </div>
+      <div class="modal" id="statusChangeConfirmModal" onclick="handleStatusChangeConfirmBackdrop(event)">
+        <div class="modal-content status-picker-modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;font-size:18px;">Confirmação</h2>
+          </div>
+          <p style="margin: 0 0 14px;">Deseja mesmo colocar alterar?</p>
+          <div class="modal-actions" style="justify-content:flex-end;">
+            <button class="secondary" style="max-width:100px;" type="button" onclick="closeStatusChangeConfirmModal()">Não</button>
+            <button class="danger-button" style="max-width:100px;" type="button" onclick="confirmStatusChange()">Sim</button>
+          </div>
+        </div>
+      </div>
       <div class="modal" id="reportModal" onclick="handleReportModalBackdrop(event)">
         <div class="modal-content report-modal-content">
           <div class="modal-header">
@@ -1655,6 +1667,7 @@
           selectedRowIndex: null,
           selectedStatusRowIndex: null,
           selectedStatusRowNumber: null,
+          pendingStatusChange: null,
           stats: null,
           statsDateStart: '',
           statsDateEnd: '',
@@ -2610,7 +2623,7 @@
           if (!container) return;
 
           const options = mode === 'deploymentOrder'
-            ? ['Em andamento', 'Na fila']
+            ? ['Em andamento']
             : ['Concluído', 'Em andamento', 'Na fila'];
 
           container.innerHTML = options
@@ -2629,6 +2642,7 @@
           document.getElementById('statusPickerModal').classList.remove('open');
           state.selectedStatusRowIndex = null;
           state.selectedStatusRowNumber = null;
+          state.pendingStatusChange = null;
           updateModalBackgroundState();
         }
 
@@ -2638,8 +2652,12 @@
 
         function selectStatus(status) {
           if (state.selectedStatusRowNumber !== null && state.selectedStatusRowNumber !== undefined) {
-            updateWorkflowStatusByRowNumber(state.selectedStatusRowNumber, status);
-            closeStatusPickerModal();
+            state.pendingStatusChange = {
+              rowNumber: state.selectedStatusRowNumber,
+              status: String(status || '').trim(),
+            };
+            document.getElementById('statusChangeConfirmModal').classList.add('open');
+            updateModalBackgroundState();
             return;
           }
           if (state.selectedStatusRowIndex === null || state.selectedStatusRowIndex === undefined) return;
@@ -2647,6 +2665,27 @@
           closeStatusPickerModal();
         }
 
+        function closeStatusChangeConfirmModal() {
+          document.getElementById('statusChangeConfirmModal').classList.remove('open');
+          state.pendingStatusChange = null;
+          closeStatusPickerModal();
+        }
+
+        function handleStatusChangeConfirmBackdrop(event) {
+          if (event.target && event.target.id === 'statusChangeConfirmModal') closeStatusChangeConfirmModal();
+        }
+
+        function confirmStatusChange() {
+          const pending = state.pendingStatusChange;
+          if (!pending || !pending.rowNumber || !pending.status) {
+            closeStatusChangeConfirmModal();
+            return;
+          }
+          updateWorkflowStatusByRowNumber(pending.rowNumber, pending.status);
+          state.pendingStatusChange = null;
+          document.getElementById('statusChangeConfirmModal').classList.remove('open');
+          closeStatusPickerModal();
+        }
         function openReportModal(event, index) {
           if (event) event.stopPropagation();
           const row = state.rows[index];

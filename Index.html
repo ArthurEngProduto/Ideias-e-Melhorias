@@ -2055,7 +2055,10 @@
       }
 
       function renderWorkflowStatusTag(currentStatus, index) {
-      const statusClass = getWorkflowStatusClass(currentStatus);
+        const statusClass = getWorkflowStatusClass(currentStatus);
+        if (currentStatus !== 'Em andamento') {
+          return `<span class="status-badge ${statusClass === 'status-done' ? 'workflow-done' : 'workflow-stopped'}">${escapeHtml(currentStatus)}</span>`;
+        }
         return `<button class="status-tag-button ${statusClass}" onclick="openStatusPickerModal(event, ${index})" aria-label="Alterar status">${escapeHtml(currentStatus)}</button>`;
       }
 

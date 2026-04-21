@@ -2475,13 +2475,27 @@
             return;
           }
 
-          tbody.innerHTML = queueRows
+          const rowsWithScore = queueRows
             .map((row) => {
-              const rowStatus = getWorkflowStatus(row);
-              const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
               const rowNumber = row.__rowNumber || null;
               const savedEvaluation = rowNumber ? state.evaluationsByRowNumber[rowNumber] : null;
               const totalScore = savedEvaluation ? calculateEvaluationTotalScore(savedEvaluation) : null;
+              return { row, totalScore };
+            })
+            .sort((a, b) => {
+              const aScore = a.totalScore;
+              const bScore = b.totalScore;
+              if (aScore === null && bScore === null) return 0;
+              if (aScore === null) return 1;
+              if (bScore === null) return -1;
+              return bScore - aScore;
+            });
+
+          tbody.innerHTML = rowsWithScore
+            .map(({ row, totalScore }) => {
+              const rowStatus = getWorkflowStatus(row);
+              const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
+              const rowNumber = row.__rowNumber || null;
               const rowInfo = encodeURIComponent(JSON.stringify({
                 rowNumber,
                 id: getRowIdValue(row),

@@ -1492,6 +1492,7 @@
                   <th>Recorrência</th>
                   <th>Status</th>
                   <th>Tabela de Avaliação</th>
+                  <th>Pontuação</th>
                 </tr>
               </thead>
               <tbody id="deploymentOrderRows"></tbody>
@@ -1723,6 +1724,16 @@
             deployment: parseEvaluationScore('evaluationScoreDeployment'),
             quality: parseEvaluationScore('evaluationScoreQuality'),
           };
+        }
+
+        function calculateEvaluationTotalScore(values) {
+          const safeValues = values || {};
+          return (
+            (Number(safeValues.finance) || 0) * EVALUATION_FIXED_WEIGHTS.finance
+            + (Number(safeValues.productivity) || 0) * EVALUATION_FIXED_WEIGHTS.productivity
+            + (Number(safeValues.deployment) || 0) * EVALUATION_FIXED_WEIGHTS.deployment
+            + (Number(safeValues.quality) || 0) * EVALUATION_FIXED_WEIGHTS.quality
+          );
         }
 
         function setEvaluationFormValues(values) {
@@ -2459,7 +2470,7 @@
           if (!tbody || !summary) return;
 
           if (!queueRows.length) {
-            tbody.innerHTML = '<tr><td colspan="8">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
             summary.textContent = '0 registro(s) com etiqueta "Na fila".';
             return;
           }
@@ -2468,8 +2479,11 @@
             .map((row) => {
               const rowStatus = getWorkflowStatus(row);
               const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
+              const rowNumber = row.__rowNumber || null;
+              const savedEvaluation = rowNumber ? state.evaluationsByRowNumber[rowNumber] : null;
+              const totalScore = savedEvaluation ? calculateEvaluationTotalScore(savedEvaluation) : null;
               const rowInfo = encodeURIComponent(JSON.stringify({
-                rowNumber: row.__rowNumber || null,
+                rowNumber,
                 id: getRowIdValue(row),
                 name: row['Digite seu nome:'] || '-',
               }));
@@ -2491,6 +2505,7 @@
                     Preencher avaliação
                   </button>
                 </td>
+                <td>${totalScore === null ? '-' : escapeHtml(String(totalScore))}</td>
               </tr>
             `;
             })
@@ -2537,6 +2552,9 @@
         function saveEvaluationAndCloseModal() {
           saveCurrentEvaluationByRow();
           closeEvaluationModal();
+          if (document.getElementById('deploymentOrderModal').classList.contains('open')) {
+            fetchDeploymentOrderRows();
+          }
         }
 
         function handleEvaluationModalBackdrop(event) {

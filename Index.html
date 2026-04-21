@@ -1493,31 +1493,31 @@
             <table class="evaluation-table">
               <thead>
                 <tr>
-                  <th>Divisão</th>
+                  <th>Critério</th>
                   <th>Nota (0 a 10)</th>
-                  <th>Observação</th>
+                  <th>Peso</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Impacto Financeiro</td>
                   <td><input id="evaluationScoreFinance" type="number" min="0" max="10" step="1" /></td>
-                  <td><textarea id="evaluationNoteFinance" placeholder="Detalhe o impacto financeiro"></textarea></td>
+                  <td><input id="evaluationWeightFinance" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
                 </tr>
                 <tr>
                   <td>Ganho de Produtividade</td>
                   <td><input id="evaluationScoreProductivity" type="number" min="0" max="10" step="1" /></td>
-                  <td><textarea id="evaluationNoteProductivity" placeholder="Detalhe o ganho de produtividade"></textarea></td>
+                  <td><input id="evaluationWeightProductivity" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
                 </tr>
                 <tr>
                   <td>Facilidade de Implantação</td>
                   <td><input id="evaluationScoreDeployment" type="number" min="0" max="10" step="1" /></td>
-                  <td><textarea id="evaluationNoteDeployment" placeholder="Detalhe a facilidade de implantação"></textarea></td>
+                  <td><input id="evaluationWeightDeployment" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
                 </tr>
                 <tr>
                   <td>Impacto na Qualidade</td>
                   <td><input id="evaluationScoreQuality" type="number" min="0" max="10" step="1" /></td>
-                  <td><textarea id="evaluationNoteQuality" placeholder="Detalhe o impacto na qualidade"></textarea></td>
+                  <td><input id="evaluationWeightQuality" type="number" min="0" max="100" step="1" placeholder="0 a 100" /></td>
                 </tr>
               </tbody>
             </table>

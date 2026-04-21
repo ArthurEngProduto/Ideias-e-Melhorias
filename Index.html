@@ -319,8 +319,8 @@
           border-bottom: 1px solid var(--line);
         }
         .deployment-order-status-tag {
-          cursor: default;
-          pointer-events: none;
+          cursor: pointer;
+          pointer-events: auto;
         }
         .deployment-order-evaluation-btn {
           min-width: 150px;
@@ -1562,7 +1562,7 @@
             <h2 style="margin:0;font-size:18px;">Alterar status</h2>
             <button class="secondary" style="max-width:120px;" onclick="closeStatusPickerModal()">Fechar</button>
           </div>
-          <div class="status-picker-options">
+          <div class="status-picker-options" id="statusPickerOptions">
             <button class="status-tag-button status-done" type="button" onclick="selectStatus('Concluído')">Concluído</button>
             <button class="status-tag-button status-progress" type="button" onclick="selectStatus('Em andamento')">Em andamento</button>
             <button class="status-tag-button status-queue" type="button" onclick="selectStatus('Na fila')">Na fila</button>
@@ -1654,6 +1654,7 @@
           filters: {},
           selectedRowIndex: null,
           selectedStatusRowIndex: null,
+          selectedStatusRowNumber: null,
           stats: null,
           statsDateStart: '',
           statsDateEnd: '',
@@ -2496,6 +2497,9 @@
               const rowStatus = getWorkflowStatus(row);
               const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
               const rowNumber = row.__rowNumber || null;
+              const statusAction = rowNumber
+                ? `openStatusPickerModalByRowNumber(event, ${Number(rowNumber)})`
+                : 'return false';
               const rowInfo = encodeURIComponent(JSON.stringify({
                 rowNumber,
                 id: getRowIdValue(row),
@@ -2509,7 +2513,16 @@
                 <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
                 <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
                 <td>${getRecurrenceBadge(recurrence)}</td>
-                <td><span class="status-tag-button ${getWorkflowStatusClass(rowStatus)} deployment-order-status-tag">${escapeHtml(rowStatus)}</span></td>
+                <td>
+                  <button
+                    type="button"
+                    class="status-tag-button ${getWorkflowStatusClass(rowStatus)} deployment-order-status-tag"
+                    onclick="${statusAction}"
+                    aria-label="Alterar status"
+                  >
+                    ${escapeHtml(rowStatus)}
+                  </button>
+                </td>
                 <td>
                   <button
                     type="button"
@@ -2574,16 +2587,48 @@
         function handleEvaluationModalBackdrop(event) {
           if (event.target && event.target.id === 'evaluationModal') closeEvaluationModal();
         }
-                function openStatusPickerModal(event, index) {  
+        function openStatusPickerModal(event, index) {
           if (event) event.stopPropagation();
           state.selectedStatusRowIndex = index;
+          state.selectedStatusRowNumber = null;
+          renderStatusPickerOptions('default');
           document.getElementById('statusPickerModal').classList.add('open');
           updateModalBackgroundState();
+        }
+
+        function openStatusPickerModalByRowNumber(event, rowNumber) {
+          if (event) event.stopPropagation();
+          state.selectedStatusRowIndex = null;
+          state.selectedStatusRowNumber = rowNumber;
+          renderStatusPickerOptions('deploymentOrder');
+          document.getElementById('statusPickerModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function renderStatusPickerOptions(mode) {
+          const container = document.getElementById('statusPickerOptions');
+          if (!container) return;
+
+          const options = mode === 'deploymentOrder'
+            ? ['Em andamento', 'Na fila']
+            : ['Concluído', 'Em andamento', 'Na fila'];
+
+          container.innerHTML = options
+            .map((status) => {
+              const statusClass = status === 'Concluído'
+                ? 'status-done'
+                : status === 'Em andamento'
+                  ? 'status-progress'
+                  : 'status-queue';
+              return `<button class="status-tag-button ${statusClass}" type="button" onclick="selectStatus('${status}')">${escapeHtml(status)}</button>`;
+            })
+            .join('');
         }
 
         function closeStatusPickerModal() {
           document.getElementById('statusPickerModal').classList.remove('open');
           state.selectedStatusRowIndex = null;
+          state.selectedStatusRowNumber = null;
           updateModalBackgroundState();
         }
 
@@ -2592,6 +2637,11 @@
         }
 
         function selectStatus(status) {
+          if (state.selectedStatusRowNumber !== null && state.selectedStatusRowNumber !== undefined) {
+            updateWorkflowStatusByRowNumber(state.selectedStatusRowNumber, status);
+            closeStatusPickerModal();
+            return;
+          }
           if (state.selectedStatusRowIndex === null || state.selectedStatusRowIndex === undefined) return;
           updateWorkflowStatus(state.selectedStatusRowIndex, status);
           closeStatusPickerModal();
@@ -3649,7 +3699,33 @@
             .updateRowStatus(row.__rowNumber, status);
         }
 
+        function updateWorkflowStatusByRowNumber(rowNumber, status) {
+          const numericRow = Number(rowNumber);
+          if (!Number.isInteger(numericRow) || numericRow <= 0) {
+            showError('Não foi possível identificar a linha para atualizar o status.');
+            return;
+          }
 
+          showLoading();
+          google.script.run
+            .withSuccessHandler(() => {
+              state.rows = state.rows.map((row) => {
+                if (Number(row.__rowNumber || 0) !== numericRow) return row;
+                return { ...row, Status: status, 'Concluído': status };
+              });
+              render();
+              if (document.getElementById('deploymentOrderModal').classList.contains('open')) {
+                fetchDeploymentOrderRows();
+              }
+              hideError();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+              hideLoading();
+            })
+            .updateRowStatus(numericRow, status);
+        }
         function deleteSelectedRow() {
           if (state.selectedRowIndex === null || state.selectedRowIndex === undefined) return;
           const row = state.rows[state.selectedRowIndex];

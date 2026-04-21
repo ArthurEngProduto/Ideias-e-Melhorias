@@ -378,6 +378,14 @@
           font-weight: 700;
           color: var(--text);
         }
+        .evaluation-actions {
+          margin-top: 14px;
+          display: flex;
+          justify-content: flex-end;
+        }
+        .evaluation-actions button {
+          max-width: 140px;
+        }
         .evaluation-total-value {
           margin-left: 6px;
           color: var(--primary);
@@ -1542,6 +1550,9 @@
             Pontuação Total:
             <span id="evaluationTotalScore" class="evaluation-total-value">0</span>
           </div>
+          <div class="evaluation-actions">
+            <button type="button" onclick="saveEvaluationAndCloseModal()">Salvar</button>
+          </div>
         </div>
       </div>
       <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
@@ -2523,6 +2534,11 @@
           document.getElementById('evaluationModal').classList.remove('open');
           state.selectedEvaluationRowNumber = null;
           updateModalBackgroundState();
+        }
+
+        function saveEvaluationAndCloseModal() {
+          saveCurrentEvaluationByRow();
+          closeEvaluationModal();
         }
 
         function handleEvaluationModalBackdrop(event) {

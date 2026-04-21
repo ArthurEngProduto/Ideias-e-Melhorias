@@ -371,6 +371,17 @@
           min-height: 62px;
           resize: vertical;
         }
+        .evaluation-total {
+          margin-top: 12px;
+          text-align: center;
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--text);
+        }
+        .evaluation-total-value {
+          margin-left: 6px;
+          color: var(--primary);
+        }
         .stats-modal-content {
           width: min(96vw, 1700px);
           max-height: 94vh;
@@ -1527,6 +1538,10 @@
               </tbody>
             </table>
           </div>
+          <div class="evaluation-total">
+            Pontuação Total:
+            <span id="evaluationTotalScore" class="evaluation-total-value">0</span>
+          </div>
         </div>
       </div>
       <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
@@ -1745,14 +1760,21 @@
               weight: EVALUATION_FIXED_WEIGHTS.quality,
             },
           ];
-
+          let totalScore = 0;
+          
           partials.forEach(({ scoreId, partialId, weight }) => {
             const partialOutput = document.getElementById(partialId);
             if (!partialOutput) return;
             const score = parseEvaluationScore(scoreId);
-            partialOutput.textContent = String(score * weight);
+            const partialScore = score * weight;
+            partialOutput.textContent = String(partialScore);
+            totalScore += partialScore;
           });
-        
+          const totalOutput = document.getElementById('evaluationTotalScore');
+          if (totalOutput) {
+            totalOutput.textContent = String(totalScore);
+          }
+          
           saveCurrentEvaluationByRow();
         }
 

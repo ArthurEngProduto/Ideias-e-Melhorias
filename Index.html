@@ -167,9 +167,13 @@
         table { width: 100%; border-collapse: collapse; min-width: 860px; }
         thead th { text-align: left; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
         tbody td { border-top: 1px solid var(--line-soft); padding: 10px; font-size: 14px; }
-                thead th:nth-child(5),
+        thead th:nth-child(5),
         tbody td:nth-child(5) {
           min-width: 155px;
+        }
+        thead th:nth-child(6),
+        tbody td:nth-child(6) {
+          min-width: 180px;
         }
         tbody tr { cursor: pointer; }
         tbody tr:hover { background: var(--surface-soft); }
@@ -2105,7 +2109,21 @@
             badgeClass = 'recurrence-high';
           }
 
-          return `<span class="status-badge ${badgeClass}">${escapeHtml(recurrence)}</span>`;
+          return `<span class="status-badge ${badgeClass}">${formatRecurrenceForBadge(recurrence)}</span>`;
+        }
+
+        function formatRecurrenceForBadge(recurrence) {
+          const normalizedRecurrence = String(recurrence || '').trim().toLowerCase();
+
+          if (normalizedRecurrence.includes('apenas uma vez')) {
+            return 'Percebi apenas<br>uma vez';
+          }
+
+          if (normalizedRecurrence.includes('algumas vezes')) {
+            return 'Já observei<br>algumas vezes';
+          }
+
+          return escapeHtml(recurrence);
         }
 
         function openModal(index) {

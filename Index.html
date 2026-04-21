@@ -2651,18 +2651,20 @@
         }
 
         function selectStatus(status) {
-          if (state.selectedStatusRowNumber !== null && state.selectedStatusRowNumber !== undefined) {
-            state.pendingStatusChange = {
-              rowNumber: state.selectedStatusRowNumber,
-              status: String(status || '').trim(),
-            };
-            document.getElementById('statusChangeConfirmModal').classList.add('open');
-            updateModalBackgroundState();
-            return;
-          }
-          if (state.selectedStatusRowIndex === null || state.selectedStatusRowIndex === undefined) return;
-          updateWorkflowStatus(state.selectedStatusRowIndex, status);
-          closeStatusPickerModal();
+          const normalizedStatus = String(status || '').trim();
+          if (!normalizedStatus) return;
+
+          const hasRowNumber = state.selectedStatusRowNumber !== null && state.selectedStatusRowNumber !== undefined;
+          const hasRowIndex = state.selectedStatusRowIndex !== null && state.selectedStatusRowIndex !== undefined;
+          if (!hasRowNumber && !hasRowIndex) return;
+
+          state.pendingStatusChange = {
+            rowNumber: hasRowNumber ? state.selectedStatusRowNumber : null,
+            rowIndex: hasRowIndex ? state.selectedStatusRowIndex : null,
+            status: normalizedStatus,
+          };
+          document.getElementById('statusChangeConfirmModal').classList.add('open');
+          updateModalBackgroundState();
         }
 
         function closeStatusChangeConfirmModal() {
@@ -2677,10 +2679,17 @@
 
         function confirmStatusChange() {
           const pending = state.pendingStatusChange;
-          if (!pending || !pending.rowNumber || !pending.status) {
+          if (!pending || !pending.status) {
             closeStatusChangeConfirmModal();
             return;
           }
+
+          if (pending.rowNumber) {
+            updateWorkflowStatusByRowNumber(pending.rowNumber, pending.status);
+          } else if (pending.rowIndex !== null && pending.rowIndex !== undefined) {
+            updateWorkflowStatus(pending.rowIndex, pending.status);
+          }
+
           updateWorkflowStatusByRowNumber(pending.rowNumber, pending.status);
           state.pendingStatusChange = null;
           document.getElementById('statusChangeConfirmModal').classList.remove('open');

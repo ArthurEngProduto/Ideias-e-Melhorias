@@ -163,8 +163,9 @@
         button.secondary { background: var(--surface); border: 1px solid var(--primary); color: var(--primary); }
         .summary { margin: 14px 0; color: var(--muted); }
         .status { margin-top: 12px; font-size: 13px; color: #8a5a00; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 10px; display: none; }
-        .table-wrap { overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; min-width: 860px; }
+        .table-wrap { overflow-x: hidden; overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 0; table-layout: fixed; }
+        thead th, tbody td { overflow-wrap: anywhere; word-break: break-word; }
         thead th { text-align: left; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
         tbody td { border-top: 1px solid var(--line-soft); padding: 10px; font-size: 14px; }
         thead th:nth-child(5),

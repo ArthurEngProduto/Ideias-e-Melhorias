@@ -1513,7 +1513,7 @@
               <thead>
                 <tr>
                   <th>Critério</th>
-                  <th>Nota (0 a 10)</th>
+                  <th>Nota (0 a 5)</th>
                   <th>Peso</th>
                   <th>Pontuação Parcial</th>
                 </tr>
@@ -1521,25 +1521,25 @@
               <tbody>
                 <tr>
                   <td>Impacto Financeiro</td>
-                  <td><input id="evaluationScoreFinance" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationScoreFinance" type="number" min="0" max="5" step="1" oninput="updateEvaluationPartialScores()" /></td>
                   <td><input id="evaluationWeightFinance" type="number" step="1" value="5" readonly /></td>
                   <td><span id="evaluationPartialFinance">0</span></td>
                 </tr>
                 <tr>
                   <td>Ganho de Produtividade</td>
-                  <td><input id="evaluationScoreProductivity" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationScoreProductivity" type="number" min="0" max="5" step="1" oninput="updateEvaluationPartialScores()" /></td>
                   <td><input id="evaluationWeightProductivity" type="number" step="1" value="3" readonly /></td>
                   <td><span id="evaluationPartialProductivity">0</span></td>  
                 </tr>
                 <tr>
                   <td>Facilidade de Implantação</td>
-                  <td><input id="evaluationScoreDeployment" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationScoreDeployment" type="number" min="0" max="5" step="1" oninput="updateEvaluationPartialScores()" /></td>
                   <td><input id="evaluationWeightDeployment" type="number" step="1" value="2" readonly /></td>
                   <td><span id="evaluationPartialDeployment">0</span></td>
                 </tr>
                 <tr>
                   <td>Impacto na Qualidade</td>
-                  <td><input id="evaluationScoreQuality" type="number" min="0" max="10" step="1" oninput="updateEvaluationPartialScores()" /></td>
+                  <td><input id="evaluationScoreQuality" type="number" min="0" max="5" step="1" oninput="updateEvaluationPartialScores()" /></td>
                   <td><input id="evaluationWeightQuality" type="number" step="1" value="4" readonly /></td>
                   <td><span id="evaluationPartialQuality">0</span></td>
                 </tr>
@@ -1713,7 +1713,7 @@
           if (!input) return 0;
           const score = Number(input.value);
           if (!Number.isFinite(score)) return 0;
-          return Math.max(0, Math.min(10, score));
+          return Math.max(0, Math.min(5, score));
         }
 
         function getEvaluationFormValues() {

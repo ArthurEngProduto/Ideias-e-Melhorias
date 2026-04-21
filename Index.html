@@ -322,6 +322,55 @@
           cursor: default;
           pointer-events: none;
         }
+        .deployment-order-evaluation-btn {
+          min-width: 150px;
+          padding: 8px 10px;
+          font-size: 13px;
+        }
+        .evaluation-modal-content {
+          max-width: 760px;
+        }
+        .evaluation-summary {
+          margin: 0 0 12px;
+          color: var(--muted);
+          font-size: 13px;
+        }
+        .evaluation-table-wrap {
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          overflow: auto;
+        }
+        .evaluation-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 560px;
+        }
+        .evaluation-table th,
+        .evaluation-table td {
+          border-top: 1px solid var(--line-soft);
+          padding: 10px;
+          font-size: 14px;
+          vertical-align: middle;
+        }
+        .evaluation-table thead th {
+          border-top: none;
+          background: var(--surface-soft);
+          border-bottom: 1px solid var(--line);
+        }
+        .evaluation-table input,
+        .evaluation-table textarea {
+          width: 100%;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: var(--surface);
+          color: var(--text);
+          padding: 8px;
+          font: inherit;
+        }
+        .evaluation-table textarea {
+          min-height: 62px;
+          resize: vertical;
+        }
         .stats-modal-content {
           width: min(96vw, 1700px);
           max-height: 94vh;
@@ -1431,6 +1480,50 @@
           </div>
         </div>
       </div>
+      <div class="modal" id="evaluationModal" onclick="handleEvaluationModalBackdrop(event)">
+        <div class="modal-content evaluation-modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;">Tabela de Avaliação</h2>
+            <div class="modal-actions">
+              <button class="secondary" style="max-width:120px;" onclick="closeEvaluationModal()">Fechar</button>
+            </div>
+          </div>
+          <p id="evaluationModalSummary" class="evaluation-summary">Preencha os campos de avaliação.</p>
+          <div class="evaluation-table-wrap">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Divisão</th>
+                  <th>Nota (0 a 10)</th>
+                  <th>Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Impacto Financeiro</td>
+                  <td><input id="evaluationScoreFinance" type="number" min="0" max="10" step="1" /></td>
+                  <td><textarea id="evaluationNoteFinance" placeholder="Detalhe o impacto financeiro"></textarea></td>
+                </tr>
+                <tr>
+                  <td>Ganho de Produtividade</td>
+                  <td><input id="evaluationScoreProductivity" type="number" min="0" max="10" step="1" /></td>
+                  <td><textarea id="evaluationNoteProductivity" placeholder="Detalhe o ganho de produtividade"></textarea></td>
+                </tr>
+                <tr>
+                  <td>Facilidade de Implantação</td>
+                  <td><input id="evaluationScoreDeployment" type="number" min="0" max="10" step="1" /></td>
+                  <td><textarea id="evaluationNoteDeployment" placeholder="Detalhe a facilidade de implantação"></textarea></td>
+                </tr>
+                <tr>
+                  <td>Impacto na Qualidade</td>
+                  <td><input id="evaluationScoreQuality" type="number" min="0" max="10" step="1" /></td>
+                  <td><textarea id="evaluationNoteQuality" placeholder="Detalhe o impacto na qualidade"></textarea></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
       <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
         <div class="modal-content status-picker-modal-content">
           <div class="modal-header">
@@ -1537,7 +1630,8 @@
           statsSelectedSectors: [],
           statsAvailableSectors: [],
           selectedReportAttachmentDeleteIndex: null,
-          isReportEditing: false
+          isReportEditing: false,
+          selectedEvaluationRowNumber: null
         };
         let loadingCount = 0;
         const DONUT_CUTOUT_RATIO = 0.62;
@@ -2239,7 +2333,11 @@
             .map((row) => {
               const rowStatus = getWorkflowStatus(row);
               const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
-              const evaluationTable = getDeploymentEvaluationTable(row);
+              const rowInfo = encodeURIComponent(JSON.stringify({
+                rowNumber: row.__rowNumber || null,
+                id: getRowIdValue(row),
+                name: row['Digite seu nome:'] || '-',
+              }));
               return `
               <tr>
                 <td>${escapeHtml(getRowIdValue(row))}</td>
@@ -2249,27 +2347,20 @@
                 <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
                 <td>${getRecurrenceBadge(recurrence)}</td>
                 <td><span class="status-tag-button ${getWorkflowStatusClass(rowStatus)} deployment-order-status-tag">${escapeHtml(rowStatus)}</span></td>
-                <td>${escapeHtml(evaluationTable)}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="deployment-order-evaluation-btn"
+                    onclick="openEvaluationModal(event, '${rowInfo}')"
+                  >
+                    Preencher avaliação
+                  </button>
+                </td>
               </tr>
             `;
             })
             .join('');
           summary.textContent = `${queueRows.length} registro(s) com etiqueta "Na fila".`;
-        }
-
-        
-        function getDeploymentEvaluationTable(row) {
-          const aliases = [
-            'Tabela de Avaliação',
-            'Tabela de avaliação',
-            'Tabela avaliacao',
-            'Tabela de avaliacao'
-          ];
-          for (const key of aliases) {
-            const value = String(row[key] || '').trim();
-            if (value) return value;
-          }
-          return '-';
         }
 
         function closeDeploymentOrderModal() {
@@ -2280,7 +2371,35 @@
         function handleDeploymentOrderModalBackdrop(event) {
           if (event.target && event.target.id === 'deploymentOrderModal') closeDeploymentOrderModal();
         }
-                function openStatusPickerModal(event, index) {
+        function openEvaluationModal(event, encodedRowInfo) {
+          if (event) event.stopPropagation();
+          let rowInfo = {};
+          try {
+            rowInfo = JSON.parse(decodeURIComponent(encodedRowInfo || ''));
+          } catch (error) {
+            rowInfo = {};
+          }
+          state.selectedEvaluationRowNumber = rowInfo.rowNumber || null;
+          const summary = document.getElementById('evaluationModalSummary');
+          if (summary) {
+            const rowIdLabel = rowInfo.id ? `ID ${rowInfo.id}` : 'registro selecionado';
+            const rowOwner = rowInfo.name ? ` (${rowInfo.name})` : '';
+            summary.textContent = `Preenchimento da avaliação para ${rowIdLabel}${rowOwner}.`;
+          }
+          document.getElementById('evaluationModal').classList.add('open');
+          updateModalBackgroundState();
+        }
+
+        function closeEvaluationModal() {
+          document.getElementById('evaluationModal').classList.remove('open');
+          state.selectedEvaluationRowNumber = null;
+          updateModalBackgroundState();
+        }
+
+        function handleEvaluationModalBackdrop(event) {
+          if (event.target && event.target.id === 'evaluationModal') closeEvaluationModal();
+        }
+                function openStatusPickerModal(event, index) {  
           if (event) event.stopPropagation();
           state.selectedStatusRowIndex = index;
           document.getElementById('statusPickerModal').classList.add('open');

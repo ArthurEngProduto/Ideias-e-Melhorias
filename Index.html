@@ -126,6 +126,7 @@
           flex-direction: column;
           align-items: flex-end;
           gap: 10px;
+          position: relative;
         }
         .header-actions {
           display: flex;
@@ -134,10 +135,60 @@
           justify-content: flex-end;
           align-items: flex-end;
         }
-        .header-action-btn {
-          width: 4.5cm;
-          min-width: 4.5cm;
-          text-align: center;
+        .header-menu-btn {
+          width: 42px;
+          height: 42px;
+          min-width: 42px;
+          border-radius: 50%;
+          padding: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          color: var(--text);
+        }
+        .header-menu-btn:hover {
+          filter: brightness(0.95);
+        }
+        .menu-grid-icon {
+          width: 18px;
+          height: 18px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(3, 1fr);
+          gap: 3px;
+        }
+        .menu-grid-icon span {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: currentColor;
+          display: block;
+        }
+        .quick-actions-menu {
+          position: absolute;
+          top: 56px;
+          right: 0;
+          z-index: 2300;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
+          padding: 10px;
+          width: 220px;
+          display: none;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .quick-actions-menu.open {
+          display: flex;
+        }
+        .quick-actions-menu button {
+          width: 100%;
+          text-align: left;
+          padding: 9px 12px;
+          border-radius: 10px;
         }
         .toolbar {
           margin-top: 14px;
@@ -1141,9 +1192,9 @@
             align-items: center;
             width: 100%;
           }
-          .header-action-btn {
-            min-width: 0;
-            width: 100%;
+          .quick-actions-menu {
+            right: 50%;
+            transform: translateX(50%);
           }
           .meta {
             text-align: center;
@@ -1459,8 +1510,26 @@
             <h1 class="portal-title">Portal de Ideias e Melhorias</h1>
             <div class="header-right">
               <div class="header-actions">
-                <button id="statsButton" class="secondary header-action-btn" onclick="openStatsModal()">Abrir Estatísticas</button>
-                <button class="secondary header-action-btn" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
+                <button
+                  id="quickActionsButton"
+                  class="header-menu-btn"
+                  type="button"
+                  aria-label="Abrir menu de ações"
+                  title="Menu de ações"
+                  aria-haspopup="dialog"
+                  aria-expanded="false"
+                  onclick="toggleQuickActionsMenu(event)"
+                >
+                  <span class="menu-grid-icon" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                  </span>
+                </button>
+                <div id="quickActionsMenu" class="quick-actions-menu" role="dialog" aria-label="Ações rápidas">
+                  <button class="secondary" type="button" onclick="openDeploymentOrderModalFromMenu(event)">Ordem de Implantação</button>
+                  <button class="secondary" type="button" onclick="openStatsModalFromMenu(event)">Abrir Estatísticas</button>
+                </div>
               </div>
               <div class="meta" id="topMeta"></div>
             </div>
@@ -2507,6 +2576,7 @@
         }
 
         function openStatsModal() {
+          closeQuickActionsMenu();
           const startInput = document.getElementById('statsDateStartFilter');
           const endInput = document.getElementById('statsDateEndFilter');
           if (startInput) {
@@ -2594,11 +2664,38 @@
         }
 
         function openDeploymentOrderModal() {
+          closeQuickActionsMenu();
           document.getElementById('deploymentOrderModal').classList.add('open');
           updateModalBackgroundState();
           fetchDeploymentOrderRows();
         }
 
+        function toggleQuickActionsMenu(event) {
+          if (event) event.stopPropagation();
+          const menu = document.getElementById('quickActionsMenu');
+          const button = document.getElementById('quickActionsButton');
+          if (!menu || !button) return;
+          const willOpen = !menu.classList.contains('open');
+          menu.classList.toggle('open', willOpen);
+          button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        }
+
+        function closeQuickActionsMenu() {
+          const menu = document.getElementById('quickActionsMenu');
+          const button = document.getElementById('quickActionsButton');
+          if (menu) menu.classList.remove('open');
+          if (button) button.setAttribute('aria-expanded', 'false');
+        }
+
+        function openStatsModalFromMenu(event) {
+          if (event) event.stopPropagation();
+          openStatsModal();
+        }
+
+        function openDeploymentOrderModalFromMenu(event) {
+          if (event) event.stopPropagation();
+          openDeploymentOrderModal();
+        }
         function fetchDeploymentOrderRows() {
           const filters = { ...(state.filters || {}), status: 'Na fila' };
           const pageSize = 10000;
@@ -3615,6 +3712,14 @@
         }
 
         function addFilterListeners() {
+        document.addEventListener('click', (event) => {
+          const menu = document.getElementById('quickActionsMenu');
+          const button = document.getElementById('quickActionsButton');
+          if (!menu || !button) return;
+          if (!menu.contains(event.target) && !button.contains(event.target)) {
+            closeQuickActionsMenu();
+          }
+        });
           ['idFilter', 'timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter', 'reportFilter'].forEach((id) => {
             const el = document.getElementById(id);
             el.addEventListener('change', applyFilters);

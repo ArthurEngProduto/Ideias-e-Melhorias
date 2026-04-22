@@ -160,7 +160,7 @@ function getFilteredRows_(filters) {
   return rows.filter((row) => {
     if (normalizedFilters.id) {
       const rowId = getRowIdValue_(row).toLowerCase();
-      if (!rowId.includes(normalizedFilters.id)) return false;
+      if (rowId !== normalizedFilters.id) return false;
     }
     const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
     if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;

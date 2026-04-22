@@ -162,6 +162,22 @@
         }
         button.secondary { background: var(--surface); border: 1px solid var(--primary); color: var(--primary); }
         .summary { margin: 14px 0; color: var(--muted); }
+        .summary-toolbar {
+          margin: 14px 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .summary-toolbar .summary {
+          margin: 0;
+        }
+        .summary-actions {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
         .status { margin-top: 12px; font-size: 13px; color: #8a5a00; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 10px; display: none; }
         .table-wrap {
           width: calc(100% + 24px);
@@ -1125,6 +1141,17 @@
             min-width: 0;
             width: 100%;
           }
+          .summary-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .summary-actions {
+            width: 100%;
+            flex-wrap: wrap;
+          }
+          .summary-actions .toolbar-standard-btn {
+            width: 100%;
+          }
         }
         @page {
           size: A4 portrait;
@@ -1403,16 +1430,18 @@
               <button class="secondary toolbar-standard-btn" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
               <button id="statsButton" class="secondary toolbar-standard-btn" onclick="openStatsModal()">Abrir Estatísticas</button>
             </div>
-            <div class="toolbar-group toolbar-group-right">
-              <button class="toolbar-standard-btn" onclick="applyFilters()">Filtrar</button>
-              <button class="secondary toolbar-standard-btn" onclick="clearFilters()">Limpar</button>
-            </div>
           </div>
 
           <div class="status" id="statusBox"></div>
         </div>
 
-        <div class="summary" id="summary"></div>
+        <div class="summary-toolbar">
+          <div class="summary" id="summary"></div>
+          <div class="summary-actions">
+            <button class="toolbar-standard-btn" onclick="applyFilters()">Filtrar</button>
+            <button class="secondary toolbar-standard-btn" onclick="clearFilters()">Limpar</button>
+          </div>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>

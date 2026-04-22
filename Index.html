@@ -1765,7 +1765,6 @@
                   <th>Produto/Processo</th>
                   <th>Recorrência</th>
                   <th>Status</th>
-                  <th>Tabela de Avaliação</th>
                   <th>Pontuação</th>
                 </tr>
               </thead>
@@ -2809,7 +2808,7 @@
           if (!tbody || !summary) return;
 
           if (!queueRows.length) {
-            tbody.innerHTML = '<tr><td colspan="9">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
             summary.textContent = '0 registro(s) com etiqueta "Na fila".';
             return;
           }
@@ -2861,7 +2860,6 @@
                     ${escapeHtml(rowStatus)}
                   </button>
                 </td>
-                <td>Abrir na linha</td>
                 <td>${totalScore === null ? '-' : escapeHtml(String(totalScore))}</td>
               </tr>
             `;

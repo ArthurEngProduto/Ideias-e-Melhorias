@@ -1412,7 +1412,7 @@
                 <th><select id="referenceFilter"></select></th>
               <th><select id="recurrenceFilter"></select></th>
               <th><select id="statusFilter"></select></th>
-              <th></th>
+              <th><select id="reportFilter"></select></th>
               </tr>
             </thead>
             <tbody id="rowsTable"></tbody>
@@ -1881,6 +1881,7 @@
               setMainSectorOptions(state.tableAvailableSectors);
               setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
+              setSelectOptions('reportFilter', payload.options.reports, 'Todos os relatórios');
               setStatsSectorOptions(state.statsAvailableSectors);
               addFilterListeners();
 
@@ -1932,6 +1933,7 @@
               setMainSectorOptions(state.tableAvailableSectors);
               setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');
               setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
+              setSelectOptions('reportFilter', payload.options.reports, 'Todos os relatórios');
               setStatsSectorOptions(state.statsAvailableSectors);
               google.script.run
                 .withSuccessHandler((data) => {
@@ -2002,7 +2004,8 @@
             sectors: state.tableSelectedSectors.slice(),
             reference: document.getElementById('referenceFilter').value,
             recurrence: document.getElementById('recurrenceFilter').value,
-            status: document.getElementById('statusFilter').value
+            status: document.getElementById('statusFilter').value,
+            report: document.getElementById('reportFilter').value
           };
           loadData();
         }
@@ -2011,7 +2014,7 @@
           ['idFilter', 'timestampStartFilter', 'timestampEndFilter', 'nameFilter'].forEach((id) => {
             document.getElementById(id).value = '';
           });
-          ['referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
+          ['referenceFilter', 'recurrenceFilter', 'statusFilter', 'reportFilter'].forEach((id) => {
             document.getElementById(id).value = '';
           });
           state.tableSelectedSectors = [];
@@ -3505,7 +3508,7 @@
         }
 
         function addFilterListeners() {
-          ['idFilter', 'timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter'].forEach((id) => {
+          ['idFilter', 'timestampStartFilter', 'timestampEndFilter', 'nameFilter', 'referenceFilter', 'recurrenceFilter', 'statusFilter', 'reportFilter'].forEach((id) => {
             const el = document.getElementById(id);
             el.addEventListener('change', applyFilters);
             if (el.tagName === 'INPUT') {

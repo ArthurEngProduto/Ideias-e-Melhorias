@@ -461,6 +461,12 @@
         .modal-title-row h2 {
           margin: 0;
         }
+        .modal-record-id {
+          margin: 0 0 10px 0;
+          color: var(--muted);
+          font-size: 14px;
+          font-weight: 600;
+        }
         .modal-actions {
           display: flex;
           align-items: center;
@@ -1471,6 +1477,7 @@
               <button class="secondary print-hidden" style="max-width:120px;" onclick="closeModal()">Fechar</button>
             </div>
           </div>
+          <p id="modalRecordId" class="modal-record-id">ID: -</p>
           <div class="details-focus-panel">
             <h3 class="details-focus-title">Informações principais</h3>
             <div class="details-focus-grid" id="modalMainDetails"></div>
@@ -2176,6 +2183,9 @@
           state.selectedRowIndex = index;
           const rowKeys = Object.keys(row || {});
           const hiddenDetailLabels = [
+            'ID',
+            'Id',
+            'id',
             'Concluído',
             'Relatório de conclusão',
             'Relatorio de conclusao',
@@ -2383,6 +2393,7 @@
             .join('');
           const details = detailsBody;
           document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome:'] || 'Registro'}`;
+          document.getElementById('modalRecordId').textContent = `ID: ${getRowIdValue(row)}`;
           const modalStatusBadge = document.getElementById('modalStatusBadge');
           modalStatusBadge.textContent = statusValue;
           modalStatusBadge.className = `status-badge ${getStatusBadgeClassByStatus(statusValue)}`;

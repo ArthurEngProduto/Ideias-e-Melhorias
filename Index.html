@@ -1395,7 +1395,7 @@
               />
             </div>
             <h1 class="portal-title">Portal de Ideias e Melhorias</h1>
-            <div class="meta" id="topMeta">Base conectada. 0 registro(s) carregado(s).</div>
+            <div class="meta" id="topMeta"></div>
           </div>
 
           <div class="toolbar">
@@ -1915,7 +1915,7 @@
               state.fields = payload.fields || [];
               state.tableAvailableSectors = payload.options.sectors || [];
               state.statsAvailableSectors = payload.options.sectors || [];
-              setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
+              setTopMeta('');
 
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
               setMainSectorOptions(state.tableAvailableSectors);
@@ -1968,7 +1968,7 @@
               state.fields = payload.fields || [];
               state.tableAvailableSectors = payload.options.sectors || [];
               state.statsAvailableSectors = payload.options.sectors || [];
-              setTopMeta(`Base conectada. ${payload.totalRecords} registro(s) carregado(s).`);
+              setTopMeta('');
               setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
               setMainSectorOptions(state.tableAvailableSectors);
               setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Recorrência');

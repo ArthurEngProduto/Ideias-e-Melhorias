@@ -121,6 +121,23 @@
           text-align: right;
           white-space: nowrap;
         }
+        .header-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 10px;
+        }
+        .header-actions {
+          display: flex;
+          gap: 10px;
+          justify-content: flex-end;
+          flex-wrap: wrap;
+        }
+        .header-action-btn {
+          width: 4.5cm;
+          min-width: 4.5cm;
+          text-align: center;
+        }
         .toolbar {
           margin-top: 14px;
           display: flex;
@@ -1114,6 +1131,18 @@
             grid-template-columns: 1fr;
             justify-items: center;
           }
+          .header-right {
+            align-items: center;
+            width: 100%;
+          }
+          .header-actions {
+            justify-content: center;
+            width: 100%;
+          }
+          .header-action-btn {
+            min-width: 0;
+            width: 100%;
+          }
           .meta {
             text-align: center;
             white-space: normal;
@@ -1426,13 +1455,12 @@
               />
             </div>
             <h1 class="portal-title">Portal de Ideias e Melhorias</h1>
-            <div class="meta" id="topMeta"></div>
-          </div>
-
-          <div class="toolbar">
-            <div class="toolbar-group toolbar-group-left">
-              <button class="secondary toolbar-standard-btn" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
-              <button id="statsButton" class="secondary toolbar-standard-btn" onclick="openStatsModal()">Abrir Estatísticas</button>
+            <div class="header-right">
+              <div class="header-actions">
+                <button class="secondary header-action-btn" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
+                <button id="statsButton" class="secondary header-action-btn" onclick="openStatsModal()">Abrir Estatísticas</button>
+              </div>
+              <div class="meta" id="topMeta"></div>
             </div>
           </div>
 

@@ -2332,7 +2332,7 @@
         const reportText = getConclusionReportValue(row);
         const hasReport = Boolean(reportText);
         const buttonClass = hasReport ? 'report-tag-button report-ready' : 'report-tag-button';
-        const buttonLabel = hasReport ? 'Acessar<br>relatório' : 'Aguardando<br>relatório';
+        const buttonLabel = hasReport ? 'Acessar' : 'Aguardando';
         return `<button class="${buttonClass}" type="button" onclick="openReportModal(event, ${index})">${buttonLabel}</button>`;
       }
         function getRecurrenceBadge(recurrence) {

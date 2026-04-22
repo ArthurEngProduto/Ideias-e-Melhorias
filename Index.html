@@ -2844,7 +2844,7 @@
                 name: row['Digite seu nome:'] || '-',
               }));
               return `
-              <tr>
+              <tr onclick="openEvaluationModal(event, '${rowInfo}')">
                 <td>${escapeHtml(getRowIdValue(row))}</td>
                 <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
                 <td>${escapeHtml(row['Digite seu nome:'] || '-')}</td>
@@ -2861,15 +2861,7 @@
                     ${escapeHtml(rowStatus)}
                   </button>
                 </td>
-                <td>
-                  <button
-                    type="button"
-                    class="deployment-order-evaluation-btn"
-                    onclick="openEvaluationModal(event, '${rowInfo}')"
-                  >
-                    Avaliação
-                  </button>
-                </td>
+                <td>Abrir na linha</td>
                 <td>${totalScore === null ? '-' : escapeHtml(String(totalScore))}</td>
               </tr>
             `;

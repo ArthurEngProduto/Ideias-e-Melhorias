@@ -280,6 +280,12 @@
         thead th, tbody td { overflow-wrap: anywhere; word-break: break-word; }
         thead th { text-align: left; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
         tbody td { border-top: 1px solid var(--line-soft); padding: 10px; font-size: 14px; }
+        thead th:nth-child(1),
+        tbody td:nth-child(1) {
+          width: 2.8cm;
+          min-width: 2.8cm;
+          max-width: 2.8cm;
+        }
         thead th:nth-child(5),
         tbody td:nth-child(5) {
           min-width: 155px;
@@ -296,6 +302,11 @@
         tbody tr:hover { background: var(--surface-soft); }
         .filter-row th { background: var(--surface); border-bottom: 1px solid var(--line); }
         .filter-row input, .filter-row select { padding: 8px; font-size: 13px; }
+        .filter-row #idFilter {
+          width: 2.5cm;
+          min-width: 2.5cm;
+          max-width: 2.5cm;
+        }
         .filter-row #referenceFilter {
           min-width: 150px;
           font-size: 12px;

@@ -129,9 +129,10 @@
         }
         .header-actions {
           display: flex;
+          flex-direction: column; 
           gap: 10px;
           justify-content: flex-end;
-          flex-wrap: wrap;
+          align-items: flex-end;
         }
         .header-action-btn {
           width: 4.5cm;
@@ -1137,6 +1138,7 @@
           }
           .header-actions {
             justify-content: center;
+            align-items: center;
             width: 100%;
           }
           .header-action-btn {
@@ -1457,8 +1459,8 @@
             <h1 class="portal-title">Portal de Ideias e Melhorias</h1>
             <div class="header-right">
               <div class="header-actions">
-                <button class="secondary header-action-btn" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
                 <button id="statsButton" class="secondary header-action-btn" onclick="openStatsModal()">Abrir Estatísticas</button>
+                <button class="secondary header-action-btn" onclick="openDeploymentOrderModal()">Ordem de Implantação</button>
               </div>
               <div class="meta" id="topMeta"></div>
             </div>

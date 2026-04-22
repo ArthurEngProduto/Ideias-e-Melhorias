@@ -297,7 +297,8 @@
         }
         thead th:nth-child(6),
         tbody td:nth-child(6) {
-          min-width: 180px;
+          min-width: 165px;
+          text-align: center;
         }
         thead th:nth-child(7),
         tbody td:nth-child(7) {
@@ -646,10 +647,15 @@
         .status-badge.recurrence-medium,
         .status-badge.recurrence-high,
         .status-badge.recurrence-default {
-          border-radius: 8px;
-          width: 5cm;
-          min-width: 5cm;
-          max-width: 5cm;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          padding: 3px 8px;
+          width: fit-content;
+          max-width: 100%;
+          font-size: 11px;
+          line-height: 1;
           text-align: center;
           white-space: nowrap;
         }

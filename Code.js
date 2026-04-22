@@ -129,7 +129,7 @@ function getRowReportFilterValue_(row) {
     || ''
   ).trim();
 
-  return reportValue ? 'Acessar relatório' : 'Aguardando relatório';
+  return reportValue ? 'Acessar' : 'Aguardando';
 }
 
 function getRows_() {
@@ -714,7 +714,7 @@ function getFilterOptions_() {
     refs: uniqueByKey_(rows, 'Este registro se refere a:'),
     recurrences: uniqueByKey_(rows, 'Qual é a recorrência ou necessidade desta melhoria?'),
     statuses: uniqueByRowStatus_(rows),
-    reports: ['Acessar relatório', 'Aguardando relatório'],
+    reports: ['Acessar', 'Aguardando'],
   };
 }
 

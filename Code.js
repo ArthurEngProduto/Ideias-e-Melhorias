@@ -143,6 +143,10 @@ function getFilteredRows_(filters) {
   const normalizedFilters = normalizeFilters_(filters || {});
 
   return rows.filter((row) => {
+    if (normalizedFilters.id) {
+      const rowId = getRowIdValue_(row).toLowerCase();
+      if (!rowId.includes(normalizedFilters.id)) return false;
+    }
     const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
     if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
     if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
@@ -768,6 +772,7 @@ function normalizeFilters_(filters) {
     : [];
 
   return {
+    id: String(filters.id || '').trim().toLowerCase(),
     timestampStart,
 
     timestampEnd,
@@ -789,6 +794,14 @@ function getFieldValue_(row, key) {
   return String(row[normalizedKey] || '').trim();
 }
 
+function getRowIdValue_(row) {
+  const candidateKeys = ['ID', 'Id', 'id'];
+  for (let i = 0; i < candidateKeys.length; i += 1) {
+    const value = getFieldValue_(row, candidateKeys[i]);
+    if (value) return value;
+  }
+  return '';
+}
 function normalizeDateFilter_(value) {
   const text = String(value || '').trim();
   if (!text) return '';

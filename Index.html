@@ -294,6 +294,12 @@
         tbody td:nth-child(6) {
           min-width: 180px;
         }
+        thead th:nth-child(7),
+        tbody td:nth-child(7) {
+          min-width: 3.4cm;
+          width: 3.4cm;
+          max-width: 3.4cm;
+        }
         thead th:nth-child(8),
         tbody td:nth-child(8) {
           min-width: 170px;
@@ -312,9 +318,10 @@
           font-size: 12px;
         }
         .filter-row #statusFilter {
-          width: 3cm;
-          min-width: 3cm;
-          max-width: 3cm;
+          width: 3.4cm;
+          min-width: 3.4cm;
+          max-width: 3.4cm;
+          white-space: nowrap;
         }
         .filter-row #reportFilter {
           min-width: 165px;
@@ -631,47 +638,51 @@
           font-size: 12px;
           font-weight: 700;
         }
-        .status-badge.workflow-stopped {
+      .status-badge.workflow-stopped {
         background: #7f1d1d;
         color: #fee2e2;
         border: 1px solid #b91c1c;
         border-radius: 8px;
-        width: 2.8cm;
-        min-width: 2.8cm;
-        max-width: 2.8cm;
+        width: 3.4cm;
+        min-width: 3.4cm;
+        max-width: 3.4cm;
         text-align: center;
+        white-space: nowrap;
       }
       .status-badge.workflow-progress {
         background: #854d0e;
         color: #fef3c7;
         border: 1px solid #b45309;
         border-radius: 8px;
-        width: 2.8cm;
-        min-width: 2.8cm;
-        max-width: 2.8cm;
+        width: 3.4cm;
+        min-width: 3.4cm;
+        max-width: 3.4cm;
         text-align: center;
+        white-space: nowrap;
       }
       .status-badge.workflow-done {
         background: #166534;
         color: #dcfce7;
         border: 1px solid #15803d;
         border-radius: 8px;
-        width: 2.8cm;
-        min-width: 2.8cm;
-        max-width: 2.8cm;
+        width: 3.4cm;
+        min-width: 3.4cm;
+        max-width: 3.4cm;
         text-align: center;
+        white-space: nowrap;
       }
       .status-tag-button {
         border: none;
         border-radius: 8px;
         padding: 6px 10px;
-        width: 2.8cm;
-        min-width: 2.8cm;
-        max-width: 2.8cm;
+        width: 3.4cm;
+        min-width: 3.4cm;
+        max-width: 3.4cm;
         text-align: center;
         font-size: 12px;
         font-weight: 700;
         cursor: pointer;
+        white-space: nowrap;
       }
       .status-tag-button.status-queue {
         background: #7f1d1d;

@@ -141,6 +141,10 @@
           min-width: 180px;
           text-align: center;
         }
+        .toolbar-filter-btn {
+          width: 3cm;
+          min-width: 3cm;
+        }
         input, select, button {
           width: 100%;
           padding: 10px;
@@ -1438,8 +1442,8 @@
         <div class="summary-toolbar">
           <div class="summary" id="summary"></div>
           <div class="summary-actions">
-            <button class="toolbar-standard-btn" onclick="applyFilters()">Filtrar</button>
-            <button class="secondary toolbar-standard-btn" onclick="clearFilters()">Limpar</button>
+            <button class="toolbar-standard-btn toolbar-filter-btn" onclick="applyFilters()">Filtrar</button>
+            <button class="secondary toolbar-standard-btn toolbar-filter-btn" onclick="clearFilters()">Limpar</button>
           </div>
         </div>
         <div class="table-wrap">

@@ -117,6 +117,21 @@ function getRowStatusValue_(row) {
   return normalizeRowStatus_(rawStatus);
 }
 
+
+function getRowReportFilterValue_(row) {
+  const statusValue = getRowStatusValue_(row);
+  if (statusValue !== 'Concluído') return '';
+
+  const reportValue = String(
+    row['Relatório de conclusão']
+    || row['Relatorio de conclusao']
+    || row['Relatório']
+    || ''
+  ).trim();
+
+  return reportValue ? 'Acessar relatório' : 'Aguardando relatório';
+}
+
 function getRows_() {
   const sheet = getSheet_();
   const values = sheet.getDataRange().getDisplayValues();
@@ -157,6 +172,7 @@ function getFilteredRows_(filters) {
     if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
     if (normalizedFilters.recurrence && getFieldValue_(row, 'Qual é a recorrência ou necessidade desta melhoria?') !== normalizedFilters.recurrence) return false;
     if (normalizedFilters.status && getRowStatusValue_(row) !== normalizedFilters.status) return false;
+    if (normalizedFilters.report && getRowReportFilterValue_(row) !== normalizedFilters.report) return false;
     return true;
   });
 }
@@ -698,6 +714,7 @@ function getFilterOptions_() {
     refs: uniqueByKey_(rows, 'Este registro se refere a:'),
     recurrences: uniqueByKey_(rows, 'Qual é a recorrência ou necessidade desta melhoria?'),
     statuses: uniqueByRowStatus_(rows),
+    reports: ['Acessar relatório', 'Aguardando relatório'],
   };
 }
 
@@ -782,6 +799,7 @@ function normalizeFilters_(filters) {
     reference: String(filters.reference || '').trim(),
     recurrence: String(filters.recurrence || '').trim(),
     status: String(filters.status || '').trim() ? normalizeRowStatus_(filters.status) : '',
+    report: String(filters.report || '').trim(),    
   };
 }
 

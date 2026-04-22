@@ -278,8 +278,8 @@
         }
         table { width: 100%; border-collapse: collapse; min-width: 0; table-layout: fixed; }
         thead th, tbody td { overflow-wrap: anywhere; word-break: break-word; }
-        thead th { text-align: left; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
-        tbody td { border-top: 1px solid var(--line-soft); padding: 10px; font-size: 14px; }
+        thead th { text-align: center; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }
+        tbody td { text-align: center; border-top: 1px solid var(--line-soft); padding: 10px; font-size: 14px; }
         thead th:nth-child(1),
         tbody td:nth-child(1) {
           width: 2.8cm;
@@ -308,12 +308,12 @@
         thead th:nth-child(8),
         tbody td:nth-child(8) {
           min-width: 220px;
-          padding-left: 24px;
+          padding-left: 10px;
         }
         tbody tr { cursor: pointer; }
         tbody tr:hover { background: var(--surface-soft); }
-        .filter-row th { background: var(--surface); border-bottom: 1px solid var(--line); }
-        .filter-row input, .filter-row select { padding: 8px; font-size: 13px; }
+        .filter-row th { text-align: center; background: var(--surface); border-bottom: 1px solid var(--line); }
+        .filter-row input, .filter-row select { text-align: center; padding: 8px; font-size: 13px; }
         .filter-row #idFilter {
           width: 2.5cm;
           min-width: 2.5cm;
@@ -344,7 +344,7 @@
         }
         .table-sector-trigger {
           width: 100%;
-          text-align: left;
+          text-align: center;
           padding-right: 28px;
           position: relative;
           border: 1px solid var(--line);

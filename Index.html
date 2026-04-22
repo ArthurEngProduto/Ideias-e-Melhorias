@@ -290,6 +290,24 @@
           flex: 1 1 0;
           min-width: 0;
         }
+        .date-range .icon-only-date {
+          width: 38px;
+          min-width: 38px;
+          flex: 0 0 38px;
+          padding: 8px 6px;
+          color: transparent;
+          caret-color: transparent;
+          text-indent: -9999px;
+          position: relative;
+        }
+        .date-range .icon-only-date::-webkit-datetime-edit {
+          color: transparent;
+        }
+        .date-range .icon-only-date::-webkit-calendar-picker-indicator {
+          opacity: 1;
+          cursor: pointer;
+          margin: 0;
+        }
         .date-range span { color: var(--muted); font-size: 12px; white-space: nowrap; }
         .pagination { margin: 18px 0 4px 0; display: flex; gap: 8px; justify-content: center; }
         .empty { display: none; text-align: center; color: var(--muted); margin: 24px 0; }
@@ -1406,9 +1424,9 @@
                 <th><input id="idFilter" placeholder="Filtrar por ID" /></th>
                 <th>
                   <div class="date-range">
-                    <input id="timestampStartFilter" type="date" aria-label="Filtrar por data inicial" />
+                    <input id="timestampStartFilter" class="icon-only-date" type="date" aria-label="Filtrar por data inicial" title="Filtrar por data inicial" />
                     <span>até</span>
-                    <input id="timestampEndFilter" type="date" aria-label="Filtrar por data final" />
+                    <input id="timestampEndFilter" class="icon-only-date" type="date" aria-label="Filtrar por data final" title="Filtrar por data final" />
                   </div>
                 </th>
                 <th><input id="nameFilter" placeholder="Filtrar por nome" /></th>

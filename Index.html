@@ -286,6 +286,11 @@
           min-width: 2.8cm;
           max-width: 2.8cm;
         }
+        thead th:nth-child(2),
+        tbody td:nth-child(2) {
+          min-width: 250px;
+          width: 250px;
+        }
         thead th:nth-child(5),
         tbody td:nth-child(5) {
           min-width: 155px;
@@ -418,24 +423,15 @@
         }
         .date-range { display: flex; align-items: center; gap: 6px; }
         .date-range input {
-          width: auto;
+          width: 100%;
           flex: 1 1 0;
           min-width: 0;
         }
-        .date-range .icon-only-date {
-          width: 38px;
-          min-width: 38px;
-          flex: 0 0 38px;
-          padding: 8px 6px;
-          color: transparent;
-          caret-color: transparent;
-          text-indent: -9999px;
-          position: relative;
+        .date-range .date-filter-input {
+          min-width: 112px;
+          font-size: 12px;
         }
-        .date-range .icon-only-date::-webkit-datetime-edit {
-          color: transparent;
-        }
-        .date-range .icon-only-date::-webkit-calendar-picker-indicator {
+        .date-range .date-filter-input::-webkit-calendar-picker-indicator {
           opacity: 1;
           cursor: pointer;
           margin: 0;
@@ -1629,9 +1625,9 @@
                 <th><input id="idFilter" placeholder="Filtrar por ID" /></th>
                 <th>
                   <div class="date-range">
-                    <input id="timestampStartFilter" class="icon-only-date" type="date" aria-label="Filtrar por data inicial" title="Filtrar por data inicial" />
+                    <input id="timestampStartFilter" class="date-filter-input" type="date" aria-label="Filtrar por data inicial" title="Filtrar por data inicial (dd/mm/aaaa)" />
                     <span>até</span>
-                    <input id="timestampEndFilter" class="icon-only-date" type="date" aria-label="Filtrar por data final" title="Filtrar por data final" />
+                    <input id="timestampEndFilter" class="date-filter-input" type="date" aria-label="Filtrar por data final" title="Filtrar por data final (dd/mm/aaaa)" />
                   </div>
                 </th>
                 <th><input id="nameFilter" placeholder="Filtrar por nome" /></th>

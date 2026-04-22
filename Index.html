@@ -3,6 +3,12 @@
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
+        rel="stylesheet"
+      />
       <title>Portal de Ideias e Melhorias</title>
       <style>
         :root {
@@ -114,7 +120,13 @@
         .header-logo .logo-light { display: none; }
         body.dark-mode .header-logo .logo-light { display: block; }
         body.dark-mode .header-logo .logo-dark { display: none; }
-        .portal-title { text-align: center; }
+        .portal-title {
+          text-align: center;
+          font-family: 'Inter', Arial, sans-serif;
+          font-size: 2.2rem;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+        }
         .meta {
           color: var(--muted);
           font-size: 13px;

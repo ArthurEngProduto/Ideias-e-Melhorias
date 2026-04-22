@@ -642,6 +642,17 @@
           font-size: 12px;
           font-weight: 700;
         }
+        .status-badge.recurrence-low,
+        .status-badge.recurrence-medium,
+        .status-badge.recurrence-high,
+        .status-badge.recurrence-default {
+          border-radius: 8px;
+          width: 5cm;
+          min-width: 5cm;
+          max-width: 5cm;
+          text-align: center;
+          white-space: nowrap;
+        }
       .status-badge.workflow-stopped {
         background: #7f1d1d;
         color: #fee2e2;
@@ -2362,11 +2373,11 @@
           const normalizedRecurrence = String(recurrence || '').trim().toLowerCase();
 
           if (normalizedRecurrence.includes('apenas uma vez')) {
-            return 'Percebi apenas<br>uma vez';
+            return 'Percebi apenas uma vez';
           }
 
           if (normalizedRecurrence.includes('algumas vezes')) {
-            return 'Já observei<br>algumas vezes';
+            return 'Já observei algumas vezes';
           }
 
           return escapeHtml(recurrence);

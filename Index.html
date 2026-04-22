@@ -47,7 +47,7 @@
         }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-        .container { max-width: 1250px; margin: 0 auto; padding: 20px; transition: filter 0.2s ease; }
+        .container { max-width: 1500px; margin: 0 auto; padding: 20px; transition: filter 0.2s ease; }
         .theme-toggle {
           position: fixed;
           top: 16px;
@@ -163,7 +163,15 @@
         button.secondary { background: var(--surface); border: 1px solid var(--primary); color: var(--primary); }
         .summary { margin: 14px 0; color: var(--muted); }
         .status { margin-top: 12px; font-size: 13px; color: #8a5a00; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 10px; display: none; }
-        .table-wrap { overflow-x: hidden; overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+        .table-wrap {
+          width: calc(100% + 24px);
+          margin: 0 -12px;
+          overflow-x: hidden;
+          overflow-y: auto;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 12px;
+        }
         table { width: 100%; border-collapse: collapse; min-width: 0; table-layout: fixed; }
         thead th, tbody td { overflow-wrap: anywhere; word-break: break-word; }
         thead th { text-align: left; background: var(--surface-soft); border-bottom: 1px solid var(--line); padding: 10px; font-size: 13px; }

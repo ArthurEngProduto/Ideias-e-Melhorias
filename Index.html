@@ -33,6 +33,9 @@
       --status-neutral-bg: rgba(55, 65, 81, 0.22);
       --status-neutral-border: rgba(55, 65, 81, 0.35);
       --status-neutral-text: #1f2937;
+      --status-done-text: #15803d;
+      --status-progress-text: #ca8a04;
+      --status-queue-text: #b91c1c;
         }
         body.dark-mode {
           --bg: #0f172a;
@@ -56,6 +59,9 @@
           --status-neutral-bg: rgba(148, 163, 184, 0.22);
           --status-neutral-border: rgba(148, 163, 184, 0.38);
           --status-neutral-text: #e5e7eb;
+          --status-done-text: #4ade80;
+          --status-progress-text: #facc15;
+          --status-queue-text: #f87171;
         }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
@@ -701,7 +707,7 @@
         }
       .status-badge.workflow-stopped {
         background: var(--status-neutral-bg);
-        color: var(--status-neutral-text);
+        color: var(--status-queue-text);
         border: 1px solid var(--status-neutral-border);
         border-radius: 8px;
         width: 3.4cm;
@@ -712,7 +718,7 @@
       }
       .status-badge.workflow-progress {
         background: var(--status-neutral-bg);
-        color: var(--status-neutral-text);
+        color: var(--status-progress-text);
         border: 1px solid var(--status-neutral-border);
         border-radius: 8px;
         width: 3.4cm;
@@ -723,7 +729,7 @@
       }
       .status-badge.workflow-done {
         background: var(--status-neutral-bg);
-        color: var(--status-neutral-text);
+        color: var(--status-done-text);
         border: 1px solid var(--status-neutral-border);
         border-radius: 8px;
         width: 3.4cm;
@@ -747,17 +753,17 @@
       }
       .status-tag-button.status-queue {
         background: var(--status-neutral-bg);
-        color: var(--status-neutral-text);
+        color: var(--status-queue-text);
         border: 1px solid var(--status-neutral-border);
       }
       .status-tag-button.status-progress {
         background: var(--status-neutral-bg);
-        color: var(--status-neutral-text);
+        color: var(--status-progress-text);
         border: 1px solid var(--status-neutral-border);
       }
       .status-tag-button.status-done {
         background: var(--status-neutral-bg);
-        color: var(--status-neutral-text);
+        color: var(--status-done-text);
         border: 1px solid var(--status-neutral-border);
       }
       .status-picker-modal-content {

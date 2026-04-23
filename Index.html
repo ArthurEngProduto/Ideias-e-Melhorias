@@ -1994,7 +1994,11 @@
         const CHART_FAMILY = {
           produto: ['#7EC8F8', '#9BD5FA', '#B9E3FC'],
           processo: ['#3D63DD', '#5B7BE5', '#7D98EC'],
-          recorrencia: ['#F4D35E', '#EE964B', '#D1495B'],
+          recorrencia: {
+            apenasUmaVez: '#fef9c3',
+            algumasVezes: '#ffedd5',
+            recorrente: '#fee2e2',
+          },
           status: {
             queue: '#7f1d1d',
             progress: '#d1c008',
@@ -3719,10 +3723,10 @@
           const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';
           if (cleanLabel(chart.field) === cleanLabel(recurrenceField)) {
             const label = cleanLabel(entry.label).toLowerCase();
-            if (label.includes('apenas uma vez')) return CHART_FAMILY.recorrencia[0];
-            if (label.includes('algumas vezes')) return CHART_FAMILY.recorrencia[1];
-            if (label.includes('recorrente')) return CHART_FAMILY.recorrencia[2];
-            return CHART_FAMILY.recorrencia[index % CHART_FAMILY.recorrencia.length];
+            if (label.includes('apenas uma vez')) return CHART_FAMILY.recorrencia.apenasUmaVez;
+            if (label.includes('algumas vezes')) return CHART_FAMILY.recorrencia.algumasVezes;
+            if (label.includes('recorrente')) return CHART_FAMILY.recorrencia.recorrente;
+            return CHART_FAMILY.default[index % CHART_FAMILY.default.length];
           }
 
           const referenceField = 'Este registro se refere a:';

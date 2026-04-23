@@ -1449,6 +1449,10 @@
             overflow: hidden !important;
             background: #fff !important;
           }
+          body.print-report {
+            height: auto !important;
+            overflow: visible !important;
+          }
           * {
             box-shadow: none !important;
           }
@@ -3420,15 +3424,21 @@
         function printReportModal() {
           updateReportAttachmentPrintSummary();
           document.body.classList.add('print-report');
-
+          autoResizeTextarea(document.getElementById('reportTextInput'));
+          autoResizeTextarea(document.getElementById('reportProblemText'));
+          
           const cleanup = () => {
             document.body.classList.remove('print-report');
             window.removeEventListener('afterprint', cleanup);
           };
 
           window.addEventListener('afterprint', cleanup);
-          window.print();
-          setTimeout(cleanup, 1000);
+          requestAnimationFrame(() => {
+            autoResizeTextarea(document.getElementById('reportTextInput'));
+            autoResizeTextarea(document.getElementById('reportProblemText'));
+            window.print();
+            setTimeout(cleanup, 1000);
+          });
         }
 
         function updateReportAttachmentPrintSummary() {

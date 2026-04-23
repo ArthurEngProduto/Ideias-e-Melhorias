@@ -46,6 +46,7 @@
       --recurrence-high-bg: #fee2e2;
       --recurrence-high-border: #ef4444;
       --recurrence-high-text: #991b1b;
+      --detail-subfield-bg: #ffffff;
         }
         body.dark-mode {
           --bg: #0f172a;
@@ -82,6 +83,7 @@
           --recurrence-high-bg: rgba(239, 68, 68, 0.2);
           --recurrence-high-border: #f87171;
           --recurrence-high-text: #ff9f9f;
+          --detail-subfield-bg: transparent;
         }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
@@ -1097,7 +1099,7 @@
           grid-template-columns: 1fr 1fr;
           gap: 10px;
         }
-        .detail-item { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; }
+        .detail-item { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; background: var(--detail-subfield-bg); }
         .detail-item.full-width { grid-column: 1 / -1; }
         .detail-label { font-size: 12px; color: var(--muted); font-weight: 700; }
         .detail-value { margin-top: 4px; font-size: 14px; white-space: pre-wrap; word-break: break-word; }

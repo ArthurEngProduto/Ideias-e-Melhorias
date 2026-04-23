@@ -1998,6 +1998,9 @@
             apenasUmaVez: '#fef9c3',
             algumasVezes: '#ffedd5',
             recorrente: '#fee2e2',
+            apenasUmaVezTexto: '#854d0e',
+            algumasVezesTexto: '#9a3412',
+            recorrenteTexto: '#991b1b',
           },
           status: {
             queue: '#7f1d1d',
@@ -3685,6 +3688,9 @@
           const radius = 62;
           const circumference = 2 * Math.PI * radius;
           const strokeWidth = Math.round(radius * (1 - DONUT_CUTOUT_RATIO));
+          const isRecurrenceChart = cleanLabel(chart.field) === cleanLabel('Qual é a recorrência ou necessidade desta melhoria?');
+          const marginStrokeWidth = strokeWidth + 4;
+          const fillStrokeWidth = Math.max(strokeWidth - 2, 1);
           let offsetAccumulator = 0;
           const separatorSize = 1.2;
 
@@ -3699,6 +3705,13 @@
             const color = getChartColor(chart, entry, index);
             const percent = total ? Math.round((count / total) * 100) : 0;
             const tooltipLabel = `${entry.label}: ${count} (${percent}%)`;
+            if (isRecurrenceChart) {
+              const marginColor = getRecurrenceTextColor(entry.label);
+              return `
+                <circle cx="90" cy="90" r="${radius}" fill="none" stroke="${marginColor}" stroke-width="${marginStrokeWidth}" stroke-linecap="butt" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}" pointer-events="none"></circle>
+                <circle class="donut-segment" cx="90" cy="90" r="${radius}" fill="none" stroke="${color}" stroke-width="${fillStrokeWidth}" stroke-linecap="butt" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}" data-tooltip="${escapeHtml(tooltipLabel)}"></circle>
+              `;
+            }
             return `<circle class="donut-segment" cx="90" cy="90" r="${radius}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="butt" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}" data-tooltip="${escapeHtml(tooltipLabel)}"></circle>`;
           }).join('');
 
@@ -3756,6 +3769,14 @@
           }
 
           return CHART_FAMILY.default[index % CHART_FAMILY.default.length];
+        }
+
+        function getRecurrenceTextColor(label) {
+          const normalizedLabel = cleanLabel(label).toLowerCase();
+          if (normalizedLabel.includes('apenas uma vez')) return CHART_FAMILY.recorrencia.apenasUmaVezTexto;
+          if (normalizedLabel.includes('algumas vezes')) return CHART_FAMILY.recorrencia.algumasVezesTexto;
+          if (normalizedLabel.includes('recorrente')) return CHART_FAMILY.recorrencia.recorrenteTexto;
+          return CHART_FAMILY.default[0];
         }
 
         function attachStatsTooltipHandlers() {

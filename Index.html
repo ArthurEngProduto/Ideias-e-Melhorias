@@ -479,14 +479,25 @@
         .deployment-order-table {
           width: 100%;
           border-collapse: collapse;
-          min-width: 720px;
+          min-width: 1080px;
         }
         .deployment-order-table th,
         .deployment-order-table td {
           border-top: 1px solid var(--line-soft);
-          padding: 9px;
+          padding: 9px 10px;
           font-size: 13px;
           text-align: center;
+          vertical-align: middle;
+          white-space: normal;
+          word-break: break-word;
+        }
+        .deployment-order-table th:first-child,
+        .deployment-order-table td:first-child {
+          width: 56px;
+          min-width: 56px;
+          max-width: 56px;
+          padding-left: 6px;
+          padding-right: 6px;
         }
         .deployment-order-table thead th {
           background: var(--surface-soft);
@@ -1756,6 +1767,16 @@
           <p id="deploymentOrderSummary" class="deployment-order-summary">Carregando...</p>
           <div class="deployment-order-table-wrap">
             <table class="deployment-order-table">
+              <colgroup>
+                <col style="width:56px;" />
+                <col style="width:108px;" />
+                <col style="width:170px;" />
+                <col style="width:140px;" />
+                <col style="width:220px;" />
+                <col style="width:120px;" />
+                <col style="width:130px;" />
+                <col style="width:90px;" />
+              </colgroup>
               <thead>
                 <tr>
                   <th>ID</th>

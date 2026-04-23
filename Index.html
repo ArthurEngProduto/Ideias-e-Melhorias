@@ -36,6 +36,15 @@
       --status-done-text: #15803d;
       --status-progress-text: #ca8a04;
       --status-queue-text: #b91c1c;
+      --recurrence-low-bg: #fff6bf;
+      --recurrence-low-border: #f4d341;
+      --recurrence-low-text: #6f4b00;
+      --recurrence-medium-bg: #ffe8cf;
+      --recurrence-medium-border: #ffb86a;
+      --recurrence-medium-text: #9a4a00;
+      --recurrence-high-bg: #ffe0e0;
+      --recurrence-high-border: #ff9f9f;
+      --recurrence-high-text: #b91c1c;
         }
         body.dark-mode {
           --bg: #0f172a;
@@ -62,6 +71,15 @@
           --status-done-text: #4ade80;
           --status-progress-text: #facc15;
           --status-queue-text: #f87171;
+          --recurrence-low-bg: rgba(245, 158, 11, 0.18);
+          --recurrence-low-border: #f59e0b;
+          --recurrence-low-text: #fde68a;
+          --recurrence-medium-bg: rgba(249, 115, 22, 0.2);
+          --recurrence-medium-border: #fb923c;
+          --recurrence-medium-text: #fdba74;
+          --recurrence-high-bg: rgba(239, 68, 68, 0.2);
+          --recurrence-high-border: #f87171;
+          --recurrence-high-text: #ff9f9f;
         }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
@@ -661,19 +679,19 @@
           border: 1px solid #86efac;
         }
         .status-badge.recurrence-low {
-          background: #fef9c3;
-          color: #854d0e;
-          border: 1px solid #fde047;
+          background: var(--recurrence-low-bg);
+          color: var(--recurrence-low-text);
+          border: 1px solid var(--recurrence-low-border);
         }
         .status-badge.recurrence-medium {
-          background: #ffedd5;
-          color: #9a3412;
-          border: 1px solid #fdba74;
+          background: var(--recurrence-medium-bg);
+          color: var(--recurrence-medium-text);
+          border: 1px solid var(--recurrence-medium-border);
         }
         .status-badge.recurrence-high {
-          background: #fee2e2;
-          color: #991b1b;
-          border: 1px solid #fca5a5;
+          background: var(--recurrence-high-bg);
+          color: var(--recurrence-high-text);
+          border: 1px solid var(--recurrence-high-border);
         }
         .status-badge.recurrence-default {
           background: #eef2ff;
@@ -2019,12 +2037,12 @@
           produto: ['#7EC8F8', '#9BD5FA', '#B9E3FC'],
           processo: ['#3D63DD', '#5B7BE5', '#7D98EC'],
           recorrencia: {
-            apenasUmaVez: '#fef9c3',
-            algumasVezes: '#ffedd5',
-            recorrente: '#fee2e2',
-            apenasUmaVezTexto: '#854d0e',
-            algumasVezesTexto: '#9a3412',
-            recorrenteTexto: '#991b1b',
+            apenasUmaVez: 'var(--recurrence-low-bg)',
+            algumasVezes: 'var(--recurrence-medium-bg)',
+            recorrente: 'var(--recurrence-high-bg)',
+            apenasUmaVezTexto: 'var(--recurrence-low-text)',
+            algumasVezesTexto: 'var(--recurrence-medium-text)',
+            recorrenteTexto: 'var(--recurrence-high-text)',
           },
           status: {
             queue: 'var(--status-queue-text)',

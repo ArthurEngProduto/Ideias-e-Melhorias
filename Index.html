@@ -285,14 +285,22 @@
         .print-icon-button {
           width: 40px;
           min-width: 40px;
-          padding: 8px;
+          height: 40px;
+          padding: 0;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          background: transparent !important;
+          border: none !important;
+          color: var(--primary);
+          border-radius: 0;
+        }
+        .print-icon-button:hover {
+          filter: brightness(0.85);
         }
         .print-icon {
-          width: 18px;
-          height: 18px;
+          width: 24px;
+          height: 24px;
           display: block;
         }
         .summary { margin: 14px 0; color: var(--muted); }

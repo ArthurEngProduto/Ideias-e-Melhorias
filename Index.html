@@ -3741,9 +3741,9 @@
           const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';
           if (cleanLabel(chart.field) === cleanLabel(recurrenceField)) {
             const label = cleanLabel(entry.label).toLowerCase();
-            if (label.includes('apenas uma vez')) return CHART_FAMILY.recorrencia.apenasUmaVez;
-            if (label.includes('algumas vezes')) return CHART_FAMILY.recorrencia.algumasVezes;
-            if (label.includes('recorrente')) return CHART_FAMILY.recorrencia.recorrente;
+            if (label.includes('apenas uma vez')) return CHART_FAMILY.recorrencia.apenasUmaVezTexto;
+            if (label.includes('algumas vezes')) return CHART_FAMILY.recorrencia.algumasVezesTexto;
+            if (label.includes('recorrente')) return CHART_FAMILY.recorrencia.recorrenteTexto;
             return CHART_FAMILY.default[index % CHART_FAMILY.default.length];
           }
 

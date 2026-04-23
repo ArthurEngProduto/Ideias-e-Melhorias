@@ -3596,9 +3596,14 @@
         function renderStatsChartCard(chart) {
           const sectorField = 'Selecione o seu setor:';
           const conclusionField = 'Status da conclusão';
+          const recurrenceField = 'Qual é a recorrência ou necessidade desta melhoria?';
           const normalizedField = cleanLabel(chart.field);
 
-          if (normalizedField === cleanLabel(sectorField) || normalizedField === cleanLabel(conclusionField)) {
+          if (
+            normalizedField === cleanLabel(sectorField)
+            || normalizedField === cleanLabel(conclusionField)
+            || normalizedField === cleanLabel(recurrenceField)
+          ) {
             return renderHorizontalBarChartCard(chart);
           }
           return renderPieChartCard(chart);

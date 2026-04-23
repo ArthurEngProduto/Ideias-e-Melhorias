@@ -282,6 +282,19 @@
           filter: brightness(0.9);
         }
         button.secondary { background: var(--surface); border: 1px solid var(--primary); color: var(--primary); }
+        .print-icon-button {
+          width: 40px;
+          min-width: 40px;
+          padding: 8px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .print-icon {
+          width: 18px;
+          height: 18px;
+          display: block;
+        }
         .summary { margin: 14px 0; color: var(--muted); }
         .summary-toolbar {
           margin: 18px 0 8px;
@@ -1757,7 +1770,7 @@
             </div>
             <div class="modal-actions">
               <button class="danger print-hidden" style="max-width:130px;" onclick="deleteSelectedRow()">Excluir linha</button>
-              <button class="secondary print-hidden" style="max-width:120px;" onclick="printDetailsModal()">Imprimir</button>
+              <button class="secondary print-hidden print-icon-button" style="max-width:40px;" onclick="printDetailsModal()" aria-label="Imprimir" title="Imprimir"><svg class="print-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="9" width="14" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8" y="14" width="8" height="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
               <button class="secondary print-hidden" style="max-width:120px;" onclick="closeModal()">Fechar</button>
             </div>
           </div>
@@ -1774,7 +1787,7 @@
           <div class="modal-header">
             <h2 style="margin:0;">Estatísticas das respostas</h2>
             <div class="modal-actions">
-              <button class="secondary" style="max-width:160px;" onclick="printStatsModal()">Imprimir gráficos</button>
+              <button class="secondary print-icon-button" style="max-width:40px;" onclick="printStatsModal()" aria-label="Imprimir gráficos" title="Imprimir gráficos"><svg class="print-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="9" width="14" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8" y="14" width="8" height="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
               <button class="secondary" style="max-width:120px;" onclick="closeStatsModal()">Fechar</button>
             </div>
           </div>
@@ -1969,7 +1982,7 @@
             <div id="reportAttachmentLinks" class="report-file-links" style="display:none;"></div>
             <div id="reportAttachmentPrintSummary" class="report-file-print-summary">Nenhum arquivo escolhido</div>
           <div id="reportPrintActions" class="report-print-actions print-hidden">
-            <button id="printReportButton" class="report-primary-action" style="max-width:120px;" type="button" onclick="printReportModal()">Imprimir</button>
+            <button id="printReportButton" class="report-primary-action print-icon-button" style="max-width:40px;" type="button" onclick="printReportModal()" aria-label="Imprimir"><svg class="print-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="9" width="14" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8" y="14" width="8" height="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
           </div>
           <div class="modal-actions report-actions print-hidden">
             <button id="saveReportButton" type="button" onclick="saveConclusionReport()">Salvar</button>

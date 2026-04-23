@@ -504,6 +504,17 @@
           border-top: none;
           border-bottom: 1px solid var(--line);
         }
+        .deployment-order-table td:nth-child(6),
+        .deployment-order-table td:nth-child(7) {
+          overflow: hidden;
+        }
+        .deployment-order-table td:nth-child(6) .status-badge,
+        .deployment-order-table td:nth-child(7) .status-badge,
+        .deployment-order-table td:nth-child(7) .status-tag-button {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+        }
         .deployment-order-status-tag {
           cursor: pointer;
           pointer-events: auto;
@@ -1772,9 +1783,9 @@
                 <col style="width:108px;" />
                 <col style="width:170px;" />
                 <col style="width:140px;" />
-                <col style="width:220px;" />
-                <col style="width:120px;" />
-                <col style="width:130px;" />
+              <col style="width:220px;" />
+                <col style="width:190px;" />
+                <col style="width:155px;" />
                 <col style="width:90px;" />
               </colgroup>
               <thead>

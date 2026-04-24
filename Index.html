@@ -1540,9 +1540,9 @@
             max-height: none !important;
             overflow: visible !important;
             margin: 0 auto !important;
-            border: none !important;
+            border: 1px solid #000 !important;
             border-radius: 0 !important;
-            padding: 0 !important;
+            padding: 3mm !important;
             background: #fff !important;
           }
           body.print-stats #statsModal .modal-header,
@@ -1562,11 +1562,22 @@
           body.print-stats #statsModal .stats-card {
             min-height: 0 !important;
             padding: 3mm !important;
-            border: 1px solid #dce3f1 !important;
+            border: 1px solid #000 !important;
             border-radius: 8px !important;
             gap: 2mm !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
+            background: #fff !important;
+          }
+          body.print-stats #statsModal .stats-title,
+          body.print-stats #statsModal .stats-subtitle,
+          body.print-stats #statsModal .legend-item,
+          body.print-stats #statsModal .bar-label,
+          body.print-stats #statsModal .bar-value,
+          body.print-stats #statsModal .legend-percent,
+          body.print-stats #statsModal .donut-total-value,
+          body.print-stats #statsModal .donut-total-label {
+            color: #000 !important;
           }
           body.print-stats #statsModal .stats-title {
             font-size: 11px !important;
@@ -1597,13 +1608,19 @@
           }
           body.print-stats #statsModal .bar-track {
             height: 8px !important;
+            border: 1px solid #000 !important;
+            background: #ffffff !important;
           }
           body.print-stats #statsModal .legend-list {
             gap: 1.2mm !important;
           }
+          body.print-stats #statsModal .legend-dot {
+            border: 1px solid #000 !important;
+          }
           body.print-stats #statsModal .legend-dot,
           body.print-stats #statsModal .bar-fill,
           body.print-stats #statsModal .donut-segment {
+            filter: brightness(0.7) contrast(1.25) !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }

@@ -2135,9 +2135,7 @@
           evaluationsByRowNumber: {}
         };
         let loadingCount = 0;
-        const SPLASH_QUERY_ACTIVE = new URLSearchParams(window.location.search).get('splash') === '1';
         const PRELOAD_CACHE_TTL_MS = 120000;
-        let skipInitialLoadingOverlay = SPLASH_QUERY_ACTIVE;
         const DONUT_CUTOUT_RATIO = 0.62;
         const STATS_THEME = {
           modalBg: '#08162D',
@@ -2380,8 +2378,8 @@
         function boot() {
           setFixedEvaluationWeights();
           updateEvaluationPartialScores();
-          const cachedBootstrap = SPLASH_QUERY_ACTIVE ? readPreloadCache('portalPreloadBootstrap') : null;
-          const cachedData = SPLASH_QUERY_ACTIVE ? readPreloadCache('portalPreloadData') : null;
+          const cachedBootstrap = readPreloadCache('portalPreloadBootstrap');
+          const cachedData = readPreloadCache('portalPreloadData');
 
           if (cachedBootstrap && cachedData) {
             applyBootstrapPayload(cachedBootstrap);
@@ -2391,16 +2389,13 @@
             return;
           }
 
-          showLoading();
           google.script.run
             .withSuccessHandler((payload) => {
               applyBootstrapPayload(payload || { options: {} });
-              loadData({ showLoader: !skipInitialLoadingOverlay });
-              hideLoading();
+              loadData({ showLoader: false });
             })
             .withFailureHandler((err) => {
               showError(err);
-              hideLoading();
             })
             .getPortalBootstrap();
         }
@@ -2409,8 +2404,6 @@
           const shouldShowLoader = !(options && options.showLoader === false);
           if (shouldShowLoader) {
             showLoading();
-          } else {
-            skipInitialLoadingOverlay = false;
           }
           google.script.run
             .withSuccessHandler((data) => {

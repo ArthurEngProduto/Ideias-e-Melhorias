@@ -3,6 +3,9 @@
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <script>
+        window.APP_BASE_URL = '<?!= APP_BASE_URL ?>' || '';
+      </script>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       <link
@@ -1742,7 +1745,7 @@
           <path fill="#000000" d="M14 2.2A9.8 9.8 0 0 0 4.2 12c0 5.4 4.4 9.8 9.8 9.8 3.3 0 6.2-1.6 8-4.1-1.1.5-2.3.8-3.6.8-5.4 0-9.8-4.4-9.8-9.8 0-2.4.9-4.6 2.3-6.5C11.9 2.3 13 2.2 14 2.2z"/>
         </svg>
       </button>
-      <div class="loading-overlay open" id="loadingOverlay" aria-live="polite" aria-busy="true">
+      <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-busy="true">
         <div class="loading-box" role="status" aria-label="Carregando">
           <div class="loading-spinner"></div>
           <p class="loading-text">Carregando...</p>
@@ -2132,6 +2135,9 @@
           evaluationsByRowNumber: {}
         };
         let loadingCount = 0;
+        const SPLASH_QUERY_ACTIVE = new URLSearchParams(window.location.search).get('splash') === '1';
+        const PRELOAD_CACHE_TTL_MS = 120000;
+        let skipInitialLoadingOverlay = SPLASH_QUERY_ACTIVE;
         const DONUT_CUTOUT_RATIO = 0.62;
         const STATS_THEME = {
           modalBg: '#08162D',
@@ -2164,6 +2170,45 @@
           deployment: 2,
           quality: 4,
         };
+
+        function readPreloadCache(key) {
+          try {
+            const raw = sessionStorage.getItem(key);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !parsed.payload || !parsed.ts) return null;
+            if ((Date.now() - Number(parsed.ts)) > PRELOAD_CACHE_TTL_MS) return null;
+            return parsed.payload;
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function clearPreloadCache() {
+          sessionStorage.removeItem('portalPreloadBootstrap');
+          sessionStorage.removeItem('portalPreloadData');
+        }
+
+        function applyBootstrapPayload(payload) {
+          state.fields = payload.fields || [];
+          state.tableAvailableSectors = payload.options.sectors || [];
+          state.statsAvailableSectors = payload.options.sectors || [];
+          setTopMeta('');
+
+          setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
+          setMainSectorOptions(state.tableAvailableSectors);
+          setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Todas as recorrências');
+          setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
+          setSelectOptions('reportFilter', payload.options.reports, 'Todos os relatórios');
+          setStatsSectorOptions(state.statsAvailableSectors);
+          addFilterListeners();
+        }
+
+        function applyDataPayload(data) {
+          state = { ...state, ...(data || {}) };
+          hideError();
+          render();
+        }
 
         function setFixedEvaluationWeights() {
           const weightInputs = [
@@ -2335,23 +2380,22 @@
         function boot() {
           setFixedEvaluationWeights();
           updateEvaluationPartialScores();
+          const cachedBootstrap = SPLASH_QUERY_ACTIVE ? readPreloadCache('portalPreloadBootstrap') : null;
+          const cachedData = SPLASH_QUERY_ACTIVE ? readPreloadCache('portalPreloadData') : null;
+
+          if (cachedBootstrap && cachedData) {
+            applyBootstrapPayload(cachedBootstrap);
+            applyDataPayload(cachedData);
+            clearPreloadCache();
+            loadData({ showLoader: false });
+            return;
+          }
+
           showLoading();
           google.script.run
             .withSuccessHandler((payload) => {
-              state.fields = payload.fields || [];
-              state.tableAvailableSectors = payload.options.sectors || [];
-              state.statsAvailableSectors = payload.options.sectors || [];
-              setTopMeta('');
-
-              setSelectOptions('referenceFilter', payload.options.refs, 'Produto ou processo');
-              setMainSectorOptions(state.tableAvailableSectors);
-              setSelectOptions('recurrenceFilter', payload.options.recurrences, 'Todas as recorrências');
-              setSelectOptions('statusFilter', payload.options.statuses, 'Todos os status');
-              setSelectOptions('reportFilter', payload.options.reports, 'Todos os relatórios');
-              setStatsSectorOptions(state.statsAvailableSectors);
-              addFilterListeners();
-
-              loadData();
+              applyBootstrapPayload(payload || { options: {} });
+              loadData({ showLoader: !skipInitialLoadingOverlay });
               hideLoading();
             })
             .withFailureHandler((err) => {
@@ -2361,18 +2405,21 @@
             .getPortalBootstrap();
         }
 
-        function loadData() {
-          showLoading();
+        function loadData(options) {
+          const shouldShowLoader = !(options && options.showLoader === false);
+          if (shouldShowLoader) {
+            showLoading();
+          } else {
+            skipInitialLoadingOverlay = false;
+          }
           google.script.run
             .withSuccessHandler((data) => {
-              state = { ...state, ...data };
-              hideError();
-              render();
-              hideLoading();
+              applyDataPayload(data);
+              if (shouldShowLoader) hideLoading();
             })
             .withFailureHandler((err) => {
               showError(err);
-              hideLoading();
+              if (shouldShowLoader) hideLoading();
             })
             .getPortalData(state.filters, state.page, state.pageSize);
         }

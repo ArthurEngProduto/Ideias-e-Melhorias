@@ -1,37 +1,33 @@
 <!doctype html>
-<html>
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Teste Baldi</title>
+    <title>Splash - Portal de Ideias e Melhorias</title>
     <script>
       (function () {
-        const THEME_KEY = 'baldi-theme';
+        const THEME_KEY = 'portalTheme';
         const storedTheme = localStorage.getItem(THEME_KEY);
-        const initialTheme = (storedTheme === 'light' || storedTheme === 'dark')
-          ? storedTheme
-          : 'dark';
-
+        const initialTheme = (storedTheme === 'dark') ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', initialTheme);
       })();
     </script>
     <style>
       :root {
-        --splash-bg: var(--app-bg);
-        --app-bg: #000000;
-        --text: #ffffff;
-        --button-bg: #ffffff;
-        --button-text: #000000;
-        --button-border: #ffffff;
-
-        /* Controles do quadrado (máscara) */
+        --bg: #ffffff;
+        --text: #1d2433;
+        --splash-bg: var(--bg);
         --mask-top: -11px;
         --mask-left: 170px;
         --mask-width: 50%;
         --mask-height: 30%;
-
         --mask-reveal-time: 3300ms;
         --glow-time: 1500ms;
+      }
+
+      html[data-theme="dark"] {
+        --bg: #0f172a;
+        --text: #ffffff;
       }
 
       * { box-sizing: border-box; }
@@ -41,15 +37,7 @@
         width: 100%;
         height: 100%;
         font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
-      }
-
-      html[data-theme="light"],
-      body[data-theme="light"] {
-        --app-bg: #ffffff;
-        --text: #000000;
-        --button-bg: #000000;
-        --button-text: #ffffff;
-        --button-border: #000000;
+        background: var(--bg);
       }
 
       .screen {
@@ -64,7 +52,6 @@
         opacity: 1;
         visibility: visible;
         transition: opacity 520ms ease, visibility 520ms ease;
-        z-index: 10;
       }
 
       #splash.hide {
@@ -91,33 +78,24 @@
         object-fit: contain;
       }
 
-      html[data-theme="dark"] .logo-wrap .logo-dark,
-      body[data-theme="dark"] .logo-wrap .logo-dark {
-        display: block;
-      }
-
-      html[data-theme="light"] .logo-wrap .logo-light,
-      body[data-theme="light"] .logo-wrap .logo-light {
-        display: block;
-      }
+      html[data-theme="dark"] .logo-wrap .logo-dark { display: block; }
+      html[data-theme="light"] .logo-wrap .logo-light { display: block; }
 
       .logo-wrap .fallback {
         display: none;
         place-items: center;
-        color: #111;
+        color: var(--text);
         font-size: clamp(38px, 8vw, 90px);
         font-style: italic;
         font-weight: 700;
       }
 
-      /* Glow uniforme após sumir o retângulo. */
       .logo-wrap.glow img,
       .logo-wrap.glow .fallback {
         animation: logo-glow var(--glow-time) ease-out forwards;
       }
 
-      html[data-theme="dark"] .logo-wrap.glow .logo-dark,
-      body[data-theme="dark"] .logo-wrap.glow .logo-dark {
+      html[data-theme="dark"] .logo-wrap.glow .logo-dark {
         --glow-peak-brightness: 1.15;
         --glow-peak-contrast: 1;
         --glow-peak-saturate: 1;
@@ -127,8 +105,7 @@
         --glow-shadow-rgb: 245, 247, 230;
       }
 
-      html[data-theme="light"] .logo-wrap.glow .logo-light,
-      body[data-theme="light"] .logo-wrap.glow .logo-light {
+      html[data-theme="light"] .logo-wrap.glow .logo-light {
         --glow-peak-brightness: 1.3;
         --glow-peak-contrast: 0.7;
         --glow-peak-saturate: 1;
@@ -138,22 +115,9 @@
         --glow-shadow-rgb: 255, 255, 255;
       }
 
-      .logo-wrap.glow .fallback {
-        --glow-peak-brightness: 1.15;
-        --glow-peak-contrast: 1;
-        --glow-peak-saturate: 1;
-        --glow-shadow-alpha: 0.45;
-        --glow-shadow-near: 14px;
-        --glow-shadow-far: 32px;
-        --glow-shadow-rgb: 245, 247, 230;
-      }
-
       @keyframes logo-glow {
         0% {
-          filter: brightness(1)
-                  contrast(1)
-                  saturate(1)
-                  drop-shadow(0 0 0 rgba(var(--glow-shadow-rgb, 245, 247, 230), 0));
+          filter: brightness(1) contrast(1) saturate(1) drop-shadow(0 0 0 rgba(var(--glow-shadow-rgb, 245, 247, 230), 0));
         }
         45% {
           filter: brightness(var(--glow-peak-brightness, 1.3))
@@ -163,23 +127,7 @@
                   drop-shadow(0 0 var(--glow-shadow-far, 32px) rgba(var(--glow-shadow-rgb, 245, 247, 230), var(--glow-shadow-alpha, 0.45)));
         }
         100% {
-          filter: brightness(1)
-                  contrast(1)
-                  saturate(1)
-                  drop-shadow(0 0 0 rgba(var(--glow-shadow-rgb, 245, 247, 230), 0));
-        }
-        45% {
-          filter: brightness(var(--glow-peak-brightness, 1.3))
-                  contrast(var(--glow-peak-contrast, 1))
-                  saturate(var(--glow-peak-saturate, 1))
-                  drop-shadow(0 0 var(--glow-shadow-near, 14px) rgba(var(--glow-shadow-rgb, 245, 247, 230), var(--glow-shadow-alpha, 0.45)))
-                  drop-shadow(0 0 var(--glow-shadow-far, 32px) rgba(var(--glow-shadow-rgb, 245, 247, 230), var(--glow-shadow-alpha, 0.45)));
-        }
-        100% {
-          filter: brightness(1)
-                  contrast(1)
-                  saturate(1)
-                  drop-shadow(0 0 0 rgba(var(--glow-shadow-rgb, 245, 247, 230), 0));
+          filter: brightness(1) contrast(1) saturate(1) drop-shadow(0 0 0 rgba(var(--glow-shadow-rgb, 245, 247, 230), 0));
         }
       }
 
@@ -192,145 +140,147 @@
         background: var(--splash-bg);
         clip-path: inset(0 0 0 0);
         animation: reveal-left-to-right var(--mask-reveal-time) ease-out 160ms forwards;
+        animation-play-state: paused;
+      }
+
+      .logo-mask.run {
+        animation-play-state: running;
       }
 
       @keyframes reveal-left-to-right {
-        0% {
-          clip-path: inset(0 0 0 0);
-        }
-        100% {
-          clip-path: inset(0 0 0 100%);
-        }
-      }
-
-      #main {
-        background: var(--app-bg);
-        color: var(--text);
-      }
-
-      #main .title {
-        margin: 0;
-        font-size: clamp(28px, 5vw, 56px);
-        font-weight: 400;
-      }
-
-      #themeToggle {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 10px 14px;
-        border: 1px solid var(--button-border);
-        border-radius: 8px;
-        background: var(--button-bg);
-        color: var(--button-text);
-        cursor: pointer;
-        font-size: 14px;
-      }
-
-      #main[data-ready="false"] { opacity: 0; }
-
-      #main[data-ready="true"] {
-        opacity: 1;
-        transition: opacity 360ms ease;
+        0% { clip-path: inset(0 0 0 0); }
+        100% { clip-path: inset(0 0 0 100%); }
       }
     </style>
   </head>
   <body>
     <section id="splash" class="screen" aria-label="Splash screen">
       <div id="logoWrap" class="logo-wrap" role="img" aria-label="Logo Baldi">
-        <img
-          id="logoDark"
-          class="logo-dark"
-          alt="Baldi branca"
-          src="https://i.ibb.co/933KM0KH/Logo-Baldi-Vers-o-Correta-Branca.png"
-        />
-        <img
-          id="logoLight"
-          class="logo-light"
-          alt="Baldi preta"
-          src="https://i.ibb.co/PzDD4QLk/Logo-Baldi-Vers-o-Correta-Preta.png"
-        />
+        <img id="logoDark" class="logo-dark" alt="Baldi branca" src="https://i.ibb.co/933KM0KH/Logo-Baldi-Vers-o-Correta-Branca.png" />
+        <img id="logoLight" class="logo-light" alt="Baldi preta" src="https://i.ibb.co/PzDD4QLk/Logo-Baldi-Vers-o-Correta-Preta.png" />
         <div id="logoFallback" class="fallback">Baldi</div>
         <div id="logoMask" class="logo-mask" aria-hidden="true"></div>
       </div>
     </section>
 
-    <main id="main" class="screen" data-ready="false" aria-label="Página inicial">
-      <button id="themeToggle" type="button" aria-label="Alternar tema">Modo claro</button>
-      <h1 class="title">teste</h1>
-    </main>
-
     <script>
       (function () {
+        const LOGO_TIMEOUT_MS = 3500;
         const GLOW_MS = 1500;
+        const HOME_URL = '<?!= SPLASH_TO_HOME_URL ?>' || '?page=index&splash=1';
+        const APP_BASE_URL = '<?!= APP_BASE_URL ?>' || '';
+        const THEME_KEY = 'portalTheme';
 
         const splash = document.getElementById('splash');
-        const main = document.getElementById('main');
         const logoDark = document.getElementById('logoDark');
         const logoLight = document.getElementById('logoLight');
         const logoWrap = document.getElementById('logoWrap');
         const logoMask = document.getElementById('logoMask');
-        const fallback = document.getElementById('logoFallback');
-        const themeToggle = document.getElementById('themeToggle');
 
-        const THEME_KEY = 'baldi-theme';
-        const getActiveLogo = () => {
-          const theme = document.documentElement.getAttribute('data-theme');
-          return theme === 'light' ? logoLight : logoDark;
-        };
+        function getActiveTheme() {
+          return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        }
 
-        const applyTheme = (theme) => {
-          const nextTheme = (theme === 'light') ? 'light' : 'dark';
-          document.documentElement.setAttribute('data-theme', nextTheme);
-          document.body.setAttribute('data-theme', nextTheme);
-          themeToggle.textContent = (nextTheme === 'dark') ? 'Modo claro' : 'Modo escuro';
-        };
+        function getActiveLogo() {
+          return getActiveTheme() === 'dark' ? logoDark : logoLight;
+        }
 
-        const storedTheme = localStorage.getItem(THEME_KEY);
-        const initialTheme = (storedTheme === 'light' || storedTheme === 'dark')
-          ? storedTheme
-          : 'dark';
-        applyTheme(initialTheme);
+        function navigateToHome(withSplashFlag) {
+          const target = withSplashFlag ? HOME_URL : (APP_BASE_URL ? APP_BASE_URL + '?page=index' : '?page=index');
+          window.location.replace(target);
+        }
 
-        themeToggle.addEventListener('click', () => {
-          const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-          const nextTheme = isDark ? 'light' : 'dark';
-          applyTheme(nextTheme);
-          localStorage.setItem(THEME_KEY, nextTheme);
-        });
+        function preloadPortalData() {
+          if (!window.google || !google.script || !google.script.run) return;
 
-        // Fallback simples caso a imagem ativa não carregue.
-        const handleLogoError = (event) => {
-          if (event.currentTarget !== getActiveLogo()) {
-            return;
-          }
+          google.script.run
+            .withSuccessHandler((bootstrapPayload) => {
+              const cachedBootstrap = {
+                ts: Date.now(),
+                payload: bootstrapPayload || {}
+              };
+              sessionStorage.setItem('portalPreloadBootstrap', JSON.stringify(cachedBootstrap));
 
-          event.currentTarget.style.display = 'none';
-          fallback.style.display = 'grid';
-        };
+              google.script.run
+                .withSuccessHandler((dataPayload) => {
+                  const cachedData = {
+                    ts: Date.now(),
+                    payload: dataPayload || {}
+                  };
+                  sessionStorage.setItem('portalPreloadData', JSON.stringify(cachedData));
+                })
+                .withFailureHandler(() => {})
+                .getPortalData({}, 1, 12);
+            })
+            .withFailureHandler(() => {})
+            .getPortalBootstrap();
+        }
 
-        logoDark.addEventListener('error', handleLogoError);
-        logoLight.addEventListener('error', handleLogoError);
+        function runSplashSequence() {
+          preloadPortalData();
+          logoMask.classList.add('run');
 
-        // Sequência: máscara termina -> glow -> entra tela principal.
-        logoMask.addEventListener('animationend', () => {
-          logoWrap.classList.add('glow');
+          logoMask.addEventListener('animationend', () => {
+            logoWrap.classList.add('glow');
+            const glowTarget = getActiveLogo();
 
-          const glowTarget = fallback.style.display === 'grid' ? fallback : getActiveLogo();
+            glowTarget.addEventListener('animationend', () => {
+              splash.classList.add('hide');
+              setTimeout(() => navigateToHome(true), 520);
+            }, { once: true });
 
-          glowTarget.addEventListener('animationend', () => {
-            main.setAttribute('data-ready', 'true');
-            splash.classList.add('hide');
+            setTimeout(() => {
+              if (!splash.classList.contains('hide')) {
+                splash.classList.add('hide');
+                navigateToHome(true);
+              }
+            }, GLOW_MS + 220);
+          }, { once: true });
+        }
+
+        function startWithLogoValidation() {
+          const storedTheme = localStorage.getItem(THEME_KEY);
+          const initialTheme = storedTheme === 'dark' ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', initialTheme);
+
+          const activeLogo = getActiveLogo();
+          let done = false;
+
+          const fallbackToHome = () => {
+            if (done) return;
+            done = true;
+            navigateToHome(false);
+          };
+
+          const proceedWithSplash = () => {
+            if (done) return;
+            done = true;
+            runSplashSequence();
+          };
+
+          const timeoutId = setTimeout(fallbackToHome, LOGO_TIMEOUT_MS);
+
+          activeLogo.addEventListener('load', () => {
+            clearTimeout(timeoutId);
+            proceedWithSplash();
           }, { once: true });
 
-          // Segurança: se o evento não disparar por algum motivo.
-          setTimeout(() => {
-            if (!splash.classList.contains('hide')) {
-              main.setAttribute('data-ready', 'true');
-              splash.classList.add('hide');
+          activeLogo.addEventListener('error', () => {
+            clearTimeout(timeoutId);
+            fallbackToHome();
+          }, { once: true });
+
+          if (activeLogo.complete) {
+            clearTimeout(timeoutId);
+            if (activeLogo.naturalWidth > 0) {
+              proceedWithSplash();
+            } else {
+              fallbackToHome();
             }
-          }, GLOW_MS + 120);
-        }, { once: true });
+          }
+        }
+
+        startWithLogoValidation();
       })();
     </script>
   </body>

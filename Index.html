@@ -47,6 +47,7 @@
       --recurrence-high-border: #ef4444;
       --recurrence-high-text: #991b1b;
       --detail-subfield-bg: #ffffff;
+          --field-border-width: 2px;
         }
         body.dark-mode {
           --bg: #0f172a;
@@ -84,6 +85,7 @@
           --recurrence-high-border: #f87171;
           --recurrence-high-text: #ff9f9f;
           --detail-subfield-bg: transparent;
+          --field-border-width: 1px;
         }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
@@ -277,6 +279,9 @@
           border-radius: 8px;
           background: var(--surface);
           color: var(--text);
+        }
+        input, select, textarea {
+          border-width: var(--field-border-width);
         }
         button {
           cursor: pointer;

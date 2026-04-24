@@ -202,6 +202,12 @@
           border: 1px solid var(--line);
           color: var(--text);
         }
+        body:not(.dark-mode) .container > .panel:first-of-type,
+        body:not(.dark-mode) .refresh-toggle,
+        body:not(.dark-mode) .theme-toggle,
+        body:not(.dark-mode) .header-menu-btn {
+          border-width: 2px;
+        }
         .header-menu-btn:hover {
           filter: brightness(0.95);
         }

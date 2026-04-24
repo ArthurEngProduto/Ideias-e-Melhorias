@@ -27,7 +27,9 @@ const NAME_FIELD_ALIASES = ['Digite seu nome:', 'Digite seu nome completo:'];
 function doGet(e) {
   const params = e && e.parameter ? e.parameter : {};
   const page = String(params.page || 'index').toLowerCase();
-  const templateName = page === 'splash' ? 'Splash' : 'Index';
+  const splashCompleted = String(params.splash || '') === '1';
+  const shouldShowSplash = page === 'splash' || (page === 'index' && !splashCompleted);
+  const templateName = shouldShowSplash ? 'Splash' : 'Index';
   const template = HtmlService.createTemplateFromFile(templateName);
 
   template.APP_BASE_URL = getAppBaseUrl_();

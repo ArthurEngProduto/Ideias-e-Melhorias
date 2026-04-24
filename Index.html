@@ -3192,7 +3192,6 @@
             updateWorkflowStatus(pending.rowIndex, pending.status);
           }
 
-          updateWorkflowStatusByRowNumber(pending.rowNumber, pending.status);
           state.pendingStatusChange = null;
           document.getElementById('statusChangeConfirmModal').classList.remove('open');
           closeStatusPickerModal();

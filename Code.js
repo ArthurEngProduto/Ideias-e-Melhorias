@@ -23,12 +23,34 @@ const CONTRIBUTION_TYPE_FIELDS = {
     'Problema que acontece com frequência',
   ],
 };
+const NAME_FIELD_ALIASES = ['Digite seu nome:', 'Digite seu nome completo:'];
+function doGet(e) {
+  const params = e && e.parameter ? e.parameter : {};
+  const page = String(params.page || 'index').toLowerCase();
+  const templateName = page === 'splash' ? 'Splash' : 'Index';
+  const template = HtmlService.createTemplateFromFile(templateName);
 
-function doGet() {
-  return HtmlService.createTemplateFromFile('Index')
+  template.APP_BASE_URL = getAppBaseUrl_();
+  template.SPLASH_TO_HOME_URL = getSplashToHomeUrl_();
+
+  return template
     .evaluate()
     .setTitle('Portal de Ideias e Melhorias')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function getAppBaseUrl_() {
+  try {
+    return ScriptApp.getService().getUrl() || '';
+  } catch (error) {
+    return '';
+  }
+}
+
+function getSplashToHomeUrl_() {
+  const baseUrl = getAppBaseUrl_();
+  if (!baseUrl) return '?page=index&splash=1';
+  return baseUrl + '?page=index&splash=1';
 }
 
 function getPortalBootstrap() {
@@ -148,6 +170,7 @@ function getRows_() {
       headers.forEach((header, headerIndex) => {
         obj[header] = row[headerIndex] || '';
       });
+      addNameFieldAliases_(obj);
       obj.__rowNumber = index + 2;
       return obj;
     });
@@ -601,7 +624,7 @@ function findFormResponseByTimestamp_(form, row) {
     const answers = response.getItemResponses();
     const matchedName = answers.some((itemResponse) => {
       const title = normalizeHeader_(itemResponse.getItem().getTitle());
-      if (title !== 'Digite seu nome:') return false;
+      if (!NAME_FIELD_ALIASES.includes(title)) return false;
       return String(itemResponse.getResponse() || '').trim().toLowerCase() === rowName;
     });
 
@@ -658,7 +681,7 @@ function deleteRowByTimestampAndName_(sheet, row) {
   const timestampIndex = headers.indexOf('Carimbo de data/hora');
   if (timestampIndex === -1) return false;
 
-  const nameIndex = headers.indexOf('Digite seu nome:');
+  const nameIndex = headers.findIndex((header) => NAME_FIELD_ALIASES.includes(header));
   const expectedTimestamp = normalizeDateTimeText_(getFieldValue_(row, 'Carimbo de data/hora'));
   const expectedName = getFieldValue_(row, 'Digite seu nome:').toLowerCase();
 
@@ -809,7 +832,27 @@ function normalizeHeader_(header) {
 
 function getFieldValue_(row, key) {
   const normalizedKey = normalizeHeader_(key);
-  return String(row[normalizedKey] || '').trim();
+  const directValue = String(row[normalizedKey] || '').trim();
+  if (directValue) return directValue;
+
+  if (normalizedKey === 'Digite seu nome:' || normalizedKey === 'Digite seu nome completo:') {
+    for (let i = 0; i < NAME_FIELD_ALIASES.length; i += 1) {
+      const aliasValue = String(row[NAME_FIELD_ALIASES[i]] || '').trim();
+      if (aliasValue) return aliasValue;
+    }
+  }
+
+  return '';
+}
+
+function addNameFieldAliases_(row) {
+  const primaryName = String(row['Digite seu nome:'] || '').trim();
+  const fullName = String(row['Digite seu nome completo:'] || '').trim();
+  const nameValue = fullName || primaryName;
+  if (!nameValue) return;
+
+  row['Digite seu nome:'] = nameValue;
+  row['Digite seu nome completo:'] = nameValue;
 }
 
 function getRowIdValue_(row) {

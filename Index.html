@@ -180,6 +180,12 @@
           height: 22px;
           display: block;
         }
+        .theme-toggle-emoji {
+          display: inline-block;
+          line-height: 1;
+          font-size: 20px;
+          filter: grayscale(1) brightness(0);
+        }
         .refresh-toggle {
           position: fixed;
           top: 16px;
@@ -1819,9 +1825,7 @@
         title="Ativar modo escuro"
         onclick="toggleTheme()"
       >
-        <svg class="theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#000000" d="M14 2.2A9.8 9.8 0 0 0 4.2 12c0 5.4 4.4 9.8 9.8 9.8 3.3 0 6.2-1.6 8-4.1-1.1.5-2.3.8-3.6.8-5.4 0-9.8-4.4-9.8-9.8 0-2.4.9-4.6 2.3-6.5C11.9 2.3 13 2.2 14 2.2z"/>
-        </svg>
+        <span class="theme-toggle-emoji" aria-hidden="true">🌙</span>
       </button>
       <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-busy="true">
         <div class="loading-box" role="status" aria-label="Carregando">
@@ -2412,9 +2416,7 @@
             `;
           } else {
             toggleButton.innerHTML = `
-              <svg class="theme-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="#000000" d="M14 2.2A9.8 9.8 0 0 0 4.2 12c0 5.4 4.4 9.8 9.8 9.8 3.3 0 6.2-1.6 8-4.1-1.1.5-2.3.8-3.6.8-5.4 0-9.8-4.4-9.8-9.8 0-2.4.9-4.6 2.3-6.5C11.9 2.3 13 2.2 14 2.2z"></path>
-              </svg>
+              <span class="theme-toggle-emoji" aria-hidden="true">🌙</span>
             `;
           }
           const buttonLabel = isDarkMode ? 'Ativar modo claro' : 'Ativar modo escuro';

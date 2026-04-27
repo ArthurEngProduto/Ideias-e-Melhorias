@@ -3415,7 +3415,7 @@
                 <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
                 <td>${getRecurrenceBadge(recurrence)}</td>
                 <td>
-                  <span class="status-badge ${getWorkflowStatusClass(rowStatus)}">${escapeHtml(rowStatus)}</span>
+                  <span class="status-badge ${getStatusBadgeClassByStatus(rowStatus)}">${escapeHtml(rowStatus)}</span>
                 </td>
                 <td>${totalScore === null ? '-' : escapeHtml(String(totalScore))}</td>
               </tr>

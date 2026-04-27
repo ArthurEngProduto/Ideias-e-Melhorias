@@ -4195,6 +4195,7 @@
             .filter((checkbox) => checkbox.checked)
             .map((checkbox) => checkbox.value);
           updateTableSectorButtonLabel();
+          applyFilters();
         }
 
         function syncTableSectorSelectionUi() {

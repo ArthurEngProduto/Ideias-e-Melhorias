@@ -1950,7 +1950,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <div class="modal-title-row">
-              <h2 id="modalTitle">Detalhes do registro</h2>
+              <h2 id="modalTitle">Registro</h2>
               <span id="modalStatusBadge" class="status-badge workflow-progress">Em andamento</span>
             </div>
             <div class="modal-actions">
@@ -2963,7 +2963,7 @@
             })
             .join('');
           const details = detailsBody;
-          document.getElementById('modalTitle').textContent = `Detalhes - ${row['Digite seu nome completo:'] || 'Registro'}`;
+          document.getElementById('modalTitle').textContent = `Registro - ${row['Digite seu nome completo:'] || 'Registro'}`;
           document.getElementById('modalRecordId').textContent = `ID: ${getRowIdValue(row)}`;
           const modalStatusBadge = document.getElementById('modalStatusBadge');
           modalStatusBadge.textContent = statusValue;

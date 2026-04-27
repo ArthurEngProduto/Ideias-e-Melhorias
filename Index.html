@@ -2221,7 +2221,8 @@
           selectedReportAttachmentDeleteIndex: null,
           isReportEditing: false,
           selectedEvaluationRowNumber: null,
-          evaluationsByRowNumber: {}
+          evaluationsByRowNumber: {},
+          initialTableWrapHeight: null
         };
         let loadingCount = 0;
         const PRELOAD_CACHE_TTL_MS = 120000;
@@ -2644,11 +2645,29 @@
           if (!state.rows.length) {
             rowsTable.innerHTML = '';
             empty.style.display = 'block';
+            lockInitialTableHeight();
             return;
           }
 
           empty.style.display = 'none';
           rowsTable.innerHTML = state.rows.map((row, index) => renderTableRow(row, index)).join('');
+          lockInitialTableHeight();
+        }
+
+        function lockInitialTableHeight() {
+          const tableWrap = document.querySelector('.table-wrap');
+          if (!tableWrap) return;
+
+          if (!state.initialTableWrapHeight) {
+            const measuredHeight = tableWrap.offsetHeight;
+            if (measuredHeight > 0) {
+              state.initialTableWrapHeight = measuredHeight;
+            }
+          }
+
+          if (state.initialTableWrapHeight) {
+            tableWrap.style.minHeight = `${state.initialTableWrapHeight}px`;
+          }
         }
 
         function renderTableRow(row, index) {

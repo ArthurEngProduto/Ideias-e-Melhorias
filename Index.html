@@ -6,6 +6,13 @@
       <script>
         window.APP_BASE_URL = '<?!= APP_BASE_URL ?>' || '';
       </script>
+      <script>
+        (function () {
+          const savedTheme = localStorage.getItem('portalTheme');
+          const isDarkMode = savedTheme === 'dark';
+          document.documentElement.classList.toggle('dark-mode', isDarkMode);
+        })();
+      </script>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       <link
@@ -52,6 +59,7 @@
       --detail-subfield-bg: #ffffff;
           --field-border-width: 2px;
         }
+        html.dark-mode,
         body.dark-mode {
           --bg: #0f172a;
           --surface: #111827;
@@ -92,6 +100,63 @@
         }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+        .inline-splash {
+          position: fixed;
+          inset: 0;
+          background: var(--bg);
+          display: grid;
+          place-items: center;
+          z-index: 5000;
+          opacity: 1;
+          visibility: visible;
+          transition: opacity 520ms ease, visibility 520ms ease;
+        }
+        .inline-splash.hide {
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+        }
+        .inline-splash-logo-wrap {
+          position: relative;
+          width: min(340px, 43vw);
+          aspect-ratio: 1068 / 475;
+        }
+        .inline-splash-logo-wrap img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          display: none;
+        }
+        html.dark-mode .inline-splash-logo-dark { display: block; }
+        html:not(.dark-mode) .inline-splash-logo-light { display: block; }
+        .inline-splash-logo-wrap.glow img {
+          animation: inline-logo-glow 1500ms ease-out forwards;
+        }
+        @keyframes inline-logo-glow {
+          0% { filter: brightness(1) drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
+          45% { filter: brightness(1.15) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4)); }
+          100% { filter: brightness(1) drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
+        }
+        .inline-splash-mask {
+          position: absolute;
+          top: -11px;
+          left: 170px;
+          width: 50%;
+          height: 30%;
+          background: var(--bg);
+          clip-path: inset(0 0 0 0);
+          animation: inline-reveal-left-to-right 3300ms ease-out 160ms forwards;
+          animation-play-state: paused;
+        }
+        .inline-splash-mask.run {
+          animation-play-state: running;
+        }
+        @keyframes inline-reveal-left-to-right {
+          0% { clip-path: inset(0 0 0 0); }
+          100% { clip-path: inset(0 0 0 100%); }
+        }
         .container { max-width: 1500px; margin: 0 auto; padding: 20px; transition: filter 0.2s ease; }
         .theme-toggle {
           position: fixed;
@@ -1725,6 +1790,13 @@
       </style>
     </head>
     <body>
+      <section id="inlineSplash" class="inline-splash" aria-label="Splash screen">
+        <div id="inlineSplashLogoWrap" class="inline-splash-logo-wrap" role="img" aria-label="Logo Baldi">
+          <img class="inline-splash-logo-dark" alt="Baldi branca" src="https://i.ibb.co/933KM0KH/Logo-Baldi-Vers-o-Correta-Branca.png" />
+          <img class="inline-splash-logo-light" alt="Baldi preta" src="https://i.ibb.co/PzDD4QLk/Logo-Baldi-Vers-o-Correta-Preta.png" />
+          <div id="inlineSplashMask" class="inline-splash-mask" aria-hidden="true"></div>
+        </div>
+      </section>
       <button
         id="btnAtualizar"
         class="refresh-toggle"
@@ -2315,6 +2387,7 @@
 
         function applyTheme(mode) {
           const isDarkMode = mode === 'dark';
+          document.documentElement.classList.toggle('dark-mode', isDarkMode);
           document.body.classList.toggle('dark-mode', isDarkMode);
           const toggleButton = document.getElementById('themeToggle');
           if (isDarkMode) {
@@ -2355,6 +2428,21 @@
           applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
         }
 
+        function runInlineSplash() {
+          const splash = document.getElementById('inlineSplash');
+          const splashMask = document.getElementById('inlineSplashMask');
+          const splashLogoWrap = document.getElementById('inlineSplashLogoWrap');
+          if (!splash || !splashMask || !splashLogoWrap) return;
+
+          splashMask.classList.add('run');
+          splashMask.addEventListener('animationend', () => {
+            splashLogoWrap.classList.add('glow');
+            setTimeout(() => {
+              splash.classList.add('hide');
+            }, 1450);
+          }, { once: true });
+        }
+        
         const preferredOrder = [
           'Carimbo de data/hora',
           'Digite seu nome completo:',
@@ -4430,6 +4518,7 @@
         });
 
         initializeTheme();
+        runInlineSplash();
         setupReportTextareaAutoResize();
         boot();
       </script>

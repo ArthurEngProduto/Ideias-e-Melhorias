@@ -2002,7 +2002,11 @@
               </div>
             </div>
             <div class="stats-filter-actions">
-              <button type="button" onclick="applyStatsFilters()">Aplicar</button>
+              <button class="secondary toolbar-filter-btn" type="button" onclick="applyStatsFilters()" aria-label="Filtrar" title="Filtrar">
+                <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
+                  <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </button>
               <button class="secondary toolbar-filter-btn" type="button" onclick="clearStatsFilters()" aria-label="Limpar filtros" title="Limpar filtros">
                 <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
                   <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>

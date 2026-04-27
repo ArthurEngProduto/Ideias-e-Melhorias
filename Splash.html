@@ -226,7 +226,7 @@
 
             glowTarget.addEventListener('animationend', () => {
               splash.classList.add('hide');
-              setTimeout(() => navigateToHome(true), 520);
+              navigateToHome(true);
             }, { once: true });
 
             setTimeout(() => {

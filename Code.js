@@ -25,15 +25,8 @@ const CONTRIBUTION_TYPE_FIELDS = {
 };
 const NAME_FIELD_ALIASES = ['Digite seu nome:', 'Digite seu nome completo:'];
 function doGet(e) {
-  const params = e && e.parameter ? e.parameter : {};
-  const page = String(params.page || 'index').toLowerCase();
-  const splashCompleted = String(params.splash || '') === '1';
-  const shouldShowSplash = page === 'splash' || (page === 'index' && !splashCompleted);
-  const templateName = shouldShowSplash ? 'Splash' : 'Index';
-  const template = HtmlService.createTemplateFromFile(templateName);
-
+  const template = HtmlService.createTemplateFromFile('Index');
   template.APP_BASE_URL = getAppBaseUrl_();
-  template.SPLASH_TO_HOME_URL = getSplashToHomeUrl_();
 
   return template
     .evaluate()
@@ -49,11 +42,6 @@ function getAppBaseUrl_() {
   }
 }
 
-function getSplashToHomeUrl_() {
-  const baseUrl = getAppBaseUrl_();
-  if (!baseUrl) return '?page=index&splash=1';
-  return baseUrl + '?page=index&splash=1';
-}
 
 function getPortalBootstrap() {
   const rows = getRows_();

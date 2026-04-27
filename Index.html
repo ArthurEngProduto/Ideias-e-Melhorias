@@ -1897,7 +1897,7 @@
             <div id="quickActionsMenu" class="quick-actions-menu" role="dialog" aria-label="Ações rápidas">
               <button class="secondary" type="button" onclick="openDeploymentOrderModalFromMenu(event)">Ordem de Implantação</button>
               <button class="secondary" type="button" onclick="openStatsModalFromMenu(event)">Estatísticas</button>
-              <button class="secondary" type="button">Ranking de Ideias</button>
+              <button class="secondary" type="button" onclick="openIdeasRankingModalFromMenu(event)">Ranking de Ideias</button>
             </div>
           </div>
         </div>
@@ -2050,6 +2050,44 @@
                 </tr>
               </thead>
               <tbody id="deploymentOrderRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal" id="ideasRankingModal" onclick="handleIdeasRankingModalBackdrop(event)">
+        <div class="modal-content deployment-order-modal-content">
+          <div class="modal-header">
+            <h2 style="margin:0;">Ranking de Ideias</h2>
+            <div class="modal-actions">
+              <button class="secondary modal-close-icon-button" style="max-width:40px;" onclick="closeIdeasRankingModal()" aria-label="Fechar" title="Fechar"><svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+            </div>
+          </div>
+          <p id="ideasRankingSummary" class="deployment-order-summary">Carregando...</p>
+          <div class="deployment-order-table-wrap">
+            <table class="deployment-order-table">
+              <colgroup>
+                <col style="width:56px;" />
+                <col style="width:108px;" />
+                <col style="width:170px;" />
+                <col style="width:140px;" />
+                <col style="width:220px;" />
+                <col style="width:190px;" />
+                <col style="width:155px;" />
+                <col style="width:90px;" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Data</th>
+                  <th>Nome completo</th>
+                  <th>Setor</th>
+                  <th>Produto/Processo</th>
+                  <th>Recorrência</th>
+                  <th>Status</th>
+                  <th>Pontuação</th>
+                </tr>
+              </thead>
+              <tbody id="ideasRankingRows"></tbody>
             </table>
           </div>
         </div>
@@ -3210,6 +3248,19 @@
           if (event) event.stopPropagation();
           openDeploymentOrderModal();
         }
+
+        function openIdeasRankingModal() {
+          closeQuickActionsMenu();
+          document.getElementById('ideasRankingModal').classList.add('open');
+          updateModalBackgroundState();
+          fetchIdeasRankingRows();
+        }
+
+        function openIdeasRankingModalFromMenu(event) {
+          if (event) event.stopPropagation();
+          openIdeasRankingModal();
+        }
+
         function fetchDeploymentOrderRows() {
           const filters = { ...(state.filters || {}), status: 'Na fila' };
           const pageSize = 10000;
@@ -3223,6 +3274,26 @@
             })
             .withFailureHandler((err) => {
               renderDeploymentOrderRows([]);
+              showError(err);
+              hideLoading();
+            })
+            .getPortalData(filters, 1, pageSize);
+        }
+
+        function fetchIdeasRankingRows() {
+          const filters = { ...(state.filters || {}) };
+          const pageSize = 10000;
+          showLoading();
+          google.script.run
+            .withSuccessHandler((data) => {
+              const allRows = (data && data.rows) ? data.rows : [];
+              const concludedRows = allRows.filter((row) => getWorkflowStatus(row) === 'Concluído');
+              renderIdeasRankingRows(concludedRows);
+              hideError();
+              hideLoading();
+            })
+            .withFailureHandler((err) => {
+              renderIdeasRankingRows([]);
               showError(err);
               hideLoading();
             })
@@ -3303,6 +3374,67 @@
         function handleDeploymentOrderModalBackdrop(event) {
           if (event.target && event.target.id === 'deploymentOrderModal') closeDeploymentOrderModal();
         }
+
+        function renderIdeasRankingRows(concludedRows) {
+          const tbody = document.getElementById('ideasRankingRows');
+          const summary = document.getElementById('ideasRankingSummary');
+          if (!tbody || !summary) return;
+
+          if (!concludedRows.length) {
+            tbody.innerHTML = '<tr><td colspan="8">Nenhum registro com status "Concluído" encontrado nos filtros atuais.</td></tr>';
+            summary.textContent = '0 registro(s) com etiqueta "Concluído".';
+            return;
+          }
+
+          const rowsWithScore = concludedRows
+            .map((row) => {
+              const rowNumber = row.__rowNumber || null;
+              const savedEvaluation = rowNumber ? state.evaluationsByRowNumber[rowNumber] : null;
+              const totalScore = savedEvaluation ? calculateEvaluationTotalScore(savedEvaluation) : null;
+              return { row, totalScore };
+            })
+            .sort((a, b) => {
+              const aScore = a.totalScore;
+              const bScore = b.totalScore;
+              if (aScore === null && bScore === null) return 0;
+              if (aScore === null) return 1;
+              if (bScore === null) return -1;
+              return bScore - aScore;
+            });
+
+          tbody.innerHTML = rowsWithScore
+            .map(({ row, totalScore }) => {
+              const rowStatus = getWorkflowStatus(row);
+              const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
+              return `
+              <tr>
+                <td>${escapeHtml(getRowIdValue(row))}</td>
+                <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
+                <td>${escapeHtml(row['Digite seu nome completo:'] || '-')}</td>
+                <td>${escapeHtml(row['Selecione o seu setor:'] || '-')}</td>
+                <td>${escapeHtml(row['Este registro se refere a:'] || '-')}</td>
+                <td>${getRecurrenceBadge(recurrence)}</td>
+                <td>
+                  <span class="status-badge ${getWorkflowStatusClass(rowStatus)}">${escapeHtml(rowStatus)}</span>
+                </td>
+                <td>${totalScore === null ? '-' : escapeHtml(String(totalScore))}</td>
+              </tr>
+            `;
+            })
+            .join('');
+
+          summary.textContent = `${concludedRows.length} registro(s) com etiqueta "Concluído".`;
+        }
+
+        function closeIdeasRankingModal() {
+          document.getElementById('ideasRankingModal').classList.remove('open');
+          updateModalBackgroundState();
+        }
+
+        function handleIdeasRankingModalBackdrop(event) {
+          if (event.target && event.target.id === 'ideasRankingModal') closeIdeasRankingModal();
+        }
+
         function openEvaluationModal(event, encodedRowInfo) {
           if (event) event.stopPropagation();
           let rowInfo = {};
@@ -3336,6 +3468,9 @@
           closeEvaluationModal();
           if (document.getElementById('deploymentOrderModal').classList.contains('open')) {
             fetchDeploymentOrderRows();
+          }
+          if (document.getElementById('ideasRankingModal').classList.contains('open')) {
+            fetchIdeasRankingRows();
           }
         }
 
@@ -4545,6 +4680,9 @@
               render();
               if (document.getElementById('deploymentOrderModal').classList.contains('open')) {
                 fetchDeploymentOrderRows();
+              }
+              if (document.getElementById('ideasRankingModal').classList.contains('open')) {
+                fetchIdeasRankingRows();
               }
               hideError();
               hideLoading();

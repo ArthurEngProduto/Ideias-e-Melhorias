@@ -1433,6 +1433,11 @@
           width: auto;
           min-width: 90px;
         }
+        .stats-filter-actions .toolbar-filter-btn {
+          width: 40px;
+          min-width: 40px;
+          padding: 0;
+        }
         .loading-overlay {
           position: fixed;
           inset: 0;
@@ -1998,7 +2003,12 @@
             </div>
             <div class="stats-filter-actions">
               <button type="button" onclick="applyStatsFilters()">Aplicar</button>
-              <button type="button" class="secondary" onclick="clearStatsFilters()">Limpar</button>
+              <button class="secondary toolbar-filter-btn" type="button" onclick="clearStatsFilters()" aria-label="Limpar filtros" title="Limpar filtros">
+                <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
+                  <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M22 8l6 6M28 8l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
             </div>
           </div>
           <div class="summary" id="statsSummary" style="margin-top:0;"></div>

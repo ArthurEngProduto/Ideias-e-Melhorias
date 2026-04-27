@@ -1598,6 +1598,7 @@
           body.print-stats {
             width: 297mm !important;
             height: 210mm !important;
+            overflow: hidden !important;
           }
           body.print-stats #detailsModal,
           body.print-stats #statusPickerModal,
@@ -1612,7 +1613,10 @@
             display: block !important;
             position: static !important;
             inset: auto !important;
+            width: 100% !important;
+            height: 198mm !important;
             padding: 0 !important;
+            overflow: hidden !important;
             background: transparent !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
@@ -1620,8 +1624,10 @@
           body.print-stats #statsModal .modal-content {
             width: 283mm !important;
             max-width: 283mm !important;
-            max-height: none !important;
-            overflow: visible !important;
+            height: 198mm !important;
+            max-height: 198mm !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
             margin: 0 auto !important;
             border: 1px solid #000 !important;
             border-radius: 0 !important;

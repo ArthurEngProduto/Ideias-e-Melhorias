@@ -2002,15 +2002,9 @@
               </div>
             </div>
             <div class="stats-filter-actions">
-              <button class="secondary toolbar-filter-btn" type="button" onclick="applyStatsFilters()" aria-label="Filtrar" title="Filtrar">
+              <button id="statsFilterActionButton" class="secondary toolbar-filter-btn" type="button" onclick="handleStatsFilterAction()" aria-label="Filtrar" title="Aplicar filtros">
                 <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
                   <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button class="secondary toolbar-filter-btn" type="button" onclick="clearStatsFilters()" aria-label="Limpar filtros" title="Limpar filtros">
-                <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
-                  <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                  <path d="M22 8l6 6M28 8l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
               </button>
             </div>
@@ -3058,6 +3052,7 @@
             endInput.value = state.statsDateEnd || '';
           }
           syncStatsSectorSelectionUi();
+          updateStatsFilterActionButton();
           fetchStats();
           document.getElementById('statsModal').classList.add('open');
           updateModalBackgroundState();
@@ -3095,11 +3090,54 @@
           state.statsDateStart = startValue;
           state.statsDateEnd = endValue;
 
+          updateStatsFilterActionButton();
           fetchStats();
         }
 
         function applyStatsFilters() {
           applyStatsDateFilter();
+        }
+
+        function hasActiveStatsFilters() {
+          return Boolean(
+            state.statsDateStart
+            || state.statsDateEnd
+            || (state.statsSelectedSectors && state.statsSelectedSectors.length)
+          );
+        }
+
+        function updateStatsFilterActionButton() {
+          const button = document.getElementById('statsFilterActionButton');
+          if (!button) return;
+
+          const hasActive = hasActiveStatsFilters();
+          if (hasActive) {
+            button.setAttribute('aria-label', 'Limpar filtros');
+            button.setAttribute('title', 'Limpar filtros');
+            button.innerHTML = `
+              <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
+                <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M22 8l6 6M28 8l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            `;
+            return;
+          }
+
+          button.setAttribute('aria-label', 'Filtrar');
+          button.setAttribute('title', 'Aplicar filtros');
+          button.innerHTML = `
+            <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
+              <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          `;
+        }
+
+        function handleStatsFilterAction() {
+          if (hasActiveStatsFilters()) {
+            clearStatsFilters();
+            return;
+          }
+          applyStatsFilters();
         }
 
         function clearStatsFilters() {
@@ -3111,18 +3149,21 @@
           if (startInput) startInput.value = '';
           if (endInput) endInput.value = '';
           syncStatsSectorSelectionUi();
+          updateStatsFilterActionButton();
           fetchStats();
         }
 
         function clearStatsSectorFilter() {
           state.statsSelectedSectors = [];
           syncStatsSectorSelectionUi();
+          updateStatsFilterActionButton();
           fetchStats();
         }
 
         function selectAllStatsSectors() {
           state.statsSelectedSectors = [...(state.statsAvailableSectors || [])];
           syncStatsSectorSelectionUi();
+          updateStatsFilterActionButton();
           fetchStats();
         }
 
@@ -4308,6 +4349,7 @@
             .filter((checkbox) => checkbox.checked)
             .map((checkbox) => checkbox.value);
           updateStatsSectorButtonLabel();
+          updateStatsFilterActionButton();
         }
          
         function syncStatsSectorSelectionUi() {

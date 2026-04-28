@@ -826,49 +826,39 @@
           border: 1px solid #86efac;
         }
         .status-badge.recurrence-low {
-          background: var(--recurrence-low-bg);
           color: var(--recurrence-low-text);
-          border: 1px solid var(--recurrence-low-border);
+          background: transparent;
+          border: none;
         }
         .status-badge.recurrence-medium {
-          background: var(--recurrence-medium-bg);
           color: var(--recurrence-medium-text);
-          border: 1px solid var(--recurrence-medium-border);
+          background: transparent;
+          border: none;
         }
         .status-badge.recurrence-high {
-          background: var(--recurrence-high-bg);
           color: var(--recurrence-high-text);
-          border: 1px solid var(--recurrence-high-border);
+          background: transparent;
+          border: none;
         }
         .status-badge.recurrence-default {
-          background: #eef2ff;
           color: #3730a3;
-          border: 1px solid #c7d2fe;
-          font-size: 12px;
-          font-weight: 700;
+          background: transparent;
+          border: none;
         }
         .status-badge.recurrence-low,
         .status-badge.recurrence-medium,
         .status-badge.recurrence-high,
         .status-badge.recurrence-default {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 8px;
-          padding: 6px 10px;
-          width: fit-content;
+          display: inline;
+          border-radius: 0;
+          padding: 0;
+          width: auto;
+          min-width: 0;
           max-width: 100%;
-          font-size: 11px;
-          line-height: 1;
-          text-align: center;
-          white-space: nowrap;
-        }
-        .status-badge.recurrence-low,
-        .status-badge.recurrence-medium,
-        .status-badge.recurrence-high {
-          width: 4.6cm;
-          min-width: 4.6cm;
-          max-width: 4.6cm;
+          font-size: 12px;
+          line-height: 1.2;
+          text-align: left;
+          white-space: normal;
         }
       .status-badge.workflow-stopped {
         background: var(--status-neutral-bg);

@@ -312,16 +312,17 @@
           border-radius: 12px;
           box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
           padding: 10px;
-          width: 220px;
+          width: 180px;
           display: none;
-          flex-direction: column;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 8px;
         }
         .quick-actions-menu.open {
-          display: flex;
+          display: grid;
         }
         .quick-actions-menu button {
           width: 100%;
+          aspect-ratio: 1 / 1;
           text-align: center;
           padding: 8px;
           border-radius: 10px;
@@ -342,6 +343,14 @@
           width: 24px;
           height: 18px;
           display: block;
+        }
+        .quick-action-placeholder {
+          width: 100%;
+          aspect-ratio: 1 / 1;
+          border-radius: 10px;
+          border: 1px dashed var(--line);
+          opacity: 0.45;
+          pointer-events: none;
         }
         .toolbar {
           margin-top: 14px;
@@ -1956,9 +1965,10 @@
               </button>
               <button class="quick-action-icon-btn" type="button" onclick="openIdeasRankingModalFromMenu(event)" aria-label="Ranking de Ideias" title="Ranking de Ideias">
                 <svg class="quick-action-icon" viewBox="0 0 30 24" aria-hidden="true">
-                  <path d="M4 21h22M6 21v-6h5v6M13 21v-10h5v10M20 21v-8h5v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M4 21h22M8 21v-5h4v5M14 21V9h4v12M20 21v-8h4v8M7 16l3-3 4 2 6-6 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
+              <div class="quick-action-placeholder" aria-hidden="true"></div>
             </div>
           </div>
         </div>

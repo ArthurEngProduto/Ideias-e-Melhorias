@@ -322,9 +322,17 @@
         }
         .quick-actions-menu button {
           width: 100%;
-          text-align: left;
-          padding: 9px 12px;
+          text-align: center;
+          padding: 8px;
           border-radius: 10px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .quick-action-icon {
+          width: 24px;
+          height: 18px;
+          display: block;
         }
         .toolbar {
           margin-top: 14px;
@@ -1926,9 +1934,22 @@
               </span>
             </button>
             <div id="quickActionsMenu" class="quick-actions-menu" role="dialog" aria-label="Ações rápidas">
-              <button class="secondary" type="button" onclick="openDeploymentOrderModalFromMenu(event)">Ordem de Implantação</button>
-              <button class="secondary" type="button" onclick="openStatsModalFromMenu(event)">Estatísticas</button>
-              <button class="secondary" type="button" onclick="openIdeasRankingModalFromMenu(event)">Ranking de Ideias</button>
+              <button class="secondary" type="button" onclick="openDeploymentOrderModalFromMenu(event)" aria-label="Ordem de Implantação" title="Ordem de Implantação">
+                <svg class="quick-action-icon" viewBox="0 0 30 24" aria-hidden="true">
+                  <path d="M9 4h12v16H9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M12 4h6V2h-6zM12 10h6M12 14h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button class="secondary" type="button" onclick="openStatsModalFromMenu(event)" aria-label="Estatísticas" title="Estatísticas">
+                <svg class="quick-action-icon" viewBox="0 0 30 24" aria-hidden="true">
+                  <path d="M4 20h22M8 20v-8M15 20V6M22 20v-11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button class="secondary" type="button" onclick="openIdeasRankingModalFromMenu(event)" aria-label="Ranking de Ideias" title="Ranking de Ideias">
+                <svg class="quick-action-icon" viewBox="0 0 30 24" aria-hidden="true">
+                  <path d="M4 21h22M6 21v-6h5v6M13 21v-10h5v10M20 21v-8h5v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </button>
             </div>
           </div>
         </div>

@@ -476,10 +476,10 @@
         tbody td:nth-child(5) {
           min-width: 155px;
         }
-        thead th:nth-child(6),
-        tbody td:nth-child(6) {
+        .table-wrap thead th:nth-child(6),
+        .table-wrap tbody td:nth-child(6) {
           min-width: 165px;
-          text-align: center;
+          text-align: left;
         }
         thead th:nth-child(7),
         tbody td:nth-child(7) {
@@ -857,6 +857,7 @@
         .status-badge.recurrence-default {
           display: inline-flex;
           align-items: center;
+          justify-content: flex-start;
           gap: 6px;
           border-radius: 0;
           padding: 0;

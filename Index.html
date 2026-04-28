@@ -311,24 +311,24 @@
           border: 1px solid var(--line);
           border-radius: 12px;
           box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
-          padding: 10px;
-          width: 180px;
+          padding: 10px 12px;
+          width: auto;
           display: none;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 8px;
+          grid-template-columns: repeat(3, max-content);
+          gap: 12px;
         }
         .quick-actions-menu.open {
           display: grid;
         }
         .quick-actions-menu button {
-          width: 100%;
-          aspect-ratio: 1 / 1;
+          width: auto;
           text-align: center;
-          padding: 8px;
-          border-radius: 10px;
+          padding: 0;
+          border-radius: 0;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          line-height: 0;
         }
         .quick-actions-menu .quick-action-icon-btn {
           background: transparent;
@@ -337,20 +337,12 @@
           color: var(--primary);
         }
         .quick-actions-menu .quick-action-icon-btn:hover {
-          background: rgba(37, 99, 235, 0.08);
+          filter: brightness(0.9);
         }
         .quick-action-icon {
-          width: 24px;
-          height: 18px;
+          width: 30px;
+          height: 30px;
           display: block;
-        }
-        .quick-action-placeholder {
-          width: 100%;
-          aspect-ratio: 1 / 1;
-          border-radius: 10px;
-          border: 1px dashed var(--line);
-          opacity: 0.45;
-          pointer-events: none;
         }
         .toolbar {
           margin-top: 14px;
@@ -1953,22 +1945,22 @@
             </button>
             <div id="quickActionsMenu" class="quick-actions-menu" role="dialog" aria-label="Ações rápidas">
               <button class="quick-action-icon-btn" type="button" onclick="openDeploymentOrderModalFromMenu(event)" aria-label="Ordem de Implantação" title="Ordem de Implantação">
-                <svg class="quick-action-icon" viewBox="0 0 30 24" aria-hidden="true">
-                  <path d="M9 4h12v16H9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                  <path d="M12 4h6V2h-6zM12 10h6M12 14h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <svg class="quick-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                  <path d="M8 6h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                  <path d="M10 3h4a1 1 0 0 1 1 1v2H9V4a1 1 0 0 1 1-1zM9.5 11h5M9.5 15h5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
               <button class="quick-action-icon-btn" type="button" onclick="openStatsModalFromMenu(event)" aria-label="Estatísticas" title="Estatísticas">
-                <svg class="quick-action-icon" viewBox="0 0 30 24" aria-hidden="true">
-                  <path d="M4 20h22M8 20v-8M15 20V6M22 20v-11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <svg class="quick-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 20h16M7 20v-7M12 20V8M17 20v-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
               <button class="quick-action-icon-btn" type="button" onclick="openIdeasRankingModalFromMenu(event)" aria-label="Ranking de Ideias" title="Ranking de Ideias">
-                <svg class="quick-action-icon" viewBox="0 0 30 24" aria-hidden="true">
-                  <path d="M4 21h22M8 21v-5h4v5M14 21V9h4v12M20 21v-8h4v8M7 16l3-3 4 2 6-6 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <svg class="quick-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 20h16M6 20v-5h4v5M10 15l2-2 2 2M11 13V9h2v4M14 20v-7h4v7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <div class="quick-action-placeholder" aria-hidden="true"></div>
             </div>
           </div>
         </div>

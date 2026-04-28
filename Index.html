@@ -922,9 +922,10 @@
         color: var(--status-queue-text);
         border: 1px solid var(--status-neutral-border);
         border-radius: 8px;
-        width: 3.4cm;
-        min-width: 3.4cm;
-        max-width: 3.4cm;
+        width: var(--workflow-status-tag-width, 3.4cm);
+        min-width: var(--workflow-status-tag-width, 3.4cm);
+        max-width: var(--workflow-status-tag-width, 3.4cm);
+        box-sizing: border-box;
         text-align: center;
         white-space: nowrap;
       }
@@ -933,9 +934,10 @@
         color: var(--status-progress-text);
         border: 1px solid var(--status-neutral-border);
         border-radius: 8px;
-        width: 3.4cm;
-        min-width: 3.4cm;
-        max-width: 3.4cm;
+        width: var(--workflow-status-tag-width, 3.4cm);
+        min-width: var(--workflow-status-tag-width, 3.4cm);
+        max-width: var(--workflow-status-tag-width, 3.4cm);
+        box-sizing: border-box;
         text-align: center;
         white-space: nowrap;
       }
@@ -944,22 +946,25 @@
         color: var(--status-done-text);
         border: 1px solid var(--status-neutral-border);
         border-radius: 8px;
-        width: 3.4cm;
-        min-width: 3.4cm;
-        max-width: 3.4cm;
+        width: var(--workflow-status-tag-width, 3.4cm);
+        min-width: var(--workflow-status-tag-width, 3.4cm);
+        max-width: var(--workflow-status-tag-width, 3.4cm);
+        box-sizing: border-box;
         text-align: center;
         white-space: nowrap;
       }
       .status-tag-button {
         border: none;
         border-radius: 8px;
-        padding: 6px 10px;
-        width: 3.4cm;
-        min-width: 3.4cm;
-        max-width: 3.4cm;
+        padding: 4px 10px;
+        width: var(--workflow-status-tag-width, 3.4cm);
+        min-width: var(--workflow-status-tag-width, 3.4cm);
+        max-width: var(--workflow-status-tag-width, 3.4cm);
+        box-sizing: border-box;
         text-align: center;
         font-size: 12px;
         font-weight: 700;
+        line-height: 1.2;
         cursor: pointer;
         white-space: nowrap;
       }

@@ -56,6 +56,9 @@
       --recurrence-high-bg: #fee2e2;
       --recurrence-high-border: #ef4444;
       --recurrence-high-text: var(--text);
+      --recurrence-dot-low: #FACC15;
+      --recurrence-dot-medium: #F97316;
+      --recurrence-dot-high: #FF0000;
       --detail-subfield-bg: #ffffff;
           --field-border-width: 2px;
         }
@@ -95,6 +98,9 @@
           --recurrence-high-bg: rgba(239, 68, 68, 0.2);
           --recurrence-high-border: #f87171;
           --recurrence-high-text: var(--text);
+          --recurrence-dot-low: #FACC15;
+          --recurrence-dot-medium: #F97316;
+          --recurrence-dot-high: #FF0000;
           --detail-subfield-bg: transparent;
           --field-border-width: 1px;
         }
@@ -849,16 +855,37 @@
         .status-badge.recurrence-medium,
         .status-badge.recurrence-high,
         .status-badge.recurrence-default {
-          display: inline;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
           border-radius: 0;
           padding: 0;
           width: auto;
           min-width: 0;
           max-width: 100%;
-          font-size: 12px;
+          font-size: 10px;
           line-height: 1.2;
           text-align: left;
           white-space: normal;
+        }
+        .status-badge.recurrence-low::before,
+        .status-badge.recurrence-medium::before,
+        .status-badge.recurrence-high::before {
+          content: '';
+          width: 8px;
+          height: 8px;
+          min-width: 8px;
+          border-radius: 50%;
+          display: inline-block;
+        }
+        .status-badge.recurrence-low::before {
+          background: var(--recurrence-dot-low);
+        }
+        .status-badge.recurrence-medium::before {
+          background: var(--recurrence-dot-medium);
+        }
+        .status-badge.recurrence-high::before {
+          background: var(--recurrence-dot-high);
         }
       .status-badge.workflow-stopped {
         background: var(--status-neutral-bg);
@@ -2799,6 +2826,9 @@
             return 'Já observei algumas vezes';
           }
 
+          if (normalizedRecurrence.includes('recorrente')) {
+            return 'É algo recorrente';
+          }
           return escapeHtml(recurrence);
         }
 

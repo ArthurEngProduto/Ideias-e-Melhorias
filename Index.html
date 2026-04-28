@@ -314,7 +314,8 @@
           padding: 10px 12px;
           width: auto;
           display: none;
-          grid-template-columns: repeat(3, max-content);
+          grid-template-columns: repeat(2, max-content);
+          grid-template-rows: repeat(2, max-content);
           gap: 12px;
         }
         .quick-actions-menu.open {
@@ -338,6 +339,12 @@
         }
         .quick-actions-menu .quick-action-icon-btn:hover {
           filter: brightness(0.9);
+        }
+        .quick-actions-menu .quick-action-placeholder {
+          width: 30px;
+          height: 30px;
+          visibility: hidden;
+          pointer-events: none;
         }
         .quick-action-icon {
           width: 30px;
@@ -1961,6 +1968,7 @@
                   <path d="M4 20h16M6 20v-5h4v5M10 15l2-2 2 2M11 13V9h2v4M14 20v-7h4v7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
+              <span class="quick-action-placeholder" aria-hidden="true"></span>
             </div>
           </div>
         </div>

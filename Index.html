@@ -716,6 +716,21 @@
           padding-left: 6px;
           padding-right: 6px;
         }
+        .deployment-order-open-record-btn {
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          border: 1px solid var(--line);
+          background: transparent;
+          color: var(--text);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          padding: 0;
+        }
+        .deployment-order-open-record-btn:hover { background: var(--surface-soft); }
+        .deployment-order-open-record-btn svg { width: 14px; height: 14px; }
         .deployment-order-table thead th {
           background: var(--surface-soft);
           border-top: none;
@@ -2118,6 +2133,7 @@
             <table class="deployment-order-table">
               <colgroup>
                 <col style="width:56px;" />
+                <col style="width:56px;" />
                 <col style="width:108px;" />
                 <col style="width:170px;" />
                 <col style="width:140px;" />
@@ -2128,6 +2144,7 @@
               </colgroup>
               <thead>
                 <tr>
+                  <th></th>
                   <th>ID</th>
                   <th>Data</th>
                   <th>Nome completo</th>
@@ -2359,7 +2376,8 @@
           selectedEvaluationRowNumber: null,
           evaluationsByRowNumber: {},
           ideasRankingScoresByRowNumber: {},
-          initialTableWrapHeight: null
+          initialTableWrapHeight: null,
+          modalRowsBackup: null
         };
         let loadingCount = 0;
         const PRELOAD_CACHE_TTL_MS = 120000;
@@ -3122,6 +3140,33 @@
           updateModalBackgroundState();
         }
 
+        function openModalByRowNumber(event, rowNumber) {
+          if (event) event.stopPropagation();
+          const numericRowNumber = Number(rowNumber);
+          if (!numericRowNumber) return;
+
+          const rowIndex = (state.rows || []).findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
+          if (rowIndex >= 0) {
+            openModal(rowIndex);
+            return;
+          }
+
+          const filters = { ...(state.filters || {}) };
+          google.script.run
+            .withSuccessHandler((data) => {
+              const rows = (data && data.rows) ? data.rows : [];
+              const fetchedRowIndex = rows.findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
+              if (fetchedRowIndex < 0) return;
+              state.modalRowsBackup = Array.isArray(state.rows) ? state.rows : [];
+              state.rows = rows;
+              openModal(fetchedRowIndex);
+            })
+            .withFailureHandler((err) => {
+              showError(err);
+            })
+            .getPortalData(filters, 1, 10000);
+        }
+
         function getStatusBadgeClassByStatus(status) {
           if (status === 'Concluído') return 'workflow-done';
           if (status === 'Na fila') return 'workflow-stopped';
@@ -3131,6 +3176,10 @@
         function closeModal() {
           document.getElementById('detailsModal').classList.remove('open');
           state.selectedRowIndex = null;
+          if (Array.isArray(state.modalRowsBackup)) {
+            state.rows = state.modalRowsBackup;
+            state.modalRowsBackup = null;
+          }
           updateModalBackgroundState();
         }
 
@@ -3388,7 +3437,7 @@
           if (!tbody || !summary) return;
 
           if (!queueRows.length) {
-            tbody.innerHTML = '<tr><td colspan="8">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9">Nenhum registro com status "Na fila" encontrado nos filtros atuais.</td></tr>';
             summary.textContent = '0 registro(s) com etiqueta "Na fila".';
             return;
           }
@@ -3424,6 +3473,20 @@
               }));
               return `
               <tr onclick="openEvaluationModal(event, '${rowInfo}')">
+                <td>
+                  <button
+                    type="button"
+                    class="deployment-order-open-record-btn"
+                    onclick="openModalByRowNumber(event, ${Number(rowNumber)})"
+                    aria-label="Abrir registro"
+                    title="Abrir registro"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      <path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </td>
                 <td>${escapeHtml(getRowIdValue(row))}</td>
                 <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
                 <td>${escapeHtml(row['Digite seu nome completo:'] || '-')}</td>

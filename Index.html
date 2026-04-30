@@ -2204,6 +2204,7 @@
                 </colgroup>
                 <thead>
                   <tr>
+                    <th></th>
                     <th>ID</th>
                     <th>Data</th>
                     <th>Nome completo</th>
@@ -2398,7 +2399,8 @@
             evaluationsByRowNumber: {},
             ideasRankingScoresByRowNumber: {},
             initialTableWrapHeight: null,
-            modalRowsBackup: null
+            modalRowsBackup: null,
+            reportRowsBackup: null
           };
           let loadingCount = 0;
           const PRELOAD_CACHE_TTL_MS = 120000;
@@ -3188,6 +3190,32 @@
               .getPortalData(filters, 1, 10000);
           }
 
+          function openReportModalByRowNumber(event, rowNumber) {
+            if (event) event.stopPropagation();
+            const numericRowNumber = Number(rowNumber);
+            if (!numericRowNumber) return;
+
+            const rowIndex = (state.rows || []).findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
+            if (rowIndex >= 0) {
+              openReportModal(event, rowIndex);
+              return;
+            }
+
+            const filters = { ...(state.filters || {}) };
+            google.script.run
+              .withSuccessHandler((data) => {
+                const rows = (data && data.rows) ? data.rows : [];
+                const fetchedRowIndex = rows.findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
+                if (fetchedRowIndex < 0) return;
+                state.reportRowsBackup = Array.isArray(state.rows) ? state.rows : [];
+                state.rows = rows;
+                openReportModal(event, fetchedRowIndex);
+              })
+              .withFailureHandler((err) => {
+                showError(err);
+              })
+              .getPortalData(filters, 1, 10000);
+          }
           function getStatusBadgeClassByStatus(status) {
             if (status === 'Concluído') return 'workflow-done';
             if (status === 'Na fila') return 'workflow-stopped';
@@ -3547,7 +3575,7 @@
             if (!tbody || !summary) return;
 
             if (!concludedRows.length) {
-              tbody.innerHTML = '<tr><td colspan="8">Nenhum registro com status "Concluído" encontrado nos filtros atuais.</td></tr>';
+              tbody.innerHTML = '<tr><td colspan="9">Nenhum registro com status "Concluído" encontrado nos filtros atuais.</td></tr>';
               summary.textContent = '0 registro(s) com etiqueta "Concluído".';
               return;
             }
@@ -3572,6 +3600,20 @@
                 const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
                 return `
                 <tr>
+                  <td>
+                    <button
+                      type="button"
+                      class="deployment-order-open-record-btn"
+                      onclick="openReportModalByRowNumber(event, ${Number(row.__rowNumber || 0)})"
+                      aria-label="Abrir relatório de conclusão"
+                      title="Abrir relatório de conclusão"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </td>
                   <td>${escapeHtml(getRowIdValue(row))}</td>
                   <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
                   <td>${escapeHtml(row['Digite seu nome completo:'] || '-')}</td>
@@ -3972,6 +4014,10 @@
             state.isReportEditing = false; 
             state.selectedReportRowIndex = null;
             updateModalBackgroundState();
+            if (Array.isArray(state.reportRowsBackup)) {
+              state.rows = state.reportRowsBackup;
+              state.reportRowsBackup = null;
+            }
           }
 
           function autoResizeTextarea(textarea) {

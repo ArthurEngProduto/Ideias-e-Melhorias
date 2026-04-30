@@ -2358,6 +2358,7 @@
           isReportEditing: false,
           selectedEvaluationRowNumber: null,
           evaluationsByRowNumber: {},
+          ideasRankingScoresByRowNumber: {},
           initialTableWrapHeight: null
         };
         let loadingCount = 0;
@@ -2498,6 +2499,14 @@
           const rowNumber = state.selectedEvaluationRowNumber;
           if (!rowNumber) return;
           state.evaluationsByRowNumber[rowNumber] = getEvaluationFormValues();
+        }
+
+        function getIdeasRankingScoreByRow(row) {
+          const rowNumber = row && row.__rowNumber ? row.__rowNumber : null;
+          if (!rowNumber) return null;
+          const savedRankingEvaluation = state.ideasRankingScoresByRowNumber[rowNumber];
+          if (!savedRankingEvaluation) return null;
+          return calculateEvaluationTotalScore(savedRankingEvaluation);
         }
 
         function updateEvaluationPartialScores() {
@@ -3461,9 +3470,7 @@
 
           const rowsWithScore = concludedRows
             .map((row) => {
-              const rowNumber = row.__rowNumber || null;
-              const savedEvaluation = rowNumber ? state.evaluationsByRowNumber[rowNumber] : null;
-              const totalScore = savedEvaluation ? calculateEvaluationTotalScore(savedEvaluation) : null;
+              const totalScore = getIdeasRankingScoreByRow(row);
               return { row, totalScore };
             })
             .sort((a, b) => {

@@ -2194,6 +2194,7 @@
               <table class="deployment-order-table">
                 <colgroup>
                   <col style="width:56px;" />
+                  <col style="width:56px;" />
                   <col style="width:108px;" />
                   <col style="width:170px;" />
                   <col style="width:140px;" />
@@ -2204,6 +2205,7 @@
                 </colgroup>
                 <thead>
                   <tr>
+                    <th></th>
                     <th>ID</th>
                     <th>Data</th>
                     <th>Nome completo</th>
@@ -3547,7 +3549,7 @@
             if (!tbody || !summary) return;
 
             if (!concludedRows.length) {
-              tbody.innerHTML = '<tr><td colspan="8">Nenhum registro com status "Concluído" encontrado nos filtros atuais.</td></tr>';
+              tbody.innerHTML = '<tr><td colspan="9">Nenhum registro com status "Concluído" encontrado nos filtros atuais.</td></tr>';
               summary.textContent = '0 registro(s) com etiqueta "Concluído".';
               return;
             }
@@ -3572,6 +3574,20 @@
                 const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
                 return `
                 <tr>
+                  <td>
+                    <button
+                      type="button"
+                      class="deployment-order-open-record-btn"
+                      onclick="event.stopPropagation(); return false;"
+                      aria-label="Abrir registro"
+                      title="Abrir registro"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M14 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </td>
                   <td>${escapeHtml(getRowIdValue(row))}</td>
                   <td>${escapeHtml(formatTimestampToDate(row['Carimbo de data/hora']))}</td>
                   <td>${escapeHtml(row['Digite seu nome completo:'] || '-')}</td>

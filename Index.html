@@ -3190,6 +3190,32 @@
               .getPortalData(filters, 1, 10000);
           }
 
+          function openReportModalByRowNumber(event, rowNumber) {
+            if (event) event.stopPropagation();
+            const numericRowNumber = Number(rowNumber);
+            if (!numericRowNumber) return;
+
+            const rowIndex = (state.rows || []).findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
+            if (rowIndex >= 0) {
+              openReportModal(event, rowIndex);
+              return;
+            }
+
+            const filters = { ...(state.filters || {}) };
+            google.script.run
+              .withSuccessHandler((data) => {
+                const rows = (data && data.rows) ? data.rows : [];
+                const fetchedRowIndex = rows.findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
+                if (fetchedRowIndex < 0) return;
+                state.modalRowsBackup = Array.isArray(state.rows) ? state.rows : [];
+                state.rows = rows;
+                openReportModal(event, fetchedRowIndex);
+              })
+              .withFailureHandler((err) => {
+                showError(err);
+              })
+              .getPortalData(filters, 1, 10000);
+          }
           function getStatusBadgeClassByStatus(status) {
             if (status === 'Concluído') return 'workflow-done';
             if (status === 'Na fila') return 'workflow-stopped';
@@ -3578,9 +3604,9 @@
                     <button
                       type="button"
                       class="deployment-order-open-record-btn"
-                      onclick="event.stopPropagation(); return false;"
-                      aria-label="Abrir registro"
-                      title="Abrir registro"
+                      onclick="openReportModalByRowNumber(event, ${Number(row.__rowNumber || 0)})"
+                      aria-label="Abrir relatório de conclusão"
+                      title="Abrir relatório de conclusão"
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>

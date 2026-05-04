@@ -2625,6 +2625,18 @@
             return calculateEvaluationTotalScore(savedRankingEvaluation);
           }
 
+          function getIdeasRankingCostReductionByRow(row) {
+            const rowKey = getPrizeRankingRowKey(row);
+            if (!rowKey) return null;
+            const savedPrizeRanking = state.prizeRankingByRowNumber[rowKey];
+            if (!savedPrizeRanking) return null;
+
+            const costBefore = Number(savedPrizeRanking.costBefore);
+            const costAfter = Number(savedPrizeRanking.costAfter);
+            if (!Number.isFinite(costBefore) || !Number.isFinite(costAfter)) return null;
+
+            return costBefore - costAfter;
+          }
           function updateEvaluationPartialScores() {
             const partials = [
               {
@@ -3625,6 +3637,7 @@
                       onclick="${statusAction}"
                       aria-label="Alterar status"
                     >
+
                       ${escapeHtml(rowStatus)}
                     </button>
                   </td>
@@ -3659,7 +3672,8 @@
             const rowsWithScore = concludedRows
               .map((row) => {
                 const totalScore = getIdeasRankingScoreByRow(row);
-                return { row, totalScore };
+                const costReduction = getIdeasRankingCostReductionByRow(row);
+                return { row, totalScore, costReduction };
               })
               .sort((a, b) => {
                 const aScore = a.totalScore;
@@ -3671,7 +3685,7 @@
               });
 
             tbody.innerHTML = rowsWithScore
-              .map(({ row, totalScore }) => {
+              .map(({ row, costReduction }) => {
                 const rowStatus = getWorkflowStatus(row);
                 const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
                 return `
@@ -3699,7 +3713,7 @@
                   <td>
                     <span class="status-badge ${getStatusBadgeClassByStatus(rowStatus)}">${escapeHtml(rowStatus)}</span>
                   </td>
-                  <td>${totalScore === null ? '-' : escapeHtml(String(totalScore))}</td>
+                  <td>${costReduction === null ? '-' : escapeHtml(formatPrizeRankingCurrency(costReduction))}</td>
                 </tr>
               `;
               })

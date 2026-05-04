@@ -3676,12 +3676,21 @@
                 return { row, totalScore, costReduction };
               })
               .sort((a, b) => {
-                const aScore = a.totalScore;
-                const bScore = b.totalScore;
-                if (aScore === null && bScore === null) return 0;
-                if (aScore === null) return 1;
-                if (bScore === null) return -1;
-                return bScore - aScore;
+                const aCostReduction = a.costReduction;
+                const bCostReduction = b.costReduction;
+
+                if (aCostReduction === null && bCostReduction === null) {
+                  const aScore = a.totalScore;
+                  const bScore = b.totalScore;
+                  if (aScore === null && bScore === null) return 0;
+                  if (aScore === null) return 1;
+                  if (bScore === null) return -1;
+                  return bScore - aScore;
+                }
+
+                if (aCostReduction === null) return 1;
+                if (bCostReduction === null) return -1;
+                return bCostReduction - aCostReduction;
               });
 
             tbody.innerHTML = rowsWithScore

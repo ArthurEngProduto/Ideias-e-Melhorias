@@ -245,7 +245,7 @@
           body.dark-mode .header-logo .logo-light { display: block; }
           body.dark-mode .header-logo .logo-dark { display: none; }
           .portal-title {
-            text-align: center;
+            text-align: left;
             font-family: 'Inter', Arial, sans-serif;
             font-size: 2.2rem;
             font-weight: 700;
@@ -739,9 +739,16 @@
             border-top: none;
             border-bottom: 1px solid var(--line);
           }
+          .deployment-order-table thead th:nth-child(7) {
+            text-align: left;
+          }
           .deployment-order-table td:nth-child(6),
           .deployment-order-table td:nth-child(7) {
             overflow: hidden;
+          }
+          .deployment-order-table th:nth-child(7),
+          .deployment-order-table td:nth-child(7) {
+            text-align: left;
           }
           .deployment-order-table td:nth-child(6) .status-badge,
           .deployment-order-table td:nth-child(7) .status-badge,
@@ -749,6 +756,13 @@
             width: 100%;
             min-width: 0;
             max-width: 100%;
+          }
+          .deployment-order-table td:nth-child(7) .status-badge.recurrence-low,
+          .deployment-order-table td:nth-child(7) .status-badge.recurrence-medium,
+          .deployment-order-table td:nth-child(7) .status-badge.recurrence-high,
+          .deployment-order-table td:nth-child(7) .status-badge.recurrence-default {
+            justify-content: flex-start;
+            text-align: left;
           }
           .deployment-order-status-tag {
             cursor: pointer;

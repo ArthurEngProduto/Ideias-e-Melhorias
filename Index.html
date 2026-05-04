@@ -2277,6 +2277,30 @@
             </div>
           </div>
         </div>
+        <div class="modal" id="prizeRankingModal" onclick="handlePrizeRankingModalBackdrop(event)">
+          <div class="modal-content evaluation-modal-content">
+            <div class="modal-header">
+              <h2 style="margin:0;">Ranking de Premiação</h2>
+              <div class="modal-actions">
+                <button class="secondary modal-close-icon-button" style="max-width:40px;" onclick="closePrizeRankingModal()" aria-label="Fechar" title="Fechar"><svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+            <p id="prizeRankingSummary" class="evaluation-summary">Avaliação de premiação da ideia selecionada.</p>
+            <div class="evaluation-table-wrap">
+              <table class="evaluation-table">
+                <thead>
+                  <tr>
+                    <th>Indicador</th>
+                    <th>Antes da ideia</th>
+                    <th>Depois da ideia</th>
+                    <th>Ganho calculado</th>
+                  </tr>
+                </thead>
+                <tbody id="prizeRankingRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
         <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
           <div class="modal-content status-picker-modal-content">
             <div class="modal-header">
@@ -3599,7 +3623,7 @@
                 const rowStatus = getWorkflowStatus(row);
                 const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
                 return `
-                <tr>
+                <tr onclick="openPrizeRankingModal(event, '${encodeURIComponent(JSON.stringify(row || {}))}')">
                   <td>
                     <button
                       type="button"
@@ -3639,6 +3663,56 @@
 
           function handleIdeasRankingModalBackdrop(event) {
             if (event.target && event.target.id === 'ideasRankingModal') closeIdeasRankingModal();
+          }
+
+          function openPrizeRankingModal(event, encodedRow) {
+            if (event) event.stopPropagation();
+            let row = null;
+            try {
+              row = JSON.parse(decodeURIComponent(encodedRow || ''));
+            } catch (error) {
+              row = null;
+            }
+            renderPrizeRankingRows(row);
+            document.getElementById('prizeRankingModal').classList.add('open');
+            updateModalBackgroundState();
+          }
+
+          function renderPrizeRankingRows(row) {
+            const tbody = document.getElementById('prizeRankingRows');
+            const summary = document.getElementById('prizeRankingSummary');
+            if (!tbody || !summary) return;
+
+            const values = [
+              { label: 'Custo por período', before: 'R$ 0,00', after: 'R$ 0,00', gain: 'R$ 0,00' },
+              { label: 'Tempo gasto por operação', before: '0 min', after: '0 min', gain: '0 min' },
+              { label: 'Volume mensal estimado', before: '0 unidades', after: '0 unidades', gain: '-' },
+              { label: 'Aumento de produtividade', before: '-', after: '-', gain: '0%' },
+              { label: 'Economia mensal estimada', before: '-', after: '-', gain: 'R$ 0,00' },
+              { label: 'Economia anual estimada', before: '-', after: '-', gain: 'R$ 0,00' },
+            ];
+
+            tbody.innerHTML = values.map((item) => `
+              <tr>
+                <td>${escapeHtml(item.label)}</td>
+                <td>${escapeHtml(item.before)}</td>
+                <td>${escapeHtml(item.after)}</td>
+                <td>${escapeHtml(item.gain)}</td>
+              </tr>
+            `).join('');
+
+            const rowIdLabel = row ? `ID ${getRowIdValue(row)}` : 'registro selecionado';
+            const rowOwner = row ? (row['Digite seu nome completo:'] || '-') : '-';
+            summary.textContent = `Ranking de premiação para ${rowIdLabel} (${rowOwner}).`;
+          }
+
+          function closePrizeRankingModal() {
+            document.getElementById('prizeRankingModal').classList.remove('open');
+            updateModalBackgroundState();
+          }
+
+          function handlePrizeRankingModalBackdrop(event) {
+            if (event.target && event.target.id === 'prizeRankingModal') closePrizeRankingModal();
           }
 
           function openEvaluationModal(event, encodedRowInfo) {

@@ -2244,7 +2244,12 @@
                 <label for="ideasRankingDateEndFilter" class="stats-filter-label">Data final</label>
                 <input id="ideasRankingDateEndFilter" type="date" class="stats-filter-input" aria-label="Filtrar ranking por data final" title="Filtrar por data final (dd/mm/aaaa)" onchange="handleIdeasRankingDateFilterChange()" />
               </div>
-              <button class="secondary toolbar-filter-btn" type="button" onclick="clearIdeasRankingDateFilters()" aria-label="Limpar período do ranking" title="Limpar período do ranking">Limpar período</button>
+              <button class="secondary toolbar-filter-btn" type="button" onclick="clearIdeasRankingDateFilters()" aria-label="Limpar filtros" title="Limpar filtros">
+                <svg class="toolbar-filter-icon" viewBox="0 0 30 24" aria-hidden="true">
+                  <path d="M2 5h16l-6 7v5l-4 2v-7L2 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M22 8l6 6M28 8l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
             </div>
             <div class="deployment-order-table-wrap">
               <table class="deployment-order-table">

@@ -2235,6 +2235,17 @@
               </div>
             </div>
             <p id="ideasRankingSummary" class="deployment-order-summary">Carregando...</p>
+            <div class="stats-filters" style="margin:0 0 12px;">
+              <div class="stats-filter-group">
+                <label for="ideasRankingDateStartFilter" class="stats-filter-label">Data inicial</label>
+                <input id="ideasRankingDateStartFilter" type="date" class="stats-filter-input" aria-label="Filtrar ranking por data inicial" title="Filtrar por data inicial (dd/mm/aaaa)" onchange="handleIdeasRankingDateFilterChange()" />
+              </div>
+              <div class="stats-filter-group">
+                <label for="ideasRankingDateEndFilter" class="stats-filter-label">Data final</label>
+                <input id="ideasRankingDateEndFilter" type="date" class="stats-filter-input" aria-label="Filtrar ranking por data final" title="Filtrar por data final (dd/mm/aaaa)" onchange="handleIdeasRankingDateFilterChange()" />
+              </div>
+              <button class="secondary toolbar-filter-btn" type="button" onclick="clearIdeasRankingDateFilters()" aria-label="Limpar período do ranking" title="Limpar período do ranking">Limpar período</button>
+            </div>
             <div class="deployment-order-table-wrap">
               <table class="deployment-order-table">
                 <colgroup>
@@ -2474,6 +2485,8 @@
             selectedPrizeRankingRowNumber: null,
             prizeRankingByRowNumber: {},
             ideasRankingRows: [],
+            ideasRankingDateStart: '',
+            ideasRankingDateEnd: '',
             initialTableWrapHeight: null,
             modalRowsBackup: null
           };
@@ -3571,6 +3584,54 @@
               .getPortalData(filters, 1, pageSize);
           }
 
+          function handleIdeasRankingDateFilterChange() {
+            const startInput = document.getElementById('ideasRankingDateStartFilter');
+            const endInput = document.getElementById('ideasRankingDateEndFilter');
+            if (!startInput || !endInput) return;
+            let start = startInput.value || '';
+            let end = endInput.value || '';
+            if (start && end && start > end) {
+              [start, end] = [end, start];
+              startInput.value = start;
+              endInput.value = end;
+            }
+            state.ideasRankingDateStart = start;
+            state.ideasRankingDateEnd = end;
+            renderIdeasRankingRows(state.ideasRankingRows || []);
+          }
+
+          function clearIdeasRankingDateFilters() {
+            const startInput = document.getElementById('ideasRankingDateStartFilter');
+            const endInput = document.getElementById('ideasRankingDateEndFilter');
+            if (startInput) startInput.value = '';
+            if (endInput) endInput.value = '';
+            state.ideasRankingDateStart = '';
+            state.ideasRankingDateEnd = '';
+            renderIdeasRankingRows(state.ideasRankingRows || []);
+          }
+
+          function filterIdeasRankingRowsByDate(rows) {
+            const start = state.ideasRankingDateStart || '';
+            const end = state.ideasRankingDateEnd || '';
+            if (!start && !end) return rows || [];
+            return (rows || []).filter((row) => {
+              const rowDate = normalizeDateInputValue(row['Carimbo de data/hora']);
+              if (!rowDate) return false;
+              if (start && rowDate < start) return false;
+              if (end && rowDate > end) return false;
+              return true;
+            });
+          }
+
+          function normalizeDateInputValue(value) {
+            const raw = String(value || '').trim();
+            const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+            const brMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (brMatch) return `${brMatch[3]}-${brMatch[2].padStart(2, '0')}-${brMatch[1].padStart(2, '0')}`;
+            return '';
+          }
+
           function renderDeploymentOrderRows(queueRows) {
             const tbody = document.getElementById('deploymentOrderRows');
             const summary = document.getElementById('deploymentOrderSummary');
@@ -3666,13 +3727,23 @@
             const summary = document.getElementById('ideasRankingSummary');
             if (!tbody || !summary) return;
 
-            if (!concludedRows.length) {
+            const baseRows = concludedRows || [];
+            if (!baseRows.length) {
               tbody.innerHTML = '<tr><td colspan="9">Nenhum registro com status "Concluído" encontrado nos filtros atuais.</td></tr>';
               summary.textContent = '0 registro(s) com etiqueta "Concluído".';
               return;
             }
 
-            const rowsWithScore = concludedRows
+            const filteredRows = filterIdeasRankingRowsByDate(baseRows);
+            if (!filteredRows.length) {
+              tbody.innerHTML = '<tr><td colspan="9">Nenhum registro encontrado para o período informado.</td></tr>';
+              const startText = state.ideasRankingDateStart ? formatDateForLabel(state.ideasRankingDateStart) : '-';
+              const endText = state.ideasRankingDateEnd ? formatDateForLabel(state.ideasRankingDateEnd) : '-';
+              summary.textContent = `0 registro(s) no período ${startText} até ${endText}.`;
+              return;
+            }
+
+            const rowsWithScore = filteredRows
               .map((row) => {
                 const totalScore = getIdeasRankingScoreByRow(row);
                 const costReduction = getIdeasRankingCostReductionByRow(row);
@@ -3731,7 +3802,13 @@
               })
               .join('');
 
-            summary.textContent = `${concludedRows.length} registro(s) com etiqueta "Concluído".`;
+            if (state.ideasRankingDateStart || state.ideasRankingDateEnd) {
+              const startText = state.ideasRankingDateStart ? formatDateForLabel(state.ideasRankingDateStart) : '-';
+              const endText = state.ideasRankingDateEnd ? formatDateForLabel(state.ideasRankingDateEnd) : '-';
+              summary.textContent = `${filteredRows.length} registro(s) com etiqueta "Concluído" no período ${startText} até ${endText}.`;
+              return;
+            }
+            summary.textContent = `${filteredRows.length} registro(s) com etiqueta "Concluído".`;
           }
 
           function closeIdeasRankingModal() {

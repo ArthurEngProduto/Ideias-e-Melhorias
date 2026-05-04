@@ -2258,7 +2258,7 @@
                     <th>Produto/Processo</th>
                     <th>Recorrência</th>
                     <th>Status</th>
-                    <th>Pontuação</th>
+                    <th>Redução de Custos</th>
                   </tr>
                 </thead>
                 <tbody id="ideasRankingRows"></tbody>
@@ -2325,7 +2325,7 @@
         <div class="modal" id="prizeRankingModal" onclick="handlePrizeRankingModalBackdrop(event)">
           <div class="modal-content evaluation-modal-content prize-ranking-modal-content">
             <div class="modal-header">
-              <h2 style="margin:0;">Ranking de Premiação</h2>
+              <h2 style="margin:0;">Apuração de Ganhos</h2>
               <div class="modal-actions">
                 <button class="secondary modal-close-icon-button" style="max-width:40px;" onclick="closePrizeRankingModal()" aria-label="Fechar" title="Fechar"><svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
               </div>
@@ -3874,7 +3874,7 @@
             if (!tbody || !summary) return;
 
             const values = [
-              { label: 'Custo por período - R$' },
+              { label: 'Custo por operação - R$' },
               { label: 'Tempo gasto por operação - min' },
               { label: 'Aumento de produtividade - %', isProductivity: true },
             ];
@@ -3903,7 +3903,7 @@
 
             const rowIdLabel = row ? `ID ${getRowIdValue(row)}` : 'registro selecionado';
             const rowOwner = row ? (row['Digite seu nome completo:'] || '-') : '-';
-            summary.textContent = `Ranking de premiação para ${rowIdLabel} (${rowOwner}).`;
+            summary.textContent = `Apuração de Ganhos para ${rowIdLabel} (${rowOwner}).`;
           }
 
           function closePrizeRankingModal() {

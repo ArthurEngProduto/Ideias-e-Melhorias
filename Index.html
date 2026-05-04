@@ -769,13 +769,15 @@
             max-height: 92vh;
           }
           .prize-ranking-modal-content .evaluation-table {
+            width: 22cm;
             min-width: 22cm;
+            table-layout: fixed;
           }
           .prize-ranking-modal-content .evaluation-table th:nth-child(1),
           .prize-ranking-modal-content .evaluation-table td:nth-child(1) {
-            width: 7cm;
-            min-width: 7cm;
-            max-width: 7cm;
+            width: 4cm;
+            min-width: 4cm;
+            max-width: 4cm;
             text-align: left;
           }
           .prize-ranking-modal-content .evaluation-table th:nth-child(2),
@@ -784,8 +786,13 @@
           .prize-ranking-modal-content .evaluation-table td:nth-child(3),
           .prize-ranking-modal-content .evaluation-table th:nth-child(4),
           .prize-ranking-modal-content .evaluation-table td:nth-child(4) {
-            width: 16.66%;
+            width: 6cm;
+            min-width: 6cm;
+            max-width: 6cm;
             text-align: center;
+          }
+          .prize-ranking-modal-content .evaluation-table-wrap {
+            overflow-x: hidden;
           }
           .evaluation-summary {
             margin: 0 0 12px;

@@ -763,6 +763,14 @@
           .evaluation-modal-content {
             max-width: 760px;
           }
+          .prize-ranking-modal-content {
+            width: 30cm;
+            max-width: 30cm;
+            max-height: 92vh;
+          }
+          .prize-ranking-modal-content .evaluation-table {
+            min-width: 30cm;
+          }
           .evaluation-summary {
             margin: 0 0 12px;
             color: var(--muted);
@@ -2278,7 +2286,7 @@
           </div>
         </div>
         <div class="modal" id="prizeRankingModal" onclick="handlePrizeRankingModalBackdrop(event)">
-          <div class="modal-content evaluation-modal-content">
+          <div class="modal-content evaluation-modal-content prize-ranking-modal-content">
             <div class="modal-header">
               <h2 style="margin:0;">Ranking de Premiação</h2>
               <div class="modal-actions">

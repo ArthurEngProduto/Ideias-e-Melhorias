@@ -2336,6 +2336,12 @@
                 <tbody id="prizeRankingRows"></tbody>
               </table>
             </div>
+            <div class="evaluation-total" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <span>Aumento de produtividade - %</span>
+              <input id="prizeProductivityBefore" type="number" step="any" min="0" placeholder="Cenário Anterior" oninput="calculatePrizeRankingProductivityGain()" style="max-width:170px;" />
+              <input id="prizeProductivityAfter" type="number" step="any" min="0" placeholder="Cenário Atual" oninput="calculatePrizeRankingProductivityGain()" style="max-width:170px;" />
+              <span>Ganho calculado: <strong id="prizeProductivityGain">0</strong></span>
+            </div>  
           </div>
         </div>
         <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
@@ -3727,6 +3733,17 @@
             gainValue.textContent = String(gain);
           }
 
+          function calculatePrizeRankingProductivityGain() {
+            const beforeInput = document.getElementById('prizeProductivityBefore');
+            const afterInput = document.getElementById('prizeProductivityAfter');
+            const gainValue = document.getElementById('prizeProductivityGain');
+            if (!beforeInput || !afterInput || !gainValue) return;
+
+            const before = Number(beforeInput.value || 0);
+            const after = Number(afterInput.value || 0);
+            gainValue.textContent = String(before - after);
+          }
+
           function renderPrizeRankingRows(row) {
             const tbody = document.getElementById('prizeRankingRows');
             const summary = document.getElementById('prizeRankingSummary');
@@ -3735,7 +3752,6 @@
             const values = [
               { label: 'Custo por período - R$' },
               { label: 'Tempo gasto por operação - min' },
-              { label: 'Aumento de produtividade - %' },
             ];
 
             tbody.innerHTML = values.map((item, index) => `
@@ -3746,6 +3762,13 @@
                 <td><span data-prize-gain="${index}">0</span></td>
               </tr>
             `).join('');
+
+            const productivityBeforeInput = document.getElementById('prizeProductivityBefore');
+            const productivityAfterInput = document.getElementById('prizeProductivityAfter');
+            const productivityGain = document.getElementById('prizeProductivityGain');
+            if (productivityBeforeInput) productivityBeforeInput.value = '';
+            if (productivityAfterInput) productivityAfterInput.value = '';
+            if (productivityGain) productivityGain.textContent = '0';
 
             const rowIdLabel = row ? `ID ${getRowIdValue(row)}` : 'registro selecionado';
             const rowOwner = row ? (row['Digite seu nome completo:'] || '-') : '-';

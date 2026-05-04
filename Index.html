@@ -694,7 +694,12 @@
           }
           #ideasRankingModal .deployment-order-table-wrap {
             position: relative;
+            overflow-x: hidden;
             background: linear-gradient(var(--surface-soft), var(--surface-soft)) top / 100% 48px no-repeat;
+          }
+          #ideasRankingModal .deployment-order-table {
+            min-width: 0;
+            table-layout: fixed;
           }
           #ideasRankingModal .deployment-order-table-wrap::after {
             content: '';

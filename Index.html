@@ -1247,6 +1247,14 @@
             justify-content: center;
             align-items: center;
           }
+          #savePrizeRankingButton {
+            padding: 6px 12px;
+            font-size: 12px;
+            max-width: 120px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+          }
         }
           .report-primary-action {
             background: #2563eb;
@@ -2336,6 +2344,9 @@
                 <tbody id="prizeRankingRows"></tbody>
               </table>
             </div> 
+            <div class="modal-actions report-actions print-hidden">
+              <button id="savePrizeRankingButton" class="label-highlight" type="button" onclick="closePrizeRankingModal()">Salvar</button>
+            </div>
           </div>
         </div>
         <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">

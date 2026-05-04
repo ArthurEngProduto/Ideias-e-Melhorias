@@ -3725,17 +3725,25 @@
             const after = Number(afterInput.value || 0);
             const gain = before - after;
             gainValue.textContent = String(gain);
+            
+            if (index === 1) {
+              calculatePrizeRankingProductivityGain(beforeInput.value, afterInput.value);
+            }
           }
 
-          function calculatePrizeRankingProductivityGain() {
-            const beforeInput = document.getElementById('prizeProductivityBefore');
-            const afterInput = document.getElementById('prizeProductivityAfter');
+          function calculatePrizeRankingProductivityGain(timeBeforeValue, timeAfterValue) {
             const gainValue = document.getElementById('prizeProductivityGain');
-            if (!beforeInput || !afterInput || !gainValue) return;
+            if (!gainValue) return;
 
-            const before = Number(beforeInput.value || 0);
-            const after = Number(afterInput.value || 0);
-            gainValue.textContent = String(before - after);
+            const before = Number(timeBeforeValue || 0);
+            const after = Number(timeAfterValue || 0);
+            if (before <= 0) {
+              gainValue.textContent = '0';
+              return;
+            }
+
+            const productivityIncrease = ((before - after) / before) * 100;
+            gainValue.textContent = String(Number(productivityIncrease.toFixed(2)));
           }
 
           function renderPrizeRankingRows(row) {
@@ -3750,16 +3758,14 @@
             ];
 
             tbody.innerHTML = values.map((item, index) => {
-              const beforeId = item.isProductivity ? ' id="prizeProductivityBefore"' : '';
-              const afterId = item.isProductivity ? ' id="prizeProductivityAfter"' : '';
               const gainId = item.isProductivity ? ' id="prizeProductivityGain"' : '';
-              const onInputHandler = item.isProductivity ? 'calculatePrizeRankingProductivityGain()' : `calculatePrizeRankingGain(${index})`;
+              const onInputHandler = `calculatePrizeRankingGain(${index})`;
               const beforeField = item.isProductivity
                 ? '-'
-                : `<input${beforeId} type="number" step="any" min="0" data-prize-before="${index}" oninput="${onInputHandler}" />`;
+                : `<input type="number" step="any" min="0" data-prize-before="${index}" oninput="${onInputHandler}" />`;
               const afterField = item.isProductivity
                 ? '-'
-                : `<input${afterId} type="number" step="any" min="0" data-prize-after="${index}" oninput="${onInputHandler}" />`;
+                : `<input type="number" step="any" min="0" data-prize-after="${index}" oninput="${onInputHandler}" />`;
               return `
                 <tr>
                   <td>${escapeHtml(item.label)}</td>
@@ -3770,11 +3776,7 @@
               `;
             }).join('');
 
-            const productivityBeforeInput = document.getElementById('prizeProductivityBefore');
-            const productivityAfterInput = document.getElementById('prizeProductivityAfter');
             const productivityGain = document.getElementById('prizeProductivityGain');
-            if (productivityBeforeInput) productivityBeforeInput.value = '';
-            if (productivityAfterInput) productivityAfterInput.value = '';
             if (productivityGain) productivityGain.textContent = '0';
 
             const rowIdLabel = row ? `ID ${getRowIdValue(row)}` : 'registro selecionado';

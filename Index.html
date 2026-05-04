@@ -3754,11 +3754,17 @@
               const afterId = item.isProductivity ? ' id="prizeProductivityAfter"' : '';
               const gainId = item.isProductivity ? ' id="prizeProductivityGain"' : '';
               const onInputHandler = item.isProductivity ? 'calculatePrizeRankingProductivityGain()' : `calculatePrizeRankingGain(${index})`;
+              const beforeField = item.isProductivity
+                ? '-'
+                : `<input${beforeId} type="number" step="any" min="0" data-prize-before="${index}" oninput="${onInputHandler}" />`;
+              const afterField = item.isProductivity
+                ? '-'
+                : `<input${afterId} type="number" step="any" min="0" data-prize-after="${index}" oninput="${onInputHandler}" />`;
               return `
                 <tr>
                   <td>${escapeHtml(item.label)}</td>
-                  <td><input${beforeId} type="number" step="any" min="0" data-prize-before="${index}" oninput="${onInputHandler}" /></td>
-                  <td><input${afterId} type="number" step="any" min="0" data-prize-after="${index}" oninput="${onInputHandler}" /></td>
+                  <td>${beforeField}</td>
+                  <td>${afterField}</td>
                   <td><span${gainId} data-prize-gain="${index}">0</span></td>
                 </tr>
               `;

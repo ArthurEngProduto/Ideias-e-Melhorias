@@ -2473,6 +2473,7 @@
             ideasRankingScoresByRowNumber: {},
             selectedPrizeRankingRowNumber: null,
             prizeRankingByRowNumber: {},
+            ideasRankingRows: [],
             initialTableWrapHeight: null,
             modalRowsBackup: null
           };
@@ -3556,11 +3557,13 @@
               .withSuccessHandler((data) => {
                 const allRows = (data && data.rows) ? data.rows : [];
                 const concludedRows = allRows.filter((row) => getWorkflowStatus(row) === 'Concluído');
+                state.ideasRankingRows = concludedRows;
                 renderIdeasRankingRows(concludedRows);
                 hideError();
                 hideLoading();
               })
               .withFailureHandler((err) => {
+                state.ideasRankingRows = [];
                 renderIdeasRankingRows([]);
                 showError(err);
                 hideLoading();
@@ -3814,13 +3817,18 @@
           function savePrizeRankingAndCloseModal() {
             saveCurrentPrizeRankingByRow();
             closePrizeRankingModal();
+            if (document.getElementById('ideasRankingModal').classList.contains('open')) {
+              fetchIdeasRankingRows();
+            }
           }
 
           function openPrizeRankingModalByRowNumber(event, rowNumber) {
             if (event) event.stopPropagation();
             const numericRowNumber = Number(rowNumber || 0);
             const row = Number.isFinite(numericRowNumber) && numericRowNumber > 1
-              ? (state.rows || []).find((item) => Number(item && item.__rowNumber) === numericRowNumber) || null
+              ? (state.ideasRankingRows || []).find((item) => Number(item && item.__rowNumber) === numericRowNumber)
+                || (state.rows || []).find((item) => Number(item && item.__rowNumber) === numericRowNumber)
+                || null
               : null;
             const selectedPrizeRowKey = getPrizeRankingRowKey(row);
             state.selectedPrizeRankingRowNumber = selectedPrizeRowKey || null;

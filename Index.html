@@ -692,6 +692,20 @@
             border: 1px solid var(--line);
             border-radius: 10px;
           }
+          #ideasRankingModal .deployment-order-table-wrap {
+            position: relative;
+            background: linear-gradient(var(--surface-soft), var(--surface-soft)) top / 100% 48px no-repeat;
+          }
+          #ideasRankingModal .deployment-order-table-wrap::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 16px;
+            height: 48px;
+            background: var(--surface-soft);
+            pointer-events: none;
+          }
           .deployment-order-modal-content {
             width: min(1480px, 99vw);
             max-height: 92vh;

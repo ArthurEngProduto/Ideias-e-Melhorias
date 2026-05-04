@@ -2345,7 +2345,7 @@
               </table>
             </div> 
             <div class="modal-actions report-actions print-hidden">
-              <button id="savePrizeRankingButton" class="label-highlight" type="button" onclick="closePrizeRankingModal()">Salvar</button>
+              <button id="savePrizeRankingButton" class="label-highlight" type="button" onclick="savePrizeRankingAndCloseModal()">Salvar</button>
             </div>
           </div>
         </div>
@@ -2471,6 +2471,8 @@
             selectedEvaluationRowNumber: null,
             evaluationsByRowNumber: {},
             ideasRankingScoresByRowNumber: {},
+            selectedPrizeRankingRowNumber: null,
+            prizeRankingByRowNumber: {},
             initialTableWrapHeight: null,
             modalRowsBackup: null
           };
@@ -2508,6 +2510,7 @@
             deployment: 2,
             quality: 4,
           };
+          const PRIZE_RANKING_STORAGE_KEY = 'portalPrizeRankingByRowKey';
 
           function readPreloadCache(key) {
             try {
@@ -2721,6 +2724,7 @@
           function boot() {
             setFixedEvaluationWeights();
             updateEvaluationPartialScores();
+            loadPrizeRankingStateFromStorage();
             const cachedBootstrap = readPreloadCache('portalPreloadBootstrap');
             const cachedData = readPreloadCache('portalPreloadData');
 
@@ -3713,6 +3717,82 @@
             if (event.target && event.target.id === 'ideasRankingModal') closeIdeasRankingModal();
           }
 
+          function getPrizeRankingRowKey(row) {
+            if (!row || typeof row !== 'object') return '';
+            const rowNumber = Number(row.__rowNumber || 0);
+            if (rowNumber > 1) return `row-${rowNumber}`;
+            const rowId = getRowIdValue(row);
+            if (rowId && rowId !== '-') return `id-${rowId}`;
+            return '';
+          }
+
+          function loadPrizeRankingStateFromStorage() {
+            try {
+              const raw = localStorage.getItem(PRIZE_RANKING_STORAGE_KEY);
+              if (!raw) return;
+              const parsed = JSON.parse(raw);
+              if (!parsed || typeof parsed !== 'object') return;
+              state.prizeRankingByRowNumber = parsed;
+            } catch (error) {
+              state.prizeRankingByRowNumber = {};
+            }
+          }
+
+          function persistPrizeRankingStateToStorage() {
+            try {
+              localStorage.setItem(PRIZE_RANKING_STORAGE_KEY, JSON.stringify(state.prizeRankingByRowNumber || {}));
+            } catch (error) {
+              // Ignore storage errors to keep UI funcional.
+            }
+          }
+
+          function getPrizeRankingFormValues() {
+            const readInput = (selector) => {
+              const input = document.querySelector(selector);
+              if (!input) return '';
+              const value = input.value;
+              if (value === '' || value === null || typeof value === 'undefined') return '';
+              const numericValue = Number(value);
+              return Number.isFinite(numericValue) ? numericValue : '';
+            };
+
+            return {
+              costBefore: readInput('[data-prize-before="0"]'),
+              costAfter: readInput('[data-prize-after="0"]'),
+              timeBefore: readInput('[data-prize-before="1"]'),
+              timeAfter: readInput('[data-prize-after="1"]'),
+            };
+          }
+
+          function setPrizeRankingFormValues(values) {
+            const safeValues = values || {};
+            const mappings = [
+              { selector: '[data-prize-before="0"]', value: safeValues.costBefore },
+              { selector: '[data-prize-after="0"]', value: safeValues.costAfter },
+              { selector: '[data-prize-before="1"]', value: safeValues.timeBefore },
+              { selector: '[data-prize-after="1"]', value: safeValues.timeAfter },
+            ];
+            mappings.forEach(({ selector, value }) => {
+              const input = document.querySelector(selector);
+              if (!input) return;
+              input.value = Number.isFinite(Number(value)) ? String(Number(value)) : '';
+            });
+
+            [0, 1].forEach((index) => calculatePrizeRankingGain(index));
+          }
+
+          function saveCurrentPrizeRankingByRow() {
+            const rowKey = state.selectedPrizeRankingRowNumber;
+            if (!rowKey) return;
+            state.prizeRankingByRowNumber[rowKey] = getPrizeRankingFormValues();
+            persistPrizeRankingStateToStorage();
+          }
+
+          function savePrizeRankingAndCloseModal() {
+            saveCurrentPrizeRankingByRow();
+            closePrizeRankingModal();
+          }
+
           function openPrizeRankingModal(event, encodedRow) {
             if (event) event.stopPropagation();
             let row = null;
@@ -3721,7 +3801,13 @@
             } catch (error) {
               row = null;
             }
+            const selectedPrizeRowKey = getPrizeRankingRowKey(row);
+            state.selectedPrizeRankingRowNumber = selectedPrizeRowKey || null;
             renderPrizeRankingRows(row);
+            const savedPrizeRanking = selectedPrizeRowKey
+              ? state.prizeRankingByRowNumber[selectedPrizeRowKey]
+              : null;
+            setPrizeRankingFormValues(savedPrizeRanking || null);
             document.getElementById('prizeRankingModal').classList.add('open');
             updateModalBackgroundState();
           }
@@ -3797,6 +3883,7 @@
 
           function closePrizeRankingModal() {
             document.getElementById('prizeRankingModal').classList.remove('open');
+            state.selectedPrizeRankingRowNumber = null;
             updateModalBackgroundState();
           }
 

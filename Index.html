@@ -3689,7 +3689,7 @@
                 const rowStatus = getWorkflowStatus(row);
                 const recurrence = String(row['Qual é a recorrência ou necessidade desta melhoria?'] || '').trim();
                 return `
-                <tr onclick="openPrizeRankingModal(event, '${encodeURIComponent(JSON.stringify(row || {}))}')">
+                <tr onclick="openPrizeRankingModalByRowNumber(event, ${Number(row.__rowNumber || 0)})">
                   <td>
                     <button
                       type="button"
@@ -3807,14 +3807,12 @@
             closePrizeRankingModal();
           }
 
-          function openPrizeRankingModal(event, encodedRow) {
+          function openPrizeRankingModalByRowNumber(event, rowNumber) {
             if (event) event.stopPropagation();
-            let row = null;
-            try {
-              row = JSON.parse(decodeURIComponent(encodedRow || ''));
-            } catch (error) {
-              row = null;
-            }
+            const numericRowNumber = Number(rowNumber || 0);
+            const row = Number.isFinite(numericRowNumber) && numericRowNumber > 1
+              ? (state.rows || []).find((item) => Number(item && item.__rowNumber) === numericRowNumber) || null
+              : null;
             const selectedPrizeRowKey = getPrizeRankingRowKey(row);
             state.selectedPrizeRankingRowNumber = selectedPrizeRowKey || null;
             renderPrizeRankingRows(row);

@@ -2335,13 +2335,7 @@
                 </thead>
                 <tbody id="prizeRankingRows"></tbody>
               </table>
-            </div>
-            <div class="evaluation-total" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <span>Aumento de produtividade - %</span>
-              <input id="prizeProductivityBefore" type="number" step="any" min="0" placeholder="Cenário Anterior" oninput="calculatePrizeRankingProductivityGain()" style="max-width:170px;" />
-              <input id="prizeProductivityAfter" type="number" step="any" min="0" placeholder="Cenário Atual" oninput="calculatePrizeRankingProductivityGain()" style="max-width:170px;" />
-              <span>Ganho calculado: <strong id="prizeProductivityGain">0</strong></span>
-            </div>  
+            </div> 
           </div>
         </div>
         <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
@@ -3752,16 +3746,23 @@
             const values = [
               { label: 'Custo por período - R$' },
               { label: 'Tempo gasto por operação - min' },
+              { label: 'Aumento de produtividade - %', isProductivity: true },
             ];
 
-            tbody.innerHTML = values.map((item, index) => `
-              <tr>
-                <td>${escapeHtml(item.label)}</td>
-                <td><input type="number" step="any" min="0" data-prize-before="${index}" oninput="calculatePrizeRankingGain(${index})" /></td>
-                <td><input type="number" step="any" min="0" data-prize-after="${index}" oninput="calculatePrizeRankingGain(${index})" /></td>
-                <td><span data-prize-gain="${index}">0</span></td>
-              </tr>
-            `).join('');
+            tbody.innerHTML = values.map((item, index) => {
+              const beforeId = item.isProductivity ? ' id="prizeProductivityBefore"' : '';
+              const afterId = item.isProductivity ? ' id="prizeProductivityAfter"' : '';
+              const gainId = item.isProductivity ? ' id="prizeProductivityGain"' : '';
+              const onInputHandler = item.isProductivity ? 'calculatePrizeRankingProductivityGain()' : `calculatePrizeRankingGain(${index})`;
+              return `
+                <tr>
+                  <td>${escapeHtml(item.label)}</td>
+                  <td><input${beforeId} type="number" step="any" min="0" data-prize-before="${index}" oninput="${onInputHandler}" /></td>
+                  <td><input${afterId} type="number" step="any" min="0" data-prize-after="${index}" oninput="${onInputHandler}" /></td>
+                  <td><span${gainId} data-prize-gain="${index}">0</span></td>
+                </tr>
+              `;
+            }).join('');
 
             const productivityBeforeInput = document.getElementById('prizeProductivityBefore');
             const productivityAfterInput = document.getElementById('prizeProductivityAfter');

@@ -3678,26 +3678,38 @@
             updateModalBackgroundState();
           }
 
+          function calculatePrizeRankingGain(index) {
+            const beforeInput = document.querySelector(`[data-prize-before="${index}"]`);
+            const afterInput = document.querySelector(`[data-prize-after="${index}"]`);
+            const gainValue = document.querySelector(`[data-prize-gain="${index}"]`);
+            if (!beforeInput || !afterInput || !gainValue) return;
+
+            const before = Number(beforeInput.value || 0);
+            const after = Number(afterInput.value || 0);
+            const gain = before - after;
+            gainValue.textContent = String(gain);
+          }
+
           function renderPrizeRankingRows(row) {
             const tbody = document.getElementById('prizeRankingRows');
             const summary = document.getElementById('prizeRankingSummary');
             if (!tbody || !summary) return;
 
             const values = [
-              { label: 'Custo por período', before: 'R$ 0,00', after: 'R$ 0,00', gain: 'R$ 0,00' },
-              { label: 'Tempo gasto por operação', before: '0 min', after: '0 min', gain: '0 min' },
-              { label: 'Volume mensal estimado', before: '0 unidades', after: '0 unidades', gain: '-' },
-              { label: 'Aumento de produtividade', before: '-', after: '-', gain: '0%' },
-              { label: 'Economia mensal estimada', before: '-', after: '-', gain: 'R$ 0,00' },
-              { label: 'Economia anual estimada', before: '-', after: '-', gain: 'R$ 0,00' },
+              { label: 'Custo por período' },
+              { label: 'Tempo gasto por operação' },
+              { label: 'Volume mensal estimado' },
+              { label: 'Aumento de produtividade' },
+              { label: 'Economia mensal estimada' },
+              { label: 'Economia anual estimada' },
             ];
 
-            tbody.innerHTML = values.map((item) => `
+            tbody.innerHTML = values.map((item, index) => `
               <tr>
                 <td>${escapeHtml(item.label)}</td>
-                <td>${escapeHtml(item.before)}</td>
-                <td>${escapeHtml(item.after)}</td>
-                <td>${escapeHtml(item.gain)}</td>
+                <td><input type="number" step="any" min="0" data-prize-before="${index}" oninput="calculatePrizeRankingGain(${index})" /></td>
+                <td><input type="number" step="any" min="0" data-prize-after="${index}" oninput="calculatePrizeRankingGain(${index})" /></td>
+                <td><span data-prize-gain="${index}">0</span></td>
               </tr>
             `).join('');
 

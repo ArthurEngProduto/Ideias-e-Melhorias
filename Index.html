@@ -3821,7 +3821,7 @@
             const before = Number(beforeInput.value || 0);
             const after = Number(afterInput.value || 0);
             const gain = before - after;
-            gainValue.textContent = String(gain);
+            gainValue.textContent = formatPrizeRankingGainValue(index, gain);
             
             if (index === 1) {
               calculatePrizeRankingProductivityGain(beforeInput.value, afterInput.value);
@@ -3835,14 +3835,39 @@
             const before = Number(timeBeforeValue || 0);
             const after = Number(timeAfterValue || 0);
             if (before <= 0) {
-              gainValue.textContent = '0';
+              gainValue.textContent = formatPrizeRankingProductivity(0);
               return;
             }
 
             const productivityIncrease = ((before - after) / before) * 100;
-            gainValue.textContent = String(Number(productivityIncrease.toFixed(2)));
+            gainValue.textContent = formatPrizeRankingProductivity(productivityIncrease);
           }
 
+         
+          function formatPrizeRankingGainValue(index, value) {
+            const numericValue = Number.isFinite(Number(value)) ? Number(value) : 0;
+            if (index === 0) {
+              return formatPrizeRankingCurrency(numericValue);
+            }
+            if (index === 1) {
+              return `${formatPrizeRankingNumber(numericValue)} min.`;
+            }
+            return formatPrizeRankingNumber(numericValue);
+          }
+
+          function formatPrizeRankingProductivity(value) {
+            return `${formatPrizeRankingNumber(value)}%`;
+          }
+
+          function formatPrizeRankingCurrency(value) {
+            const numericValue = Number.isFinite(Number(value)) ? Number(value) : 0;
+            return `R$ ${numericValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          }
+
+          function formatPrizeRankingNumber(value) {
+            const numericValue = Number.isFinite(Number(value)) ? Number(value) : 0;
+            return Number(numericValue.toFixed(2)).toString();
+          }
           function renderPrizeRankingRows(row) {
             const tbody = document.getElementById('prizeRankingRows');
             const summary = document.getElementById('prizeRankingSummary');
@@ -3868,13 +3893,13 @@
                   <td>${escapeHtml(item.label)}</td>
                   <td>${beforeField}</td>
                   <td>${afterField}</td>
-                  <td><span${gainId} data-prize-gain="${index}">0</span></td>
+                  <td><span${gainId} data-prize-gain="${index}">${item.isProductivity ? formatPrizeRankingProductivity(0) : formatPrizeRankingGainValue(index, 0)}</span></td>
                 </tr>
               `;
             }).join('');
 
             const productivityGain = document.getElementById('prizeProductivityGain');
-            if (productivityGain) productivityGain.textContent = '0';
+            if (productivityGain) productivityGain.textContent = formatPrizeRankingProductivity(0);
 
             const rowIdLabel = row ? `ID ${getRowIdValue(row)}` : 'registro selecionado';
             const rowOwner = row ? (row['Digite seu nome completo:'] || '-') : '-';

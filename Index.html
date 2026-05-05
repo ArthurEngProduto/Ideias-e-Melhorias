@@ -3962,6 +3962,13 @@
             updateModalBackgroundState();
           }
 
+          const PRIZE_RANKING_FIELDS = [
+            { label: 'Custo por operação - R$', type: 'currency' },
+            { label: 'Tempo gasto por operação - min', type: 'minutes' },
+            { label: 'Aumento de produtividade - %', type: 'productivity', readOnly: true },
+            { label: 'Custo Anual', type: 'currency' },
+          ];
+
           function calculatePrizeRankingGain(index) {
             const beforeInput = document.querySelector(`[data-prize-before="${index}"]`);
             const afterInput = document.querySelector(`[data-prize-after="${index}"]`);
@@ -3996,10 +4003,12 @@
          
           function formatPrizeRankingGainValue(index, value) {
             const numericValue = Number.isFinite(Number(value)) ? Number(value) : 0;
-            if (index === 0) {
+            const field = PRIZE_RANKING_FIELDS[index];
+            if (!field) return formatPrizeRankingNumber(numericValue);
+            if (field.type === 'currency') {
               return formatPrizeRankingCurrency(numericValue);
             }
-            if (index === 1) {
+            if (field.type === 'minutes') {
               return `${formatPrizeRankingNumber(numericValue)} min.`;
             }
             return formatPrizeRankingNumber(numericValue);
@@ -4023,19 +4032,13 @@
             const summary = document.getElementById('prizeRankingSummary');
             if (!tbody || !summary) return;
 
-            const values = [
-              { label: 'Custo por operação - R$' },
-              { label: 'Tempo gasto por operação - min' },
-              { label: 'Aumento de produtividade - %', isProductivity: true },
-            ];
-
-            tbody.innerHTML = values.map((item, index) => {
-              const gainId = item.isProductivity ? ' id="prizeProductivityGain"' : '';
+            tbody.innerHTML = PRIZE_RANKING_FIELDS.map((item, index) => {
+              const gainId = item.type === 'productivity' ? ' id="prizeProductivityGain"' : '';
               const onInputHandler = `calculatePrizeRankingGain(${index})`;
-              const beforeField = item.isProductivity
+              const beforeField = item.readOnly
                 ? '-'
                 : `<input type="number" step="any" min="0" data-prize-before="${index}" oninput="${onInputHandler}" />`;
-              const afterField = item.isProductivity
+              const afterField = item.readOnly
                 ? '-'
                 : `<input type="number" step="any" min="0" data-prize-after="${index}" oninput="${onInputHandler}" />`;
               return `
@@ -4043,7 +4046,7 @@
                   <td>${escapeHtml(item.label)}</td>
                   <td>${beforeField}</td>
                   <td>${afterField}</td>
-                  <td><span${gainId} data-prize-gain="${index}">${item.isProductivity ? formatPrizeRankingProductivity(0) : formatPrizeRankingGainValue(index, 0)}</span></td>
+                  <td><span${gainId} data-prize-gain="${index}">${item.type === 'productivity' ? formatPrizeRankingProductivity(0) : formatPrizeRankingGainValue(index, 0)}</span></td>
                 </tr>
               `;
             }).join('');

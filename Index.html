@@ -3908,6 +3908,8 @@
               costAfter: readInput('[data-prize-after="0"]'),
               timeBefore: readInput('[data-prize-before="1"]'),
               timeAfter: readInput('[data-prize-after="1"]'),
+              annualCostBefore: readInput('[data-prize-before="3"]'),
+              annualCostAfter: readInput('[data-prize-after="3"]'),
             };
           }
 
@@ -3918,6 +3920,8 @@
               { selector: '[data-prize-after="0"]', value: safeValues.costAfter },
               { selector: '[data-prize-before="1"]', value: safeValues.timeBefore },
               { selector: '[data-prize-after="1"]', value: safeValues.timeAfter },
+              { selector: '[data-prize-before="3"]', value: safeValues.annualCostBefore },
+              { selector: '[data-prize-after="3"]', value: safeValues.annualCostAfter },
             ];
             mappings.forEach(({ selector, value }) => {
               const input = document.querySelector(selector);
@@ -3925,7 +3929,7 @@
               input.value = Number.isFinite(Number(value)) ? String(Number(value)) : '';
             });
 
-            [0, 1].forEach((index) => calculatePrizeRankingGain(index));
+            [0, 1, 3].forEach((index) => calculatePrizeRankingGain(index));
           }
 
           function saveCurrentPrizeRankingByRow() {

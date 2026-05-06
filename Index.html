@@ -2689,11 +2689,11 @@
             const savedPrizeRanking = state.prizeRankingByRowNumber[rowKey];
             if (!savedPrizeRanking) return null;
 
-            const costBefore = Number(savedPrizeRanking.costBefore);
-            const costAfter = Number(savedPrizeRanking.costAfter);
-            if (!Number.isFinite(costBefore) || !Number.isFinite(costAfter)) return null;
+            const annualCostBefore = Number(savedPrizeRanking.annualCostBefore);
+            const annualCostAfter = Number(savedPrizeRanking.annualCostAfter);
+            if (!Number.isFinite(annualCostBefore) || !Number.isFinite(annualCostAfter)) return null;
 
-            return costBefore - costAfter;
+            return annualCostBefore - annualCostAfter;
           }
           function updateEvaluationPartialScores() {
             const partials = [

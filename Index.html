@@ -693,23 +693,12 @@
             border-radius: 10px;
           }
           #ideasRankingModal .deployment-order-table-wrap {
-            position: relative;
             overflow-x: hidden;
-            background: linear-gradient(var(--surface-soft), var(--surface-soft)) top / 100% 48px no-repeat;
           }
           #ideasRankingModal .deployment-order-table {
             min-width: 0;
+            width: 100%;
             table-layout: fixed;
-          }
-          #ideasRankingModal .deployment-order-table-wrap::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 16px;
-            height: 48px;
-            background: var(--surface-soft);
-            pointer-events: none;
           }
           .deployment-order-modal-content {
             width: min(1480px, 99vw);
@@ -753,8 +742,12 @@
           }
           .deployment-order-open-record-btn:hover { background: var(--surface-soft); }
           .deployment-order-open-record-btn svg { width: 14px; height: 14px; }
+          .deployment-order-table thead,
+          .deployment-order-table thead tr,
           .deployment-order-table thead th {
             background: var(--surface-soft);
+          }
+          .deployment-order-table thead th {
             border-top: none;
             border-bottom: 1px solid var(--line);
           }

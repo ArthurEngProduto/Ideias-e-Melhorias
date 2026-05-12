@@ -355,6 +355,10 @@
             width: 39px;
             height: 39px;
           }
+         .quick-action-icon.portal-info-icon {
+            width: 28px;
+            height: 28px;
+          }
           .toolbar {
             margin-top: 14px;
             display: flex;
@@ -508,6 +512,8 @@
           .table-wrap thead th:nth-child(6),
           .table-wrap tbody td:nth-child(6) {
             min-width: 165px;
+          }
+          .table-wrap tbody td:nth-child(6) {
             text-align: left;
           }
           thead th:nth-child(7),
@@ -2099,6 +2105,13 @@
                     <text x="21" y="22" text-anchor="middle" font-size="5" font-weight="700" fill="currentColor">3</text>
                   </svg>
                 </button>
+                <button class="quick-action-icon-btn" type="button" onclick="openPortalInfoModalFromMenu(event)" aria-label="Informações do Portal" title="Informações do Portal">
+                  <svg class="quick-action-icon portal-info-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="12" cy="8" r="1.1" fill="currentColor"/>
+                    <path d="M12 11v5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </button>
                 <span class="quick-action-placeholder" aria-hidden="true"></span>
               </div>
             </div>
@@ -2311,6 +2324,42 @@
                 </thead>
                 <tbody id="ideasRankingRows"></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal" id="portalInfoModal" onclick="handlePortalInfoModalBackdrop(event)">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Resumo — Objetivos e Funções do Portal</h2>
+              <div class="modal-actions">
+                <button class="secondary modal-close-icon-button" style="max-width:40px;" onclick="closePortalInfoModal()" aria-label="Fechar" title="Fechar"><svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+            <div style="display:grid;gap:10px;line-height:1.6;">
+              <p>O Portal de Ideias e Melhorias tem como objetivo centralizar, organizar e acompanhar ideias, problemas e oportunidades de melhoria registradas pela equipe, transformando sugestões em ações com acompanhamento claro.</p>
+              <h3 style="margin:0;">Objetivos principais</h3>
+              <ul style="margin:0;padding-left:20px;">
+                <li>Reunir em um só lugar todos os registros de melhoria.</li>
+                <li>Facilitar a análise e priorização das demandas.</li>
+                <li>Dar visibilidade ao andamento de cada item.</li>
+                <li>Registrar resultados e soluções aplicadas.</li>
+                <li>Apoiar decisões com dados e indicadores.</li>
+              </ul>
+              <h3 style="margin:0;">Funções principais</h3>
+              <ul style="margin:0;padding-left:20px;">
+                <li>Consulta de registros: visualização de todas as contribuições em tabela.</li>
+                <li>Filtros avançados: busca por ID, data, nome, setor, tipo, recorrência, status e relatório.</li>
+                <li>Gestão de status: atualização do fluxo (ex.: Na fila, Em andamento, Concluído).</li>
+                <li>Detalhamento por registro: abertura de informações completas em modal.</li>
+                <li>Relatório de conclusão: criação, edição e exclusão do relatório final da solução.</li>
+                <li>Anexos de evidência: inclusão e remoção de imagens/arquivos da conclusão.</li>
+                <li>Estatísticas e indicadores: gráficos e totais por setor, tipo de contribuição, recorrência e status.</li>
+                <li>Priorização de implantação: apoio à ordem de execução das ideias.</li>
+                <li>Ranking e avaliação: pontuação de ideias com critérios ponderados para apoiar decisões.</li>
+              </ul>
+              <h3 style="margin:0;">Resultado esperado</h3>
+              <p>Com o portal, a empresa ganha controle, transparência e agilidade na gestão de melhorias, aumentando a qualidade das decisões e a efetividade das ações implementadas.</p>
             </div>
           </div>
         </div>
@@ -3580,6 +3629,25 @@
             openIdeasRankingModal();
           }
 
+          function openPortalInfoModal() {
+            closeQuickActionsMenu();
+            document.getElementById('portalInfoModal').classList.add('open');
+            updateModalBackgroundState();
+          }
+
+          function openPortalInfoModalFromMenu(event) {
+            if (event) event.stopPropagation();
+            openPortalInfoModal();
+          }
+
+          function closePortalInfoModal() {
+            document.getElementById('portalInfoModal').classList.remove('open');
+            updateModalBackgroundState();
+          }
+
+          function handlePortalInfoModalBackdrop(event) {
+            if (event.target && event.target.id === 'portalInfoModal') closePortalInfoModal();
+          }
           function fetchDeploymentOrderRows() {
             const filters = { ...(state.filters || {}), status: 'Na fila' };
             const pageSize = 10000;

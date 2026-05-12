@@ -311,12 +311,14 @@
             border: 1px solid var(--line);
             border-radius: 12px;
             box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
-            padding: 10px 12px;
-            width: auto;
+            padding: 10px;
+            width: 114px;
+            min-height: 114px;
             display: none;
-            grid-template-columns: repeat(2, max-content);
-            grid-template-rows: repeat(2, max-content);
-            gap: 12px;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            place-items: center;
+            gap: 8px;
           }
           .quick-actions-menu.open {
             display: grid;
@@ -339,12 +341,6 @@
           }
           .quick-actions-menu .quick-action-icon-btn:hover {
             filter: brightness(0.9);
-          }
-          .quick-actions-menu .quick-action-placeholder {
-            width: 30px;
-            height: 30px;
-            visibility: hidden;
-            pointer-events: none;
           }
           .quick-action-icon {
             width: 37px;
@@ -2112,7 +2108,6 @@
                     <path d="M12 11v5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                   </svg>
                 </button>
-                <span class="quick-action-placeholder" aria-hidden="true"></span>
               </div>
             </div>
           </div>

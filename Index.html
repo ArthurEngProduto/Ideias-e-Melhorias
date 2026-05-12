@@ -1978,6 +1978,14 @@
             body.print-report #reportModal .report-file-links {
               background: #ffffff !important;
             }
+
+      .home-footer{--home-footer-bg:#e8e9eb;position:fixed;left:0;right:0;bottom:0;z-index:2400;isolation:isolate;margin:0;padding:8px 16px;background:transparent;color:#545963;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:12px;font-size:12px;line-height:1;min-height:30px}
+      .home-footer::before{content:"";position:absolute;inset:0;background:var(--home-footer-bg);z-index:-1}
+      html.dark-mode .home-footer,
+      body.dark-mode .home-footer{--home-footer-bg:#0d121c;color:#8790a1}
+      .home-footer span:nth-child(2){text-align:center}
+      .home-footer span:nth-child(3){text-align:right}
+      body{padding-bottom:46px}
         </style>
       </head>
       <body>
@@ -2538,6 +2546,11 @@
             </div>
           </div>
         </div>
+        <footer class="home-footer" aria-label="Informações do portal">
+          <span>Versão 1.0 2026 ©</span>
+          <span>Uso exclusivo da Manufatura de Estojos Baldi ®</span>
+          <span>Desenvolvido por Arthur Sefair Miana</span>
+        </footer>
         <script>
           let state = {
             page: 1,

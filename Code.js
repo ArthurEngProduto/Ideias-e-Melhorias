@@ -170,24 +170,38 @@ function getFilteredRows_(filters) {
   const rows = getRows_();
   const normalizedFilters = normalizeFilters_(filters || {});
 
-  return rows.filter((row) => {
-    if (normalizedFilters.id) {
-      const rowId = getRowIdValue_(row).toLowerCase();
-      if (rowId !== normalizedFilters.id) return false;
-    }
-    const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
-    if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
-    if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
-    if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
-    const rowSector = getFieldValue_(row, 'Selecione o seu setor:');
-    if (normalizedFilters.sectors.length && !normalizedFilters.sectors.includes(rowSector)) return false;
-    if (normalizedFilters.sector && rowSector !== normalizedFilters.sector) return false;
-    if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
-    if (normalizedFilters.recurrence && getFieldValue_(row, 'Qual é a recorrência ou necessidade desta melhoria?') !== normalizedFilters.recurrence) return false;
-    if (normalizedFilters.status && getRowStatusValue_(row) !== normalizedFilters.status) return false;
-    if (normalizedFilters.report && getRowReportFilterValue_(row) !== normalizedFilters.report) return false;
-    return true;
-  });
+  return rows
+    .filter((row) => {
+      if (normalizedFilters.id) {
+        const rowId = getRowIdValue_(row).toLowerCase();
+        if (rowId !== normalizedFilters.id) return false;
+      }
+      const rowDate = normalizeDateFilter_(getFieldValue_(row, 'Carimbo de data/hora'));
+      if (normalizedFilters.timestampStart && (!rowDate || rowDate < normalizedFilters.timestampStart)) return false;
+      if (normalizedFilters.timestampEnd && (!rowDate || rowDate > normalizedFilters.timestampEnd)) return false;
+      if (normalizedFilters.name && !getFieldValue_(row, 'Digite seu nome:').toLowerCase().includes(normalizedFilters.name)) return false;
+      const rowSector = getFieldValue_(row, 'Selecione o seu setor:');
+      if (normalizedFilters.sectors.length && !normalizedFilters.sectors.includes(rowSector)) return false;
+      if (normalizedFilters.sector && rowSector !== normalizedFilters.sector) return false;
+      if (normalizedFilters.reference && getFieldValue_(row, 'Este registro se refere a:') !== normalizedFilters.reference) return false;
+      if (normalizedFilters.recurrence && getFieldValue_(row, 'Qual é a recorrência ou necessidade desta melhoria?') !== normalizedFilters.recurrence) return false;
+      if (normalizedFilters.status && getRowStatusValue_(row) !== normalizedFilters.status) return false;
+      if (normalizedFilters.report && getRowReportFilterValue_(row) !== normalizedFilters.report) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const aTimestamp = parseTimestamp_(getFieldValue_(a, 'Carimbo de data/hora'));
+      const bTimestamp = parseTimestamp_(getFieldValue_(b, 'Carimbo de data/hora'));
+
+      if (aTimestamp && bTimestamp) {
+        return bTimestamp.getTime() - aTimestamp.getTime();
+      }
+
+      if (aTimestamp) return -1;
+      if (bTimestamp) return 1;
+
+      return Number(b.__rowNumber || 0) - Number(a.__rowNumber || 0);
+    });
 }
 
 function updateRowStatus(rowNumber, status) {

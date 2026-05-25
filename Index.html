@@ -1811,6 +1811,8 @@
             body.print-stats {
               width: 297mm !important;
               height: 210mm !important;
+              min-height: 0 !important;
+              display: block !important;
               overflow: hidden !important;
             }
             body.print-stats #detailsModal,
@@ -1823,6 +1825,7 @@
             body.print-stats #reportDeleteConfirmModal,
             body.print-stats #reportAttachmentDeleteConfirmModal,
             body.print-stats .container,
+            body.print-stats .home-footer,
             body.print-stats .theme-toggle,
             body.print-stats .refresh-toggle,
             body.print-stats #loadingOverlay {

@@ -58,7 +58,7 @@
         --recurrence-high-text: var(--text);
             --recurrence-dot-low: #FACC15;
             --recurrence-dot-medium: #F97316;
-            --recurrence-dot-high: #FF0000;
+            --recurrence-dot-high: #dc2626;
             --detail-subfield-bg: #ffffff;
             --control-border-width: 2px;
             --field-border-width: 2px;
@@ -101,7 +101,7 @@
             --recurrence-high-text: var(--text);
             --recurrence-dot-low: #FACC15;
             --recurrence-dot-medium: #F97316;
-            --recurrence-dot-high: #FF0000;
+            --recurrence-dot-high: #f87171;
             --detail-subfield-bg: transparent;
             --control-border-width: 2px;
             --field-border-width: 2px;
@@ -456,6 +456,24 @@
             height: 22px;
             display: block;
           }
+          .modal-heading-compact {
+            margin: 0;
+            font-size: 18px;
+          }
+          .modal-actions-end {
+            justify-content: flex-end;
+          }
+          .modal-action-confirm {
+            max-width: 100px;
+          }
+          .confirm-positive {
+            background: #166534;
+            color: #fff;
+            border: 1px solid #15803d;
+          }
+          .required-mark {
+            color: #dc2626;
+          }
           .summary { margin: 14px 0; color: var(--muted); }
           .summary-toolbar {
             margin: 18px 0 8px;
@@ -526,7 +544,13 @@
           tbody tr { cursor: pointer; }
           tbody tr:hover { background: var(--surface-soft); }
           .filter-row th { text-align: center; background: var(--surface); border-bottom: 1px solid var(--line); }
-          .filter-row input, .filter-row select { text-align: center; padding: 8px; font-size: 13px; }
+          .filter-row input, .filter-row select {
+            min-height: 36px;
+            height: 36px;
+            text-align: center;
+            padding: 8px 10px;
+            font-size: 13px;
+          }
           .filter-row #referenceFilter,
           .filter-row #recurrenceFilter,
           .filter-row #statusFilter,
@@ -564,6 +588,8 @@
           }
           .table-sector-trigger {
             width: 100%;
+            min-height: 36px;
+            height: 36px;
             text-align: center;
             padding-right: 28px;
             position: relative;
@@ -658,6 +684,11 @@
           }
           .date-range span { color: var(--muted); font-size: 12px; white-space: nowrap; }
           .pagination { margin: 18px 0 4px 0; display: flex; gap: 8px; justify-content: center; }
+          .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: none;
+          }
           .empty { display: none; text-align: center; color: var(--muted); margin: 24px 0; }
           .modal {
             display: none;
@@ -938,11 +969,15 @@
             color: #fff;
           }
           .status-badge {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 24px;
             padding: 4px 10px;
             border-radius: 999px;
             font-size: 12px;
             font-weight: 700;
+            line-height: 1.2;
           }
           .status-badge.concluded {
             background: #dcfce7;
@@ -1046,6 +1081,7 @@
           border: none;
           border-radius: 8px;
           padding: 4px 10px;
+          min-height: 24px;
           width: var(--workflow-status-tag-width, 3.4cm);
           min-width: var(--workflow-status-tag-width, 3.4cm);
           max-width: var(--workflow-status-tag-width, 3.4cm);
@@ -1082,8 +1118,12 @@
             margin-top: 8px;
           }
           .report-tag-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 8px;
             padding: 6px 10px;
+            min-height: 28px;
             width: 2.5cm;
             min-width: 2.5cm;
             max-width: 2.5cm;
@@ -2165,8 +2205,8 @@
           <div class="empty" id="empty">Nenhum registro encontrado para os filtros informados.</div>
 
           <div class="pagination">
-            <button class="secondary" onclick="prevPage()">Anterior</button>
-            <button class="secondary" onclick="nextPage()">Próxima</button>
+            <button id="prevPageButton" class="secondary" onclick="prevPage()">Anterior</button>
+            <button id="nextPageButton" class="secondary" onclick="nextPage()">Próxima</button>
           </div>
         </div>
         <div class="modal" id="detailsModal" onclick="handleModalBackdrop(event)">
@@ -2451,7 +2491,7 @@
         <div class="modal" id="statusPickerModal" onclick="handleStatusPickerBackdrop(event)">
           <div class="modal-content status-picker-modal-content">
             <div class="modal-header">
-              <h2 style="margin:0;font-size:18px;">Alterar status</h2>
+              <h2 class="modal-heading-compact">Alterar status</h2>
               <button class="secondary modal-close-icon-button" style="max-width:40px;" onclick="closeStatusPickerModal()" aria-label="Fechar" title="Fechar"><svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
             </div>
             <div class="status-picker-options" id="statusPickerOptions">
@@ -2462,19 +2502,19 @@
         <div class="modal" id="statusChangeConfirmModal" onclick="handleStatusChangeConfirmBackdrop(event)">
           <div class="modal-content status-picker-modal-content">
             <div class="modal-header">
-              <h2 style="margin:0;font-size:18px;">Confirmação</h2>
+              <h2 class="modal-heading-compact">Confirmação</h2>
             </div>
             <p style="margin: 0 0 14px;">Deseja mesmo alterar?</p>
-            <div class="modal-actions" style="justify-content:flex-end;">
-              <button class="secondary" style="max-width:100px;" type="button" onclick="closeStatusChangeConfirmModal()">Não</button>
-              <button style="max-width:100px;background:#166534;color:#fff;border:1px solid #15803d;" type="button" onclick="confirmStatusChange()">Sim</button>
+            <div class="modal-actions modal-actions-end">
+              <button class="secondary modal-action-confirm" type="button" onclick="closeStatusChangeConfirmModal()">Não</button>
+              <button class="modal-action-confirm confirm-positive" type="button" onclick="confirmStatusChange()">Sim</button>
             </div>
           </div>
         </div>
         <div class="modal" id="reportModal" onclick="handleReportModalBackdrop(event)">
           <div class="modal-content report-modal-content">
             <div class="modal-header">
-              <h2 id="reportModalTitle" style="margin:0;font-size:18px;">Relatório de conclusão</h2>
+              <h2 id="reportModalTitle" class="modal-heading-compact">Relatório de conclusão</h2>
               <div class="modal-actions">
                 <button id="deleteReportButton" class="print-hidden" style="display:none;" type="button" onclick="requestDeleteReport()">Excluir relatório</button>
                 <button id="editReportButton" class="report-primary-action print-hidden label-highlight" style="max-width:120px;display:none;" type="button" onclick="enableReportEditing()">Editar</button>
@@ -2492,7 +2532,7 @@
               <textarea id="reportProblemText" class="report-form-textarea" readonly></textarea>
             </div>
             <div>
-              <label for="reportTextInput" class="report-form-label">Solução aplicada <span style="color:#dc2626;">*</span></label>
+              <label for="reportTextInput" class="report-form-label">Solução aplicada <span class="required-mark">*</span></label>
               <textarea id="reportTextInput" class="report-form-textarea" placeholder="Descreva a solução encontrada e aplicada."></textarea>
               <div id="reportValidationError" class="report-validation-error">Preencha o campo obrigatório</div>
             </div>
@@ -2524,24 +2564,24 @@
         <div class="modal" id="reportDeleteConfirmModal" onclick="handleReportDeleteConfirmBackdrop(event)">
           <div class="modal-content status-picker-modal-content">
             <div class="modal-header">
-              <h2 style="margin:0;font-size:18px;">Confirmação</h2>
+              <h2 class="modal-heading-compact">Confirmação</h2>
             </div>
             <p style="margin: 0 0 14px;">Deseja excluir este relatório?</p>
-            <div class="modal-actions" style="justify-content:flex-end;">
-              <button class="secondary" style="max-width:100px;" type="button" onclick="closeReportDeleteConfirmModal()">Não</button>
-              <button class="danger-button" style="max-width:100px;" type="button" onclick="confirmDeleteReport()">Sim</button>
+            <div class="modal-actions modal-actions-end">
+              <button class="secondary modal-action-confirm" type="button" onclick="closeReportDeleteConfirmModal()">Não</button>
+              <button class="danger-button modal-action-confirm" type="button" onclick="confirmDeleteReport()">Sim</button>
             </div>
           </div>
         </div>
         <div class="modal" id="reportAttachmentDeleteConfirmModal" onclick="handleReportAttachmentDeleteConfirmBackdrop(event)">
           <div class="modal-content status-picker-modal-content">
             <div class="modal-header">
-              <h2 style="margin:0;font-size:18px;">Confirmação</h2>
+              <h2 class="modal-heading-compact">Confirmação</h2>
             </div>
             <p style="margin: 0 0 14px;">Deseja apagar este arquivo?</p>
-            <div class="modal-actions" style="justify-content:flex-end;">
-              <button class="secondary" style="max-width:100px;" type="button" onclick="closeReportAttachmentDeleteConfirmModal()">Não</button>
-              <button class="danger-button" style="max-width:100px;" type="button" onclick="confirmDeleteReportAttachment()">Sim</button>
+            <div class="modal-actions modal-actions-end">
+              <button class="secondary modal-action-confirm" type="button" onclick="closeReportAttachmentDeleteConfirmModal()">Não</button>
+              <button class="danger-button modal-action-confirm" type="button" onclick="confirmDeleteReportAttachment()">Sim</button>
             </div>
           </div>
         </div>
@@ -2601,7 +2641,7 @@
               recorrente: 'var(--recurrence-high-bg)',
               apenasUmaVezTexto: '#FACC15',
               algumasVezesTexto: '#F97316',
-              recorrenteTexto: '#FF0000',
+              recorrenteTexto: 'var(--recurrence-dot-high)',
             },
             status: {
               queue: 'var(--status-queue-text)',
@@ -2653,9 +2693,37 @@
           }
 
           function applyDataPayload(data) {
-            state = { ...state, ...(data || {}) };
+            state = { ...state, ...normalizePortalDataPayload(data) };
             hideError();
             render();
+          }
+
+          function normalizePortalDataPayload(data) {
+            const payload = data || {};
+            const rows = Array.isArray(payload.rows) ? payload.rows : [];
+            const filteredRows = rows.filter((row) => isRealPortalRow(row));
+            const removedRows = rows.length - filteredRows.length;
+            const rawTotal = Number(payload.total);
+            const total = Number.isFinite(rawTotal)
+              ? Math.max(filteredRows.length, rawTotal - removedRows)
+              : filteredRows.length;
+            const pageSize = Number(payload.pageSize || state.pageSize || 20);
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            const page = Math.min(Number(payload.page || state.page || 1), totalPages);
+
+            return {
+              ...payload,
+              page,
+              pageSize,
+              total,
+              totalPages,
+              rows: filteredRows,
+            };
+          }
+
+          function isRealPortalRow(row) {
+            const id = Number(getRowIdValue(row));
+            return Number.isFinite(id) && id > 0;
           }
 
           function setFixedEvaluationWeights() {
@@ -2909,7 +2977,7 @@
                 setStatsSectorOptions(state.statsAvailableSectors);
                 google.script.run
                   .withSuccessHandler((data) => {
-                    state = { ...state, ...data };
+                    state = { ...state, ...normalizePortalDataPayload(data) };
                     hideError();
                     render();
                     if (document.getElementById('statsModal').classList.contains('open')) {
@@ -3001,6 +3069,8 @@
             document.getElementById('summary').textContent =
               `Mostrando ${state.rows.length} de ${state.total} registro(s). Página ${state.page} de ${state.totalPages}.`;
 
+            updatePaginationButtons();
+
             const rowsTable = document.getElementById('rowsTable');
             const empty = document.getElementById('empty');
 
@@ -3014,6 +3084,13 @@
             empty.style.display = 'none';
             rowsTable.innerHTML = state.rows.map((row, index) => renderTableRow(row, index)).join('');
             lockInitialTableHeight();
+          }
+
+          function updatePaginationButtons() {
+            const previousButton = document.getElementById('prevPageButton');
+            const nextButton = document.getElementById('nextPageButton');
+            if (previousButton) previousButton.disabled = Number(state.page || 1) <= 1;
+            if (nextButton) nextButton.disabled = Number(state.page || 1) >= Number(state.totalPages || 1);
           }
 
           function lockInitialTableHeight() {
@@ -3372,7 +3449,7 @@
             const filters = { ...(state.filters || {}) };
             google.script.run
               .withSuccessHandler((data) => {
-                const rows = (data && data.rows) ? data.rows : [];
+                const rows = ((data && data.rows) ? data.rows : []).filter((row) => isRealPortalRow(row));
                 const fetchedRowIndex = rows.findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
                 if (fetchedRowIndex < 0) return;
                 state.modalRowsBackup = Array.isArray(state.rows) ? state.rows : [];
@@ -3399,7 +3476,7 @@
             const filters = { ...(state.filters || {}) };
             google.script.run
               .withSuccessHandler((data) => {
-                const rows = (data && data.rows) ? data.rows : [];
+                const rows = ((data && data.rows) ? data.rows : []).filter((row) => isRealPortalRow(row));
                 const fetchedRowIndex = rows.findIndex((row) => Number(row.__rowNumber || 0) === numericRowNumber);
                 if (fetchedRowIndex < 0) return;
                 state.modalRowsBackup = Array.isArray(state.rows) ? state.rows : [];
@@ -3661,7 +3738,7 @@
             showLoading();
             google.script.run
               .withSuccessHandler((data) => {
-                const queueRows = (data && data.rows) ? data.rows : [];
+                const queueRows = ((data && data.rows) ? data.rows : []).filter((row) => isRealPortalRow(row));
                 renderDeploymentOrderRows(queueRows);
                 hideError();
                 hideLoading();
@@ -3680,7 +3757,7 @@
             showLoading();
             google.script.run
               .withSuccessHandler((data) => {
-                const allRows = (data && data.rows) ? data.rows : [];
+                const allRows = ((data && data.rows) ? data.rows : []).filter((row) => isRealPortalRow(row));
                 const concludedRows = allRows.filter((row) => getWorkflowStatus(row) === 'Concluído');
                 state.ideasRankingRows = concludedRows;
                 renderIdeasRankingRows(concludedRows);
@@ -5321,8 +5398,8 @@
             const message = err && err.message ? err.message : String(err || 'Erro desconhecido');
             const box = document.getElementById('statusBox');
             box.style.display = 'block';
-            box.textContent = `Erro ao carregar dados: ${message}`;
-            document.getElementById('topMeta').textContent = 'Falha na conexão com a planilha.';
+            box.textContent = `Não foi possível concluir a ação: ${message}`;
+            document.getElementById('topMeta').textContent = 'Verifique a conexão com a planilha.';
           }
 
 

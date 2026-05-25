@@ -163,7 +163,13 @@ function getRows_() {
       addNameFieldAliases_(obj);
       obj.__rowNumber = index + 2;
       return obj;
-    });
+    })
+    .filter((row) => isRealPortalRow_(row));
+}
+
+function isRealPortalRow_(row) {
+  const id = Number(getRowIdValue_(row));
+  return Number.isFinite(id) && id > 0;
 }
 
 function getFilteredRows_(filters) {
@@ -885,4 +891,3 @@ function normalizeDateFilter_(value) {
 
   return '';
 }
-

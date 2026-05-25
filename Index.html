@@ -3518,7 +3518,22 @@
 
             const pageStyle = document.createElement('style');
             pageStyle.id = printStyleId;
-            pageStyle.textContent = '@page { size: A4 landscape; margin: 6mm; }';
+            pageStyle.textContent = `
+              @page { size: A4 landscape; margin: 6mm; }
+              @media print {
+                html,
+                body.print-stats {
+                  width: 297mm !important;
+                  height: 210mm !important;
+                  min-height: 0 !important;
+                  margin: 0 !important;
+                  overflow: hidden !important;
+                }
+                body.print-stats .home-footer {
+                  display: none !important;
+                }
+              }
+            `;
             document.head.appendChild(pageStyle);
 
             document.body.classList.add('print-stats');
@@ -3532,7 +3547,6 @@
 
             window.addEventListener('afterprint', cleanup);
             window.print();
-            setTimeout(cleanup, 1000);
           }
 
           function openStatsModal() {

@@ -3516,8 +3516,9 @@
           }
 
           function printStatsModal() {
-            const statsModal = document.getElementById('statsModal');
-            if (!statsModal) return;
+            const statsCharts = document.getElementById('statsCharts');
+            const statsEmpty = document.getElementById('statsEmpty');
+            if (!statsCharts) return;
 
             const iframe = document.createElement('iframe');
             iframe.setAttribute('aria-hidden', 'true');
@@ -3532,30 +3533,111 @@
             const styles = Array.from(document.querySelectorAll('style'))
               .map((style) => style.textContent || '')
               .join('\n');
+            const printContent = statsCharts.innerHTML.trim()
+              ? `<div class="stats-grid">${statsCharts.innerHTML}</div>`
+              : `<p class="stats-empty-print">${statsEmpty ? statsEmpty.textContent : 'Sem dados para imprimir.'}</p>`;
             const printOverrides = `
               @page { size: A4 landscape; margin: 6mm; }
               html,
-              body {
-                width: 285mm !important;
-                height: 196mm !important;
+              body.stats-print-document {
+                width: auto !important;
+                height: auto !important;
                 min-height: 0 !important;
-                max-height: 196mm !important;
                 margin: 0 !important;
-                overflow: hidden !important;
-              }
-              body {
+                padding: 0 !important;
+                overflow: visible !important;
                 display: block !important;
                 background: #ffffff !important;
+                color: #000000 !important;
               }
-              body.print-stats #statsModal {
-                display: block !important;
-                position: static !important;
-                width: 100% !important;
-                height: 196mm !important;
-                max-height: 196mm !important;
+              .stats-print-page {
+                width: 283mm !important;
+                margin: 0 auto !important;
+                border: 1px solid #000 !important;
+                box-sizing: border-box !important;
+                padding: 3mm !important;
                 overflow: hidden !important;
                 page-break-after: avoid !important;
                 break-after: avoid !important;
+                background: #fff !important;
+              }
+              .stats-print-page-title {
+                display: block !important;
+                margin: 0 0 3mm !important;
+                color: #000 !important;
+                font-size: 13px !important;
+                line-height: 1.2 !important;
+              }
+              .stats-print-page .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 4mm !important;
+                align-items: stretch !important;
+              }
+              .stats-print-page .stats-card {
+                min-height: 0 !important;
+                padding: 3mm !important;
+                border: 1px solid #000 !important;
+                border-radius: 8px !important;
+                gap: 2mm !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                background: #fff !important;
+              }
+              .stats-print-page .stats-title,
+              .stats-print-page .stats-subtitle,
+              .stats-print-page .legend-item,
+              .stats-print-page .bar-label,
+              .stats-print-page .bar-value,
+              .stats-print-page .legend-percent,
+              .stats-print-page .donut-total-value,
+              .stats-print-page .donut-total-label,
+              .stats-empty-print {
+                color: #000 !important;
+              }
+              .stats-print-page .stats-title {
+                font-size: 11px !important;
+                line-height: 1.2 !important;
+              }
+              .stats-print-page .stats-subtitle,
+              .stats-print-page .legend-item,
+              .stats-print-page .bar-label,
+              .stats-print-page .bar-value,
+              .stats-print-page .legend-percent {
+                font-size: 10px !important;
+                line-height: 1.2 !important;
+              }
+              .stats-print-page .donut-wrap {
+                width: 34mm !important;
+                height: 34mm !important;
+              }
+              .stats-print-page .donut-total-value {
+                font-size: 15px !important;
+              }
+              .stats-print-page .donut-total-label {
+                font-size: 9px !important;
+                margin-top: 1px !important;
+              }
+              .stats-print-page .bar-chart {
+                gap: 1.5mm !important;
+                margin: 1mm 0 2mm !important;
+              }
+              .stats-print-page .bar-track {
+                height: 8px !important;
+                border: 1px solid #000 !important;
+                background: #ffffff !important;
+              }
+              .stats-print-page .legend-list {
+                gap: 1.2mm !important;
+              }
+              .stats-print-page .legend-dot {
+                border: 1px solid #000 !important;
+              }
+              .stats-print-page .legend-dot,
+              .stats-print-page .bar-fill,
+              .stats-print-page .donut-segment {
+                filter: brightness(0.7) contrast(1.25) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
               }
             `;
             const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
@@ -3568,7 +3650,12 @@
                   <style>${styles}</style>
                   <style>${printOverrides}</style>
                 </head>
-                <body class="print-stats">${statsModal.outerHTML}</body>
+                <body class="stats-print-document">
+                  <main class="stats-print-page">
+                    <h1 class="stats-print-page-title">Estatísticas</h1>
+                    ${printContent}
+                  </main>
+                </body>
               </html>
             `);
             iframeDocument.close();

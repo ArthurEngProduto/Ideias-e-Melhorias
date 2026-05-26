@@ -3516,46 +3516,75 @@
           }
 
           function printStatsModal() {
-            const printStyleId = 'stats-print-page-style';
-            const existingStyle = document.getElementById(printStyleId);
-            if (existingStyle) existingStyle.remove();
+            const statsModal = document.getElementById('statsModal');
+            if (!statsModal) return;
 
-            const pageStyle = document.createElement('style');
-            pageStyle.id = printStyleId;
-            pageStyle.textContent = `
+            const iframe = document.createElement('iframe');
+            iframe.setAttribute('aria-hidden', 'true');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+
+            const styles = Array.from(document.querySelectorAll('style'))
+              .map((style) => style.textContent || '')
+              .join('\n');
+            const printOverrides = `
               @page { size: A4 landscape; margin: 6mm; }
-              @media print {
-                html,
-                body.print-stats {
-                  width: 285mm !important;
-                  height: 196mm !important;
-                  min-height: 0 !important;
-                  max-height: 196mm !important;
-                  margin: 0 !important;
-                  overflow: hidden !important;
-                }
-                body.print-stats #statsModal {
-                  page-break-after: avoid !important;
-                  break-after: avoid !important;
-                }
-                body.print-stats .home-footer {
-                  display: none !important;
-                }
+              html,
+              body {
+                width: 285mm !important;
+                height: 196mm !important;
+                min-height: 0 !important;
+                max-height: 196mm !important;
+                margin: 0 !important;
+                overflow: hidden !important;
+              }
+              body {
+                display: block !important;
+                background: #ffffff !important;
+              }
+              body.print-stats #statsModal {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                height: 196mm !important;
+                max-height: 196mm !important;
+                overflow: hidden !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
               }
             `;
-            document.head.appendChild(pageStyle);
-
-            document.body.classList.add('print-stats');
+            const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDocument.open();
+            iframeDocument.write(`
+              <!doctype html>
+              <html lang="pt-BR">
+                <head>
+                  <meta charset="utf-8" />
+                  <style>${styles}</style>
+                  <style>${printOverrides}</style>
+                </head>
+                <body class="print-stats">${statsModal.outerHTML}</body>
+              </html>
+            `);
+            iframeDocument.close();
 
             const cleanup = () => {
-              document.body.classList.remove('print-stats');
-              const styleNode = document.getElementById(printStyleId);
-              if (styleNode) styleNode.remove();
-              window.removeEventListener('afterprint', cleanup);
+              iframe.remove();
             };
 
-            window.addEventListener('afterprint', cleanup);
-            window.print();
+            const printFrame = () => {
+              const frameWindow = iframe.contentWindow;
+              frameWindow.focus();
+              frameWindow.addEventListener('afterprint', cleanup, { once: true });
+              frameWindow.print();
+            };
+
+            setTimeout(printFrame, 100);
           }
 
           function openStatsModal() {

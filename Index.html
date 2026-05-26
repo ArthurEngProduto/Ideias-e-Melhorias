@@ -1809,9 +1809,10 @@
             }
           }
             body.print-stats {
-              width: 297mm !important;
-              height: 210mm !important;
+              width: 285mm !important;
+              height: 196mm !important;
               min-height: 0 !important;
+              max-height: 196mm !important;
               display: block !important;
               overflow: hidden !important;
             }
@@ -1836,9 +1837,12 @@
               position: static !important;
               inset: auto !important;
               width: 100% !important;
-              height: 198mm !important;
+              height: 196mm !important;
+              max-height: 196mm !important;
               padding: 0 !important;
               overflow: hidden !important;
+              page-break-after: avoid !important;
+              break-after: avoid !important;
               background: transparent !important;
               backdrop-filter: none !important;
               -webkit-backdrop-filter: none !important;
@@ -1846,8 +1850,8 @@
             body.print-stats #statsModal .modal-content {
               width: 283mm !important;
               max-width: 283mm !important;
-              height: 198mm !important;
-              max-height: 198mm !important;
+              height: 196mm !important;
+              max-height: 196mm !important;
               box-sizing: border-box !important;
               overflow: hidden !important;
               margin: 0 auto !important;
@@ -3523,11 +3527,16 @@
               @media print {
                 html,
                 body.print-stats {
-                  width: 297mm !important;
-                  height: 210mm !important;
+                  width: 285mm !important;
+                  height: 196mm !important;
                   min-height: 0 !important;
+                  max-height: 196mm !important;
                   margin: 0 !important;
                   overflow: hidden !important;
+                }
+                body.print-stats #statsModal {
+                  page-break-after: avoid !important;
+                  break-after: avoid !important;
                 }
                 body.print-stats .home-footer {
                   display: none !important;

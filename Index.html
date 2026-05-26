@@ -3536,6 +3536,7 @@
             const printContent = statsCharts.innerHTML.trim()
               ? `<div class="stats-grid">${statsCharts.innerHTML}</div>`
               : `<p class="stats-empty-print">${statsEmpty ? statsEmpty.textContent : 'Sem dados para imprimir.'}</p>`;
+            const periodText = getStatsPrintPeriodText();
             const printOverrides = `
               @page { size: A4 landscape; margin: 6mm; }
               html,
@@ -3562,13 +3563,24 @@
                 background: #fff !important;
               }
               .stats-print-page-title {
-                display: block !important;
+                display: inline-block !important;
                 margin: 0 0 3mm !important;
                 color: #000 !important;
                 font-size: 13px !important;
                 line-height: 1.2 !important;
               }
+              .stats-print-period {
+                float: right !important;
+                display: inline-block !important;
+                color: #000 !important;
+                font-size: 12px !important;
+                font-weight: 600 !important;
+                line-height: 1.2 !important;
+                text-align: right !important;
+                white-space: nowrap !important;
+              }
               .stats-print-page .stats-grid {
+                clear: both !important;
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 gap: 4mm !important;
                 align-items: stretch !important;
@@ -3653,6 +3665,7 @@
                 <body class="stats-print-document">
                   <main class="stats-print-page">
                     <h1 class="stats-print-page-title">Estatísticas</h1>
+                    <span class="stats-print-period">${escapeHtml(periodText)}</span>
                     ${printContent}
                   </main>
                 </body>
@@ -3672,6 +3685,24 @@
             };
 
             setTimeout(printFrame, 100);
+          }
+
+          function getStatsPrintPeriodText() {
+            const startInput = document.getElementById('statsDateStartFilter');
+            const endInput = document.getElementById('statsDateEndFilter');
+            const startValue = String((startInput && startInput.value) || state.statsDateStart || '').trim();
+            const endValue = String((endInput && endInput.value) || state.statsDateEnd || '').trim();
+
+            if (startValue && endValue) {
+              return `Período: ${formatDateForLabel(startValue)} até ${formatDateForLabel(endValue)}`;
+            }
+            if (startValue) {
+              return `Período: a partir de ${formatDateForLabel(startValue)}`;
+            }
+            if (endValue) {
+              return `Período: até ${formatDateForLabel(endValue)}`;
+            }
+            return 'Período: todos os registros';
           }
 
           function openStatsModal() {
